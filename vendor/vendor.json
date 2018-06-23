@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "oZxN/nwcgrl8+SIVVbXSbQrOcd0=",
+			"path": "github.com/xuyu/logging",
+			"revision": "8a07c475aa4823912dccacff99449185f7626dc0",
+			"revisionTime": "2014-06-24T02:37:06Z"
+		}
+	],
+	"rootPath": "godog"
+}

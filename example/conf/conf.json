@@ -1,0 +1,18 @@
+{
+  "Log": {
+    "File":"log/app.log",
+    "Level": "debug",
+    "Name":"app",
+    "Suffix": "060102-15"
+  },
+  "Prog": {
+    "CPU": 0,
+    "Daemon": false,
+    "HealthPort": ""
+  },
+  "Server": {
+    "PortInfo":"0.0.0.0:10240"
+  },
+
+  "File":"log/app.log"
+}
