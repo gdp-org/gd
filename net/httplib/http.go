@@ -1,11 +1,9 @@
 /**
- * Created by JetBrains GoLand.
- * Author: Chuck Chen
- * Date: 2018/6/22
- * Time: 15:47
- */
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+*/
 
-package http
+package httplib
 
 import (
 	"encoding/json"
@@ -29,6 +27,7 @@ var (
 	CONTENT_NONE = ""
 	CONTENT_JSON = "application/json"
 	CONTENT_YAML = "application/yaml"
+	CONTENT_ALL  = "*"
 )
 
 type IRequest interface {
@@ -56,8 +55,6 @@ type Response struct {
 	TransferEncoding []string
 }
 
-type Responser http.ResponseWriter
-type Requester http.Request
 type HandlerFunc func(http.ResponseWriter, *http.Request)
 
 type Handler interface {
@@ -218,7 +215,7 @@ type LogRequestInfo struct {
 	Body         interface{}
 }
 
-func GetResponseInfo(err *me.MError, data interface{}) []byte {
+func getResponseInfo(err *me.MError, data interface{}) []byte {
 	response := &ResponseData{}
 	if err == nil {
 		response.Result = me.ERR_CODE_SUCCESS
@@ -239,7 +236,7 @@ func GetResponseInfo(err *me.MError, data interface{}) []byte {
 }
 
 func LogGetResponseInfo(req *http.Request, err *me.MError, data interface{}) []byte {
-	ret := GetResponseInfo(err, data)
+	ret := getResponseInfo(err, data)
 
 	body := ""
 	b_body, ee := ioutil.ReadAll(req.Body)

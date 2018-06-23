@@ -1,3 +1,8 @@
+/**
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+ */
+
 package utils
 
 import (

@@ -1,0 +1,6 @@
+/**
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+ */
+
+curl http://127.0.0.1:10240/test -d '{"data":"lalala"}'

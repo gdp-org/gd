@@ -11,8 +11,6 @@
     "HealthPort": ""
   },
   "Server": {
-    "PortInfo":"0.0.0.0:10240"
-  },
-
-  "File":"log/app.log"
+    "PortInfo":"127.0.0.1:10240"
+  }
 }

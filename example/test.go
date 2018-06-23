@@ -1,21 +1,74 @@
 /**
- * Created by JetBrains GoLand.
- * Author: Chuck Chen
- * Date: 2018/6/22
- * Time: 16:19
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
  */
 
 package main
 
 import (
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/xuyu/logging"
-	"godog/config"
-	_ "godog/logs"
+	me "godog/error"
+	"godog/net/httplib"
+	"godog/service"
+	"net/http"
 )
 
+var App *service.Application
+
+type test struct {
+	Data string
+}
+
+func HandlerTest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", httplib.CONTENT_ALL)
+	w.Header().Add("Content-Type", httplib.CONTENT_JSON)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	} else if r.Method != http.MethodPost {
+		// only support POST method
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var merr *me.MError
+	req := &test{}
+	resp := ""
+
+	// defer write response
+	defer func() {
+		if merr != nil {
+			logging.Error("test, errorCode: %d, errMsg: %s", merr.Code(), merr.Detail())
+		}
+
+		w.Write(httplib.LogGetResponseInfo(r, merr, resp))
+	}()
+
+	// get request data
+	err := httplib.GetRequestBody(r, &req)
+	if err != nil {
+		merr = me.MakeHttpError(me.ERR_CODE_PARA_ERROR, err)
+		return
+	}
+	logging.Info("test recv request: %#v", req)
+
+	// response data
+	resp = "test success!!!"
+}
+
+func register() {
+	App.AddHandlerFunc("/test", HandlerTest)
+}
+
 func main() {
-	appConfig := config.AppConfig
+	App = service.NewApplication(App.AppConfig.BaseConfig.Log.Name)
+	register()
 
-	logging.Debug(appConfig.Get("File"))
-
+	err := App.Run()
+	if err != nil {
+		logging.Error("Error occurs, error = %s", err.Error())
+		return
+	}
 }

@@ -1,19 +1,22 @@
 /**
- * Created by JetBrains GoLand.
- * Author: Chuck Chen
- * Date: 2018/6/22
- * Time: 16:38
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
  */
 
-package log
+package logs
 
 import (
-	"path/filepath"
-	"os"
 	"github.com/xuyu/logging"
+	"godog/config"
+	"os"
+	"path/filepath"
 )
 
-func InitLogger(logFile, logLevel, name, suffix string, daemon bool) error {
+func init() {
+	initLogger(config.AppConfig.BaseConfig.Log.File, config.AppConfig.BaseConfig.Log.Level, config.AppConfig.BaseConfig.Log.Name, config.AppConfig.BaseConfig.Log.Suffix, config.AppConfig.BaseConfig.Prog.Daemon)
+}
+
+func initLogger(logFile, logLevel, name, suffix string, daemon bool) error {
 	logFile, _ = filepath.Abs(logFile)
 	if err := os.MkdirAll(filepath.Dir(logFile), os.ModeDir|os.ModePerm); err != nil {
 		return err

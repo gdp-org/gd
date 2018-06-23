@@ -1,18 +1,17 @@
 /**
- * Created by JetBrains GoLand.
- * Author: Chuck Chen
- * Date: 2018/6/22
- * Time: 14:59
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
  */
 
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"io/ioutil"
 	"os"
-	"bytes"
-	"io"
 )
 
 func loadFile(filename string) ([]byte, error) {
@@ -44,8 +43,22 @@ func LoadJsonToObject(filename string, t interface{}) error {
 	return nil
 }
 
-func ParseJSON(filename string, v interface{}) error {
-	data, err := ioutil.ReadFile(filename)
+func ParseJSON(path string, v interface{}) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	mode := info.Mode()
+	if mode.IsDir() {
+		return errors.New("Invalid config file.it is directory. ")
+	}
+
+	if !mode.IsRegular() {
+		return errors.New("Invalid config file,it is not a regular file. ")
+	}
+
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -67,5 +80,9 @@ func ParseJSON(filename string, v interface{}) error {
 	}
 
 	data = bytes.Join(lines, []byte{})
-	return json.Unmarshal(data, v)
+	if err = json.Unmarshal(data, v); err != nil {
+		return err
+	}
+
+	return nil
 }
