@@ -6,8 +6,8 @@
 ## Author
 
 ```
-author:Chuck1024
-email:chuck.ch1024@outlook.com
+author: Chuck1024
+email : chuck.ch1024@outlook.com
 ```
 
 ## Installation
@@ -18,7 +18,7 @@ Start with cloning godog:
 >git clone https://github.com/chuck1024/godog.git
 ```
 
-##Introduction
+## Introduction
 
 Godog is a basic framework with golang, which can help developers develop server quickly. It provides rich modules to help you.
 
