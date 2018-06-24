@@ -63,7 +63,7 @@ func register() {
 }
 
 func main() {
-	Apps = service.NewApplication(Apps.AppConfig.BaseConfig.Log.Name)
+	Apps = service.NewApplication("test")
 	register()
 
 	err := Apps.Run()

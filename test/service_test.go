@@ -19,7 +19,7 @@ func HandlerTest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	App = service.NewApplication(App.AppConfig.BaseConfig.Log.Name)
+	App = service.NewApplication("test")
 	App.AddHandlerFunc("/test", HandlerTest)
 
 	err := App.Run()
@@ -28,3 +28,5 @@ func main() {
 		return
 	}
 }
+
+// you can use command to try that it is in another file <service_test.txt>.
