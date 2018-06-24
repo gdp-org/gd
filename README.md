@@ -12,7 +12,7 @@ cute.
 **Author**
 
 ```
-author:Chuck
+author:Chuck1024
 email:chuck.ch1024@outlook.com
 ```
 
