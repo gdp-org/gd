@@ -1,7 +1,5 @@
 # godog
 
-## Means
-
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗" in Chinese, which is very cute.
 
 
