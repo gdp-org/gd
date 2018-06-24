@@ -6,10 +6,10 @@
 package main
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/xuyu/logging"
 	"godog/service"
 	"net/http"
+	"testing"
 )
 
 var App *service.Application
@@ -18,7 +18,7 @@ func HandlerTest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("test success!!!"))
 }
 
-func main() {
+func TestService(t *testing.T) {
 	App = service.NewApplication("test")
 	App.AddHandlerFunc("/test", HandlerTest)
 
@@ -29,4 +29,4 @@ func main() {
 	}
 }
 
-// you can use command to try that it is in another file <service_test.txt>.
+// you can use command to test service that it is in another file <service_test.txt>.

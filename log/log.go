@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package logs
+package log
 
 import (
 	"github.com/xuyu/logging"

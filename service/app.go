@@ -9,7 +9,7 @@ import (
 	"errors"
 	"github.com/xuyu/logging"
 	"godog/config"
-	_ "godog/logs"
+	_ "godog/log"
 	"godog/net/httplib"
 	"godog/utils"
 	"runtime"

@@ -6,7 +6,6 @@
 package main
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/xuyu/logging"
 	me "godog/error"
 	"godog/net/httplib"

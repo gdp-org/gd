@@ -3,4 +3,4 @@
  * Author: Chuck1024
  */
 
-curl http://127.0.0.1:10240/test -d '{"data":"test service"}'
+curl http://127.0.0.1:10240/test
