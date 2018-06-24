@@ -2,7 +2,7 @@
   "Log": {
     "File":"log/app.log",
     "Level": "debug",
-    "Name":"app",
+    "Name": "test",
     "Suffix": "060102-15"
   },
   "Prog": {
@@ -12,5 +12,7 @@
   },
   "Server": {
     "PortInfo":"127.0.0.1:10240"
-  }
+  },
+
+  "key":"value"
 }
