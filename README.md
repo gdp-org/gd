@@ -19,7 +19,10 @@ email:chuck.ch1024@outlook.com
 **Introduction**
 
 ```
-godog is a basic framework with golang, which can help developers develop server quickly. It provides rich modules to help you.
+
+godog is a basic framework with golang, which can 
+help developers develop server quickly. It provides
+rich modules to help you.
 ```
 
 **Installation**
