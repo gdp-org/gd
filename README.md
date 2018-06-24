@@ -1,5 +1,5 @@
 # godog
---
+
 **Means**
 
 "go" is the meaning of a dog in Chinese pronunciation, 
@@ -10,7 +10,6 @@ cute.
 **Author**
 
 author:Chuck
-
 email:chuck.ch1024@outlook.com
 
 **Introduction**
@@ -21,7 +20,7 @@ godog is a basic framework with golang, which can help developers develop server
 
 Start with cloning godog:
 ```
-	>git clone https://github.com/chuck1024/godog.git
-	>cd ..
+>git clone https://github.com/chuck1024/godog.git
+>cd ..
 ```
   
