@@ -1,18 +1,18 @@
 # godog
 
-##Means
+## Means
 
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗" in Chinese, which is very cute.
 
 
-##Author
+## Author
 
 ```
 author:Chuck1024
 email:chuck.ch1024@outlook.com
 ```
 
-##Installation
+## Installation
 
 Start with cloning godog:
 
@@ -28,7 +28,7 @@ It contains `config module`,`error module`,`logging module`,`net module` and `se
 
 >* [logging](https://github.com/xuyu/logging)  module is third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.  
 
-##Usage
+## Usage
 
 `service module` provides golang server. It is a simple demo that you can develop it on the basis of it.
 
@@ -98,7 +98,7 @@ func TestConfig(t *testing.T){
 
 `error module` provides the relation usages of error which you find in getResponseInfo function of “net/http/httplib.go”
 
-##License
+## License
 
 Godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  
 
