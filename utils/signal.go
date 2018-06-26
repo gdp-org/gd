@@ -18,7 +18,7 @@ var (
 	Hup      = make(chan os.Signal)
 )
 
-func init(){
+func init() {
 	signal.Notify(Shutdown, syscall.SIGINT)
 	signal.Notify(Shutdown, syscall.SIGTERM)
 	signal.Notify(Hup, syscall.SIGHUP)

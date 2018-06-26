@@ -1,20 +1,20 @@
 /**
  * Copyright 2018 godog Author. All Rights Reserved.
  * Author: Chuck1024
-*/
+ */
 
 package httplib
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/xuyu/logging"
+	me "godog/error"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-	"bytes"
-	"io"
-	me "godog/error"
 )
 
 var (
