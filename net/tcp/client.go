@@ -40,7 +40,7 @@ func (c *Client) Start() {
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		logging.Error("gorpc.Client: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		logging.Warning("gorpc.Client: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -103,10 +103,12 @@ func clientHandler(c *Client) {
 		c.stopWg.Done()
 		c.Stop()
 	}()
+
 	var conn io.ReadWriteCloser
 	var err error
 	var stopping atomic.Value
 	var dialRetryTime = c.DialRetryTime
+
 	for {
 		dialChan := make(chan struct{})
 		// connect
@@ -143,11 +145,12 @@ func clientHandler(c *Client) {
 				return
 			}
 		}
+
 		clientHandleConnection(c, conn)
 
 		dialRetryTime = c.DialRetryTime
 
-		// It happen abnormal when connection doesn't closed. need to closed connection.
+		// It happens abnormal when connection doesn't closed. need to closed connection.
 		select {
 		case <-c.clientStopChan:
 			return
@@ -205,9 +208,10 @@ func clientWriter(c *Client, conn io.Writer, pendingRequests map[uint32]*AsyncRe
 
 	var enc MessageEncoder
 	if enc, err = c.Encoder(conn, c.SendBufferSize); err != nil {
-		err = fmt.Errorf(" Init encoder error: %s", err.Error())
+		err = fmt.Errorf("Init encoder error: %s ", err.Error())
 		return
 	}
+
 	t := time.NewTimer(c.FlushDelay)
 	var flushChan <-chan time.Time
 	for {
@@ -216,13 +220,14 @@ func clientWriter(c *Client, conn io.Writer, pendingRequests map[uint32]*AsyncRe
 		case m = <-c.requestsChan:
 		default:
 			runtime.Gosched()
+
 			select {
 			case <-stopChan:
 				return
 			case m = <-c.requestsChan:
 			case <-flushChan:
 				if err = enc.Flush(); err != nil {
-					err = fmt.Errorf("Cannot flush requests to underlying stream:%s [%s]", c.Addr, err)
+					err = fmt.Errorf("Cannot flush requests to underlying stream:%s [%s] ", c.Addr, err)
 					return
 				}
 				flushChan = nil
@@ -310,7 +315,7 @@ func clientReader(c *Client, conn io.Reader, pendingRequests map[uint32]*AsyncRe
 		}
 		pendingRequestLock.Unlock()
 		if !ok {
-			err = fmt.Errorf("Unexpected msgID=[%d] obtained from server [%s]", msgID, c.Addr)
+			err = fmt.Errorf("unexpected msgID=[%d] obtained from server [%s]", msgID, c.Addr)
 			continue
 		}
 
@@ -475,7 +480,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		panic("BUG: Active timer trapped into acquireTimer()")
+		logging.Error("BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }
