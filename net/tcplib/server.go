@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcp
+package tcplib
 
 import (
 	"fmt"
@@ -209,6 +209,7 @@ func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan cha
 		err = fmt.Errorf("Init decoder error:%s", err.Error())
 		return
 	}
+
 	var req Packet
 	for {
 		if req, err = dec.Decode(); err != nil {

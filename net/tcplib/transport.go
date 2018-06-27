@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcp
+package tcplib
 
 import (
 	"io"

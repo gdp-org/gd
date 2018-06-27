@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcp
+package tcplib
 
 import (
 	"bufio"
@@ -30,20 +30,20 @@ type MessageEncoderFunc func(w io.Writer, bufferSize int) (encoder MessageEncode
 type MessageDecoderFunc func(r io.Reader, bufferSize int) (decoder MessageDecoder, err error)
 
 func defaultMessageEncoder(w io.Writer, bufferSize int) (encoder MessageEncoder, err error) {
-	return &SelfPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
+	return &CustomPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
 }
 
 func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder, err error) {
-	return &SelfPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
+	return &CustomPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
 }
 
 const (
-	HeaderLen = 9
+	HeaderLen = 13
 	SohLen    = 1
 	EohLen    = 2
 )
 
-type SelfPacket struct {
+type CustomPacket struct {
 	SOH uint8
 	Header
 	Body []byte
@@ -58,24 +58,24 @@ type Header struct {
 	CheckSum  uint16
 }
 
-func (p *SelfPacket) ID() uint32 {
+func (p *CustomPacket) ID() uint32 {
 	return p.MsgID
 }
 
-func (p *SelfPacket) SetErrCode(code uint32) {
+func (p *CustomPacket) SetErrCode(code uint32) {
 	p.ErrCode = uint16(code)
 }
 
-type SelfPacketEncoder struct {
+type CustomPacketEncoder struct {
 	bw *bufio.Writer
 }
 
-type SelfPacketDecoder struct {
+type CustomPacketDecoder struct {
 	br *bufio.Reader
 }
 
-func (e *SelfPacketEncoder) Encode(p Packet) error {
-	if packet, ok := p.(*SelfPacket); ok {
+func (e *CustomPacketEncoder) Encode(p Packet) error {
+	if packet, ok := p.(*CustomPacket); ok {
 		if err := binary.Write(e.bw, binary.BigEndian, packet.SOH); err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (e *SelfPacketEncoder) Encode(p Packet) error {
 	return errors.New("SelfPacketEncoder Encode occur error")
 }
 
-func (e *SelfPacketEncoder) Flush() error {
+func (e *CustomPacketEncoder) Flush() error {
 	if e.bw != nil {
 		if err := e.bw.Flush(); err != nil {
 			return err
@@ -104,8 +104,8 @@ func (e *SelfPacketEncoder) Flush() error {
 }
 
 // of course, Decode Function need you to judge packet SOH, EOH and packet length.
-func (d *SelfPacketDecoder) Decode() (Packet, error) {
-	packet := &SelfPacket{}
+func (d *CustomPacketDecoder) Decode() (Packet, error) {
+	packet := &CustomPacket{}
 
 	if err := binary.Read(d.br, binary.BigEndian, &packet.SOH); err != nil {
 		return nil, err
