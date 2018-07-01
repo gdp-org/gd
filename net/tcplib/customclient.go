@@ -66,9 +66,8 @@ func (c *CustomClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *CodeErro
 		return nil, InternalServerError
 	}
 
-	var cc *Client
-	var ok bool
-	if cc, ok = c.Cm[addr.String()]; !ok {
+	cc, ok := c.Cm[addr.String()]
+	if !ok {
 		c.cmMutex.Lock()
 		defer c.cmMutex.Unlock()
 		if cc, ok = c.Cm[addr.String()]; !ok {
