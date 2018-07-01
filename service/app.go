@@ -69,7 +69,7 @@ func (app *Application) AddHandlerFunc(addr string, handler httplib.HandlerFunc)
 
 func (app *Application) initCPU() error {
 	if config.AppConfig.BaseConfig.Prog.CPU == 0 {
-		runtime.GOMAXPROCS(runtime.NumCPU()) //配0就用所有核
+		runtime.GOMAXPROCS(runtime.NumCPU())
 	} else {
 		runtime.GOMAXPROCS(config.AppConfig.BaseConfig.Prog.CPU)
 	}

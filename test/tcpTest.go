@@ -6,20 +6,21 @@
 package main
 
 import (
-	"godog/net/tcplib"
 	"github.com/xuyu/logging"
+	"godog/net/tcplib"
 	"sync/atomic"
 )
 
 var globalSeq uint32
+
 func nextSeq() uint32 {
 	return atomic.AddUint32(&globalSeq, 1)
 }
 
-func server(){
+func server() {
 	s := &tcplib.Server{
-		Addr:"127.0.0.1:16666",
-		Handler: func(clientAddr string, req tcplib.Packet)tcplib.Packet{
+		Addr: "127.0.0.1:16666",
+		Handler: func(clientAddr string, req tcplib.Packet) tcplib.Packet {
 			logging.Debug("Obtained request %+v from the client %s\n", req, clientAddr)
 			body := []byte("niu bi")
 			rsp := NewPacket(body)
@@ -28,11 +29,11 @@ func server(){
 	}
 
 	if err := s.Serve(); err != nil {
-		logging.Error("Cannot stop godog tcp server:%s",err)
+		logging.Error("Cannot stop godog tcp server:%s", err)
 	}
 }
 
-func client(){
+func client() {
 	c := &tcplib.Client{
 		Addr: "127.0.0.1:16666",
 	}
@@ -48,7 +49,7 @@ func client(){
 		logging.Error("Error when sending request to server: %s", err)
 	}
 	rsp := rspPkt.(*tcplib.CustomPacket).Body
-	logging.Debug("resp=%s",string(rsp))
+	logging.Debug("resp=%s", string(rsp))
 }
 
 func NewPacket(body []byte) *tcplib.CustomPacket {
@@ -56,16 +57,16 @@ func NewPacket(body []byte) *tcplib.CustomPacket {
 	return &tcplib.CustomPacket{
 		SOH: 6,
 		Header: tcplib.Header{
-			Version:      0,
-			CheckSum:     0,
-			MsgID:        seq,
-			ErrCode:      0,
-			PacketLen:    uint32(len(body)) + tcplib.HeaderLen + 2},
+			Version:   0,
+			CheckSum:  0,
+			Seq:     seq,
+			ErrCode:   0,
+			PacketLen: uint32(len(body)) + tcplib.HeaderLen + 2},
 		Body: body,
 		EOH:  8,
 	}
 }
 
-func main(){
+func main() {
 	client()
 }

@@ -51,7 +51,7 @@ type CustomPacket struct {
 }
 
 type Header struct {
-	MsgID     uint32
+	Seq       uint32
 	ErrCode   uint16
 	PacketLen uint32
 	Version   uint8
@@ -59,7 +59,7 @@ type Header struct {
 }
 
 func (p *CustomPacket) ID() uint32 {
-	return p.MsgID
+	return p.Seq
 }
 
 func (p *CustomPacket) SetErrCode(code uint32) {
