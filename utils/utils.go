@@ -11,7 +11,9 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
+	"time"
 )
 
 func loadFile(filename string) ([]byte, error) {
@@ -85,4 +87,24 @@ func ParseJSON(path string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func GetLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		os.Stderr.WriteString("Oops: " + err.Error() + "\n")
+	} else {
+		for _, a := range addrs {
+			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					return ipnet.IP.String()
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func CurrentMicroSeconds() int64 {
+	return time.Now().UnixNano() / 1e3
 }

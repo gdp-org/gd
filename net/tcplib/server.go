@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type HandlerFunc func(clientAddr string, req Packet) (rsp Packet)
+type HandlerFunc func(addr string, req Packet) (rsp Packet)
 
 type Server struct {
 	Addr             string

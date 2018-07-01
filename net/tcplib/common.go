@@ -49,6 +49,7 @@ var (
 	TimeOutError        = &CodeError{10001, "timeout error."}
 	OverflowError       = &CodeError{10002, "overflow error."}
 	InternalServerError = &CodeError{10003, "interval server error."}
+	InvalidParam        = &CodeError{10004, "invalid param"}
 )
 
 var closedFlushChan = make(chan time.Time)
