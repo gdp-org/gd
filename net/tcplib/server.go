@@ -124,7 +124,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			<-acceptChan
 			return
 		case <-acceptChan:
-			logging.Info("[%s] connected.\n", clientAddr)
+			logging.Info("[%s] connected.", clientAddr)
 		}
 
 		if err != nil {
@@ -192,7 +192,7 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 		<-writerDone
 	}
 	responsesChan = nil
-	logging.Info("[%s] disconnected.\n", clientAddr)
+	logging.Info("[%s] disconnected.", clientAddr)
 }
 
 func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
@@ -206,7 +206,7 @@ func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan cha
 	var err error
 	var dec MessageDecoder
 	if dec, err = s.Decoder(conn, s.RecvBufferSize); err != nil {
-		err = fmt.Errorf("Init decoder error:%s", err.Error())
+		err = fmt.Errorf("init decoder error:%s", err.Error())
 		return
 	}
 

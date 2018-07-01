@@ -32,14 +32,14 @@ func NewServer(addr string) *CustomServer {
 	return s
 }
 
-func (s *CustomServer) start() {
+func (s *CustomServer) Start() {
 	err := s.ss.Start()
 	if err != nil {
 		logging.Error("%s", err.Error())
 	}
 }
 
-func (s *CustomServer) Start() {
+func (s *CustomServer) Run() {
 	err := s.ss.Serve()
 	if err != nil {
 		logging.Error("%s", err.Error())
@@ -52,12 +52,12 @@ func (s *CustomServer) Stop() {
 
 func (s *CustomServer) RegisterTcpHandler(headCmd uint32, f HandlerFunc) {
 	if _, ok := s.m[headCmd]; ok {
-		logging.Warning("[RegisterHandler] head cmd [%d] already registered.\n", headCmd)
+		logging.Warning("[RegisterHandler] head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.m[headCmd] = f
-	logging.Info("[RegisterHandler] register head cmd [%d] success.\n", headCmd)
+	logging.Info("[RegisterHandler] register head cmd [%d] success.", headCmd)
 }
 
 func (s *CustomServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
@@ -66,7 +66,7 @@ func (s *CustomServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet
 
 	f, ok := s.m[headCmd]
 	if !ok {
-		logging.Error("[dispatchHyPacket] head cmd %d not register handler!\n", headCmd)
+		logging.Error("[dispatchHyPacket] head cmd %d not register handler!", headCmd)
 		return NewCustomPacketWithRet(headCmd, []byte(""), hyPacket.Seq, uint16(InvalidParam.Code()))
 	}
 	return f(clientAddr, req)
