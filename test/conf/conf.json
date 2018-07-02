@@ -11,8 +11,10 @@
     "HealthPort": ""
   },
   "Server": {
-    "PortInfo":"127.0.0.1:10240"
+    "HttpPort":10240,
+    "TcpPort": 10241
   },
 
+  "tcpServer":"127.0.0.1:16666",
   "key":"value"
 }
