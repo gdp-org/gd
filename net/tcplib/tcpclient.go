@@ -15,10 +15,14 @@ import (
 )
 
 /*
- * custom client
+ * tcp client
  */
 
-type CustomClient struct {
+var (
+	AppTcpClient *TcpClient
+)
+
+type TcpClient struct {
 	Cm       map[string]*Client
 	cmMutex  sync.Mutex
 	addrs    []*net.TCPAddr
@@ -27,17 +31,19 @@ type CustomClient struct {
 	localIp  string
 }
 
-func NewClient(timeout, retryNum uint32) *CustomClient {
-	return &CustomClient{
+func NewClient(timeout, retryNum uint32) *TcpClient {
+	AppTcpClient = &TcpClient{
 		Cm:       make(map[string]*Client),
 		Timeout:  timeout,
 		RetryNum: retryNum,
 		localIp:  utils.GetLocalIP(),
 	}
+
+	return AppTcpClient
 }
 
 // add server address
-func (c *CustomClient) AddAddr(addr string) {
+func (c *TcpClient) AddAddr(addr string) {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
 		logging.Error("[AddAddr] parse addr failed, %s", err.Error())
 	} else {
@@ -46,7 +52,7 @@ func (c *CustomClient) AddAddr(addr string) {
 }
 
 // Stop stop client
-func (c *CustomClient) Stop() {
+func (c *TcpClient) Stop() {
 	for addr, cc := range c.Cm {
 		cc.Stop()
 		logging.Error("[Stop] stop client %s", addr)
@@ -56,7 +62,7 @@ func (c *CustomClient) Stop() {
 }
 
 // Invoke rpc call
-func (c *CustomClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *CodeError) {
+func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *CodeError) {
 	addr := &net.TCPAddr{}
 
 	if len(c.addrs) > 0 {
@@ -93,7 +99,7 @@ func (c *CustomClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *CodeErro
 		return nil, err
 	}
 
-	rsp = rspPkt.(*CustomPacket).Body
+	rsp = rspPkt.(*TcpPacket).Body
 
 	return rsp, nil
 }

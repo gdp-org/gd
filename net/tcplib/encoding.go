@@ -31,11 +31,11 @@ type MessageEncoderFunc func(w io.Writer, bufferSize int) (encoder MessageEncode
 type MessageDecoderFunc func(r io.Reader, bufferSize int) (decoder MessageDecoder, err error)
 
 func defaultMessageEncoder(w io.Writer, bufferSize int) (encoder MessageEncoder, err error) {
-	return &CustomPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
+	return &TcpPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
 }
 
 func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder, err error) {
-	return &CustomPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
+	return &TcpPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
 }
 
 /*
@@ -48,7 +48,7 @@ const (
 	EohLen    = 2
 )
 
-type CustomPacket struct {
+type TcpPacket struct {
 	SOH uint8
 	Header
 	Body []byte
@@ -77,25 +77,25 @@ func nextSeq() uint32 {
 	return atomic.AddUint32(&globalSeq, 1)
 }
 
-func (p *CustomPacket) ID() uint32 {
+func (p *TcpPacket) ID() uint32 {
 	return p.Seq
 }
 
-func (p *CustomPacket) SetErrCode(code uint32) {
+func (p *TcpPacket) SetErrCode(code uint32) {
 	p.ErrCode = uint16(code)
 }
 
-func NewCustomPacket(cmd uint32, body []byte) *CustomPacket {
+func NewCustomPacket(cmd uint32, body []byte) *TcpPacket {
 	seq := nextSeq()
 	return NewCustomPacketWithSeq(cmd, body, seq)
 }
 
-func NewCustomPacketWithSeq(cmd uint32, body []byte, seq uint32) *CustomPacket {
+func NewCustomPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
 	return NewCustomPacketWithRet(cmd, body, seq, 0)
 }
 
-func NewCustomPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *CustomPacket {
-	return &CustomPacket{
+func NewCustomPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *TcpPacket {
+	return &TcpPacket{
 		SOH: SOH,
 		Header: Header{
 			Version:   0,
@@ -109,16 +109,16 @@ func NewCustomPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *Cu
 	}
 }
 
-type CustomPacketEncoder struct {
+type TcpPacketEncoder struct {
 	bw *bufio.Writer
 }
 
-type CustomPacketDecoder struct {
+type TcpPacketDecoder struct {
 	br *bufio.Reader
 }
 
-func (e *CustomPacketEncoder) Encode(p Packet) error {
-	if packet, ok := p.(*CustomPacket); ok {
+func (e *TcpPacketEncoder) Encode(p Packet) error {
+	if packet, ok := p.(*TcpPacket); ok {
 		if err := binary.Write(e.bw, binary.BigEndian, packet.SOH); err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (e *CustomPacketEncoder) Encode(p Packet) error {
 	return errors.New("SelfPacketEncoder Encode occur error")
 }
 
-func (e *CustomPacketEncoder) Flush() error {
+func (e *TcpPacketEncoder) Flush() error {
 	if e.bw != nil {
 		if err := e.bw.Flush(); err != nil {
 			return err
@@ -147,8 +147,8 @@ func (e *CustomPacketEncoder) Flush() error {
 }
 
 // of course, Decode Function need you to judge packet SOH, EOH and packet length.
-func (d *CustomPacketDecoder) Decode() (Packet, error) {
-	packet := &CustomPacket{}
+func (d *TcpPacketDecoder) Decode() (Packet, error) {
+	packet := &TcpPacket{}
 
 	if err := binary.Read(d.br, binary.BigEndian, &packet.SOH); err != nil {
 		return nil, err

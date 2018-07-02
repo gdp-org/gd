@@ -32,11 +32,12 @@ type BaseConfigure struct {
 	Prog struct {
 		CPU        int
 		Daemon     bool
-		HealthPort string
+		HealthPort int
 	}
 
 	Server struct {
-		PortInfo string
+		HttpPort int
+		TcpPort  int
 	}
 }
 

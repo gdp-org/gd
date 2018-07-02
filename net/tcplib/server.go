@@ -27,7 +27,7 @@ type Server struct {
 	SendBufferSize   int
 	RecvBufferSize   int
 	Listener         net.Listener
-	serverStopChan   chan struct{}
+	ServerStopChan   chan struct{ bool }
 	stopWg           sync.WaitGroup
 	Encoder          MessageEncoderFunc
 	Decoder          MessageDecoderFunc
@@ -38,10 +38,10 @@ func (s *Server) Start() *CodeError {
 		panic("Server.Handler cannot be nil")
 	}
 
-	if s.serverStopChan != nil {
+	if s.ServerStopChan != nil {
 		panic("server is already running. Stop it before starting it again")
 	}
-	s.serverStopChan = make(chan struct{})
+	s.ServerStopChan = make(chan struct{ bool })
 
 	if s.Concurrency <= 0 {
 		s.Concurrency = DefaultConcurrency
@@ -86,12 +86,12 @@ func (s *Server) Serve() *CodeError {
 }
 
 func (s *Server) Stop() {
-	if s.serverStopChan == nil {
+	if s.ServerStopChan == nil {
 		panic("server must be started before stopping it")
 	}
-	close(s.serverStopChan)
+	close(s.ServerStopChan)
 	s.stopWg.Wait()
-	s.serverStopChan = nil
+	s.ServerStopChan = nil
 }
 
 func serverHandler(s *Server, workersCh chan struct{}) {
@@ -118,7 +118,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 		}()
 
 		select {
-		case <-s.serverStopChan:
+		case <-s.ServerStopChan:
 			stopping.Store(true)
 			s.Listener.Close()
 			<-acceptChan
@@ -129,7 +129,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 
 		if err != nil {
 			select {
-			case <-s.serverStopChan:
+			case <-s.ServerStopChan:
 				return
 			case <-time.After(time.Second):
 			}
@@ -185,7 +185,7 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 		close(stopChan)
 		conn.Close()
 		<-readerDone
-	case <-s.serverStopChan:
+	case <-s.ServerStopChan:
 		close(stopChan)
 		conn.Close()
 		<-readerDone
@@ -198,7 +198,7 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			logging.Error("[%s]->[%s] panic when reading data from client: %v", clientAddr, s.Addr, r)
+			logging.Error("[%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
 		}
 		close(done)
 	}()

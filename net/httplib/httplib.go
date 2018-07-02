@@ -8,8 +8,10 @@ package httplib
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/xuyu/logging"
 	me "godog/error"
+	"godog/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -61,7 +63,9 @@ type Handler interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
-func Serve(srvPort string, handler http.Handler) {
+func Serve(httpPort int, handler http.Handler) {
+	localIp := utils.GetLocalIP()
+	srvPort := fmt.Sprintf("%s:%d", localIp, httpPort)
 	logging.Info("[Serve] Try to listen on port: %s", srvPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
@@ -72,7 +76,9 @@ func Serve(srvPort string, handler http.Handler) {
 	}()
 }
 
-func Health(srvPort string, handler http.Handler) {
+func Health(healthPort int, handler http.Handler) {
+	localIp := utils.GetLocalIP()
+	srvPort := fmt.Sprintf("%s:%d", localIp, healthPort)
 	logging.Info("[Health] Try to monitor health condition on port: %s", srvPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)

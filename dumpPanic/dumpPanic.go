@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package utils
+package dumpPanic
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 var (
 	dumpFlag   = os.O_CREATE | os.O_WRONLY
 	dumpMode   = os.FileMode(0777)
-	dumpPrefix = "panic."
+	dumpPrefix = "dumpPanic."
 )
 
 func ReviewDumpPanic(file *os.File) error {
