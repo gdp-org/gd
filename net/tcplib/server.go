@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type HandlerFunc func(addr string, req Packet) (rsp Packet)
+type HandlerFunc func(req Packet) (rsp Packet)
 
 type Server struct {
 	Addr             string
@@ -268,7 +268,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 			logging.Error("[%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
 		}
 	}()
-	rsp = handler(clientAddr, req)
+	rsp = handler(req)
 	return
 }
 

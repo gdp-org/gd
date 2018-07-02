@@ -81,7 +81,7 @@ func (s *TcpServer) AddTcpHandler(headCmd uint32, f HandlerFunc) {
 	logging.Info("[RegisterHandler] register head cmd [%d] success.", headCmd)
 }
 
-func (s *TcpServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
+func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 	hyPacket := req.(*TcpPacket)
 	headCmd := hyPacket.Cmd
 
@@ -90,5 +90,5 @@ func (s *TcpServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 		logging.Error("[dispatchHyPacket] head cmd %d not register handler!", headCmd)
 		return NewCustomPacketWithRet(headCmd, []byte(""), hyPacket.Seq, uint16(InvalidParam.Code()))
 	}
-	return f(clientAddr, req)
+	return f(req)
 }

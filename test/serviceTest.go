@@ -18,7 +18,7 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("test success!!!"))
 }
 
-func HandlerTcpTest(clientAddr string, req tcplib.Packet) (rsp tcplib.Packet) {
+func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
 	cReq := req.(*tcplib.TcpPacket)
 	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
 	return
