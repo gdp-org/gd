@@ -3,8 +3,4 @@
  * Author: Chuck1024
  */
 
-http server test:
->curl http://127.0.0.1:10240/test
-
-tcp server test:
->go test tcpClient_test.go
+curl http://127.0.0.1:10240/test

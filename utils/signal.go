@@ -3,11 +3,10 @@
  * Author: Chuck1024
  */
 
-package dumpPanic
+package utils
 
 import (
 	"github.com/xuyu/logging"
-	"godog/net/tcplib"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,7 +18,7 @@ var (
 	Hup      = make(chan os.Signal)
 )
 
-func init() {
+func init(){
 	signal.Notify(Shutdown, syscall.SIGINT)
 	signal.Notify(Shutdown, syscall.SIGTERM)
 	signal.Notify(Hup, syscall.SIGHUP)
@@ -31,7 +30,6 @@ func Signal() {
 			select {
 			case <-Shutdown:
 				logging.Info("[Application.signal] receive signal SIGINT or SIGTERM, to stop server...")
-				tcplib.AppTcpServer.Stop()
 				Running <- false
 			case <-Hup:
 			}

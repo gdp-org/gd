@@ -9,7 +9,6 @@ import (
 	"github.com/xuyu/logging"
 	me "godog/error"
 	"godog/net/httplib"
-	"godog/net/tcplib"
 	"godog/service"
 	"net/http"
 )
@@ -58,18 +57,8 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 	resp = "test success!!!"
 }
 
-func HandlerTcpTestSelf(clientAddr string, req tcplib.Packet) (rsp tcplib.Packet) {
-	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
-	return
-}
-
-
 func register() {
-	// http
-	Apps.AppHttp.AddHandlerFunc("/test/self", HandlerTestSelf)
-	// Tcp
-	App.AppTcpServer.AddTcpHandler(1024, HandlerTcpTestSelf)
+	Apps.AddHandlerFunc("/test/self", HandlerTestSelf)
 }
 
 func main() {

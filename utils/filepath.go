@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package dumpPanic
+package utils
 
 import (
 	"io"
