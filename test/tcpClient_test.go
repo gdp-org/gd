@@ -8,28 +8,12 @@ package main
 import (
 	"github.com/xuyu/logging"
 	"godog/net/tcplib"
-	"time"
+	"testing"
 )
 
-func server() {
-	s := tcplib.AppTcpServer
-
-	s.AddTcpHandler(1024, func(clientAddr string, req tcplib.Packet) (rsp tcplib.Packet) {
-		cReq := req.(*tcplib.TcpPacket)
-		rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
-		return
-	})
-
-	go func() {
-		time.Sleep(10 * time.Second)
-		s.Stop()
-	}()
-
-	s.Run()
-}
-
-func client() {
+func TestClient(t *testing.T) {
 	c := tcplib.NewClient(500, 0)
+	// remember alter addr
 	c.AddAddr("192.168.1.107:10241")
 
 	body := []byte("test success")
@@ -40,8 +24,4 @@ func client() {
 	}
 
 	logging.Debug("resp=%s", string(rsp))
-}
-
-func main() {
-	client()
 }
