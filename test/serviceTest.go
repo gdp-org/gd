@@ -15,6 +15,7 @@ import (
 var App *service.Application
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
+	logging.Debug("connected : %s",r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 

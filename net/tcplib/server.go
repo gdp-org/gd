@@ -27,7 +27,7 @@ type Server struct {
 	SendBufferSize   int
 	RecvBufferSize   int
 	Listener         net.Listener
-	ServerStopChan   chan struct{ bool }
+	serverStopChan   chan struct{ bool }
 	stopWg           sync.WaitGroup
 	Encoder          MessageEncoderFunc
 	Decoder          MessageDecoderFunc
@@ -38,10 +38,10 @@ func (s *Server) Start() *CodeError {
 		panic("Server.Handler cannot be nil")
 	}
 
-	if s.ServerStopChan != nil {
+	if s.serverStopChan != nil {
 		panic("server is already running. Stop it before starting it again")
 	}
-	s.ServerStopChan = make(chan struct{ bool })
+	s.serverStopChan = make(chan struct{ bool })
 
 	if s.Concurrency <= 0 {
 		s.Concurrency = DefaultConcurrency
@@ -86,12 +86,12 @@ func (s *Server) Serve() *CodeError {
 }
 
 func (s *Server) Stop() {
-	if s.ServerStopChan == nil {
+	if s.serverStopChan == nil {
 		panic("server must be started before stopping it")
 	}
-	close(s.ServerStopChan)
+	close(s.serverStopChan)
 	s.stopWg.Wait()
-	s.ServerStopChan = nil
+	s.serverStopChan = nil
 }
 
 func serverHandler(s *Server, workersCh chan struct{}) {
@@ -118,7 +118,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 		}()
 
 		select {
-		case <-s.ServerStopChan:
+		case <-s.serverStopChan:
 			stopping.Store(true)
 			s.Listener.Close()
 			<-acceptChan
@@ -129,7 +129,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 
 		if err != nil {
 			select {
-			case <-s.ServerStopChan:
+			case <-s.serverStopChan:
 				return
 			case <-time.After(time.Second):
 			}
@@ -185,7 +185,7 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 		close(stopChan)
 		conn.Close()
 		<-readerDone
-	case <-s.ServerStopChan:
+	case <-s.serverStopChan:
 		close(stopChan)
 		conn.Close()
 		<-readerDone
