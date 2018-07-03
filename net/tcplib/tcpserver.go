@@ -68,7 +68,7 @@ func (s *TcpServer) Run() error {
 }
 
 func (s *TcpServer) Stop() {
-	s.ss.ServerStopChan <- struct{ bool }{true}
+	s.ss.serverStopChan <- struct{ bool }{true}
 }
 
 func (s *TcpServer) AddTcpHandler(headCmd uint32, f HandlerFunc) {
