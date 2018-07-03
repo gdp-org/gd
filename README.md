@@ -28,10 +28,20 @@ It contains `config module`,`error module`,`logging module`,`net module` and `se
 
 ## Usage
 
-`service module` provides golang server. It is a simple demo that you can develop it on the basis of it.
+`service module` provides golang server. It is a simple demo that you can develop it on the basis of it. 
+>* You can find it in "godog/test/serviceTest.go"
+>* use `control+c` to stop process
 
 ```
-func HandlerTest(w http.ResponseWriter, r *http.Request) {
+import (
+	"fmt"
+	"godog/net/tcplib"
+	"godog/service"
+	"net/http"
+)
+
+func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("connected : %s",r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 
@@ -48,22 +58,54 @@ func main() {
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
 	
 	// Tcp
+	// cmd:1024
 	App.AppTcpServer.AddTcpHandler(1024, HandlerTcpTest)
 
 	err := App.Run()
 	if err != nil {
-		logging.Error("Error occurs, error = %s", err.Error())
+		fmt.Printf("Error occurs, error = %s\n", err.Error())
 		return
 	}
 }
 
 // you can use command to test service that it is in another file <serviceTest.txt>.
 ```
-
-`config module` provides the related configuration of the project.
+`tcpClient` show how to call tcpserver
+>* You can find it in "godog/test/tcpClient_test.go"
 
 ```
-func TestConfig(t *testing.T){
+import (
+	"fmt"
+	"godog/net/tcplib"
+)
+
+func main() {
+	c := tcplib.NewClient(500, 0)
+	// remember alter addr 
+	c.AddAddr("127.0.0.1:10241")
+
+	body := []byte("test success")
+
+	//cmd:1024
+	rsp, err := c.Invoke(1024, body)
+	if err != nil {
+		logging.Error("Error when sending request to server: %s", err)
+	}
+
+	fmt.Printf("resp=%s\n", string(rsp))
+}
+```
+
+`config module` provides the related configuration of the project.
+>* You can find it in "godog/test/config_test.go"
+
+```
+import (
+	"fmt"
+	"godog/config"
+)
+
+func main(){
 	AppConfig = config.AppConfig
 
 	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
@@ -71,7 +113,7 @@ func TestConfig(t *testing.T){
 
 	// AppConfig.BaseConfig.Log.File is the path of log file.
 	file := AppConfig.BaseConfig.Log.File
-	logging.Debug("log file:%s",file)
+	fmt.Printf("log file:%s\n",file)
 
 	// AppConfig.BaseConfig.Log.Level is log level.
 	// DEBUG   logLevel = 1
@@ -80,28 +122,28 @@ func TestConfig(t *testing.T){
 	// ERROR   logLevel = 4
 	// DISABLE logLevel = 255
 	level := AppConfig.BaseConfig.Log.Level
-	logging.Debug("log level:%s",level)
+	fmt.Printf("log level:%s\n",level)
 
 	// AppConfig.BaseConfig.Log.Name is service name
 	name := AppConfig.BaseConfig.Log.Name
-	logging.Debug("name:%s",name)
+	fmt.Printf("name:%s\n",name)
 
 	// AppConfig.BaseConfig.Log.Suffix is suffix of log file.
 	// suffix = "060102-15" . It indicates that the log is cut per hour
 	// suffix = "060102" . It indicates that the log is cut per day
 	suffix := AppConfig.BaseConfig.Log.Suffix
-	logging.Debug("log suffix:%s",suffix)
+	fmt.Printf("log suffix:%s\n",suffix)
 
 	// you can add configuration items directly in conf.json
 	value := AppConfig.Get("key")
-	logging.Debug("value:%s",value)
+	fmt.Printf("value:%s\n",value)
 
 	// you can add config key-value if you need.
 	AppConfig.Set("yourKey","yourValue")
 
 	// get config key
 	yourValue := AppConfig.Get("yourKey")
-	logging.Debug("yourValue:%s",yourValue)
+	fmt.Printf("yourValue:%s\n",yourValue)
 }
 ```
 
