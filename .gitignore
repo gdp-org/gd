@@ -10,5 +10,6 @@
 .idea/*
 test/test_self.go
 test/log/*
+test/dumpPanic.-dump-*
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
