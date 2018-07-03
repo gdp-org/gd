@@ -38,7 +38,6 @@ type BaseConfigure struct {
 	Server struct {
 		HttpPort int
 		TcpPort  int
-		WsPort   int
 	}
 }
 
