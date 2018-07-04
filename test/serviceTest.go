@@ -8,11 +8,11 @@ package main
 import (
 	"github.com/xuyu/logging"
 	"godog/net/tcplib"
-	"godog/service"
+	"godog"
 	"net/http"
 )
 
-var App *service.Application
+var App *godog.Application
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 	logging.Debug("connected : %s",r.RemoteAddr)
@@ -26,7 +26,7 @@ func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
 }
 
 func main() {
-	App = service.NewApplication("test")
+	App = godog.NewApplication("test")
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
 
