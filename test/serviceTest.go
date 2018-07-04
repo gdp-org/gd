@@ -7,15 +7,15 @@ package main
 
 import (
 	"github.com/xuyu/logging"
-	"godog/net/tcplib"
 	"godog"
+	"godog/net/tcplib"
 	"net/http"
 )
 
 var App *godog.Application
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	logging.Debug("connected : %s",r.RemoteAddr)
+	logging.Debug("connected : %s", r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 

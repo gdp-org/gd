@@ -7,10 +7,10 @@ package main
 
 import (
 	"github.com/xuyu/logging"
+	"godog"
 	me "godog/error"
 	"godog/net/httplib"
 	"godog/net/tcplib"
-	"godog"
 	"net/http"
 )
 
@@ -63,7 +63,6 @@ func HandlerTcpTestSelf(req tcplib.Packet) (rsp tcplib.Packet) {
 	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
 	return
 }
-
 
 func register() {
 	// http
