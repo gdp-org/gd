@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package service
+package godog
 
 import (
 	"github.com/xuyu/logging"

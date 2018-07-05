@@ -7,26 +7,26 @@ package main
 
 import (
 	"github.com/xuyu/logging"
+	"godog"
 	"godog/net/tcplib"
-	"godog/service"
 	"net/http"
 )
 
-var App *service.Application
+var App *godog.Application
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	logging.Debug("connected : %s",r.RemoteAddr)
+	logging.Debug("connected : %s", r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 
 func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
 	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
+	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
 	return
 }
 
 func main() {
-	App = service.NewApplication("test")
+	App = godog.NewApplication("test")
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
 

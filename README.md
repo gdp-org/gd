@@ -35,8 +35,8 @@ It contains `config module`,`error module`,`logging module`,`net module` and `se
 ```
 import (
 	"fmt"
+	"godog"
 	"godog/net/tcplib"
-	"godog/service"
 	"net/http"
 )
 
@@ -47,12 +47,12 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 
 func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
 	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
+	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
 	return
 }
 
 func main() {
-	App := service.NewApplication("test")
+	App := godog.NewApplication("test")
 	
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)

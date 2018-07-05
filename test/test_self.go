@@ -7,14 +7,14 @@ package main
 
 import (
 	"github.com/xuyu/logging"
+	"godog"
 	me "godog/error"
 	"godog/net/httplib"
 	"godog/net/tcplib"
-	"godog/service"
 	"net/http"
 )
 
-var Apps *service.Application
+var Apps *godog.Application
 
 type test struct {
 	Data string
@@ -58,12 +58,11 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 	resp = "test success!!!"
 }
 
-func HandlerTcpTestSelf(clientAddr string, req tcplib.Packet) (rsp tcplib.Packet) {
+func HandlerTcpTestSelf(req tcplib.Packet) (rsp tcplib.Packet) {
 	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewCustomPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
+	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
 	return
 }
-
 
 func register() {
 	// http
@@ -73,7 +72,7 @@ func register() {
 }
 
 func main() {
-	Apps = service.NewApplication("test")
+	Apps = godog.NewApplication("test")
 	register()
 
 	err := Apps.Run()
