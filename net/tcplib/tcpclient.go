@@ -93,7 +93,7 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *CodeError) 
 	}
 
 	var reqPkt, rspPkt Packet
-	reqPkt = NewCustomPacket(cmd, req)
+	reqPkt = NewTcpPacket(cmd, req)
 	if rspPkt, err = cc.CallRetry(reqPkt, c.RetryNum); err != nil {
 		logging.Error("[Invoke] CallRetry occur error: ", err)
 		return nil, err

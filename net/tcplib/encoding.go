@@ -39,7 +39,7 @@ func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder,
 }
 
 /*
- * CustomPacket.
+ * TcpPacket.
  */
 
 const (
@@ -85,16 +85,16 @@ func (p *TcpPacket) SetErrCode(code uint32) {
 	p.ErrCode = uint16(code)
 }
 
-func NewCustomPacket(cmd uint32, body []byte) *TcpPacket {
+func NewTcpPacket(cmd uint32, body []byte) *TcpPacket {
 	seq := nextSeq()
-	return NewCustomPacketWithSeq(cmd, body, seq)
+	return NewTcpPacketWithSeq(cmd, body, seq)
 }
 
-func NewCustomPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
-	return NewCustomPacketWithRet(cmd, body, seq, 0)
+func NewTcpPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
+	return NewTcpPacketWithRet(cmd, body, seq, 0)
 }
 
-func NewCustomPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *TcpPacket {
+func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *TcpPacket {
 	return &TcpPacket{
 		SOH: SOH,
 		Header: Header{
