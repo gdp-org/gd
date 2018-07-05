@@ -82,13 +82,13 @@ func (s *TcpServer) AddTcpHandler(headCmd uint32, f HandlerFunc) {
 }
 
 func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
-	hyPacket := req.(*TcpPacket)
-	headCmd := hyPacket.Cmd
+	packet := req.(*TcpPacket)
+	headCmd := packet.Cmd
 
 	f, ok := s.m[headCmd]
 	if !ok {
-		logging.Error("[dispatchHyPacket] head cmd %d not register handler!", headCmd)
-		return NewTcpPacketWithRet(headCmd, []byte(""), hyPacket.Seq, uint16(InvalidParam.Code()))
+		logging.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
+		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint16(InvalidParam.Code()))
 	}
 	return f(req)
 }
