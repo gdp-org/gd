@@ -12,7 +12,6 @@ import (
 	"errors"
 	"hash/crc32"
 	"io"
-	"mds/common/logging"
 	"sync/atomic"
 )
 
@@ -155,7 +154,6 @@ func (d *TcpPacketDecoder) Decode() (Packet, error) {
 	}
 
 	if packet.Header.SOH != SOH {
-		logging.Debug("soh:%d", packet.Header.SOH)
 		return nil, errors.New("invalid SOH")
 	}
 
