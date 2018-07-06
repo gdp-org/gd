@@ -149,7 +149,7 @@ func main(){
 }
 ```
 
-`error module` provides the relation usages of error which you find in getResponseInfo function of “net/http/httplib.go”
+`error module` provides the relation usages of error that you can find it in godog.
 
 ## License
 

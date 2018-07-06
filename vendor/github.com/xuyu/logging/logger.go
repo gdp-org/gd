@@ -3,10 +3,10 @@ package logging
 import (
 	"fmt"
 	"io"
-	"time"
-	"runtime"
 	"path"
+	"runtime"
 	"strconv"
+	"time"
 )
 
 type Record struct {

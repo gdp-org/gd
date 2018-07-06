@@ -6,7 +6,7 @@
 package tcplib
 
 import (
-	"fmt"
+	"godog/error"
 	"time"
 )
 
@@ -20,41 +20,17 @@ const (
 	DefaultConnectNumbers  = 1
 )
 
-type CodeError struct {
-	code int
-	msg  string
-}
-
-func (e *CodeError) Code() int {
-	return e.code
-}
-
-func (e *CodeError) Error() string {
-	return fmt.Sprintf("[%d] %s", e.code, e.msg)
-}
-
-func (e *CodeError) Msg(msg string) *CodeError {
-	e.msg = msg
-	return e
-}
-
-func NewCodeError(code int, msg string) *CodeError {
-	return &CodeError{
-		code: code,
-		msg:  msg,
-	}
-}
-
 var (
-	TimeOutError        = &CodeError{10001, "timeout error."}
-	OverflowError       = &CodeError{10002, "overflow error."}
-	InternalServerError = &CodeError{10003, "interval server error."}
-	InvalidParam        = &CodeError{10004, "invalid param"}
+	TimeOutError        = error.SetCodeType(10001, "timeout error.")
+	OverflowError       = error.SetCodeType(10002, "overflow error.")
+	InternalServerError = error.SetCodeType(10003, "interval server error.")
+	InvalidParam        = error.SetCodeType(10004, "invalid param")
 )
 
 var closedFlushChan = make(chan time.Time)
 
 func init() {
+
 	close(closedFlushChan)
 }
 

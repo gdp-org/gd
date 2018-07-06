@@ -8,6 +8,7 @@ package tcplib
 import (
 	"fmt"
 	"github.com/xuyu/logging"
+	dogError "godog/error"
 	"io"
 	"net"
 	"runtime"
@@ -33,7 +34,7 @@ type Server struct {
 	Decoder          MessageDecoderFunc
 }
 
-func (s *Server) Start() *CodeError {
+func (s *Server) Start() *dogError.CodeError {
 	if s.Handler == nil {
 		panic("Server.Handler cannot be nil")
 	}
@@ -67,7 +68,7 @@ func (s *Server) Start() *CodeError {
 
 	var err error
 	if s.Listener, err = net.Listen("tcp", s.Addr); err != nil {
-		ce := InternalServerError.Msg(fmt.Sprintf("[%s]. Cannot listen to: [%s]", s.Addr, err))
+		ce := InternalServerError.SetMsg(fmt.Sprintf("[%s]. Cannot listen to: [%s]", s.Addr, err))
 		return ce
 	}
 
@@ -77,7 +78,7 @@ func (s *Server) Start() *CodeError {
 	return nil
 }
 
-func (s *Server) Serve() *CodeError {
+func (s *Server) Serve() *dogError.CodeError {
 	if err := s.Start(); err != nil {
 		return err
 	}

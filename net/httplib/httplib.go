@@ -66,7 +66,7 @@ type Handler interface {
 func Serve(httpPort int, handler http.Handler) {
 	localIp := utils.GetLocalIP()
 	srvPort := fmt.Sprintf("%s:%d", localIp, httpPort)
-	logging.Info("[Serve] Http try to listen ip:%s, port: %d",localIp, httpPort)
+	logging.Info("[Serve] Http try to listen ip:%s, port: %d", localIp, httpPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
@@ -221,10 +221,10 @@ type LogRequestInfo struct {
 	Body         interface{}
 }
 
-func getResponseInfo(err *me.MError, data interface{}) []byte {
+func getResponseInfo(err *me.CodeError, data interface{}) []byte {
 	response := &ResponseData{}
 	if err == nil {
-		response.Result = me.ERR_CODE_SUCCESS
+		response.Result = me.Success
 		response.Msg = "ok"
 	} else {
 		response.Result = err.Code()
@@ -241,7 +241,7 @@ func getResponseInfo(err *me.MError, data interface{}) []byte {
 	return ret
 }
 
-func LogGetResponseInfo(req *http.Request, err *me.MError, data interface{}) []byte {
+func LogGetResponseInfo(req *http.Request, err *me.CodeError, data interface{}) []byte {
 	ret := getResponseInfo(err, data)
 
 	body := ""

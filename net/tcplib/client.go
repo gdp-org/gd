@@ -8,6 +8,7 @@ package tcplib
 import (
 	"fmt"
 	"github.com/xuyu/logging"
+	dogError "godog/error"
 	"io"
 	"runtime"
 	"sync"
@@ -188,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		logging.Error("[clientHandleConnection] occur error: ",c.Addr + ", " + err.Error())
+		logging.Error("[clientHandleConnection] occur error: ", c.Addr+", "+err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -326,23 +327,23 @@ func clientReader(c *Client, conn io.Reader, pendingRequests map[uint32]*AsyncRe
 	}
 }
 
-func (c *Client) Call(req Packet) (rsp Packet, err *CodeError) {
+func (c *Client) Call(req Packet) (rsp Packet, err *dogError.CodeError) {
 	return c.CallTimeout(req, c.RequestTimeout, 0)
 }
 
-func (c *Client) CallRetry(req Packet, retryNum uint32) (rsp Packet, err *CodeError) {
+func (c *Client) CallRetry(req Packet, retryNum uint32) (rsp Packet, err *dogError.CodeError) {
 	return c.CallTimeout(req, c.RequestTimeout, retryNum)
 }
 
 // udp: skip response
-func (c *Client) SendUDP(req Packet) (err *CodeError) {
+func (c *Client) SendUDP(req Packet) (err *dogError.CodeError) {
 	if _, err = c.CallAsync(req, true); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Client) CallTimeout(req Packet, timeout time.Duration, retryNum uint32) (rsp Packet, err *CodeError) {
+func (c *Client) CallTimeout(req Packet, timeout time.Duration, retryNum uint32) (rsp Packet, err *dogError.CodeError) {
 	var tryNum uint32
 retry:
 	var m *AsyncResult
@@ -355,12 +356,12 @@ retry:
 		if m.Error == nil {
 			rsp, err = m.Response, nil
 		} else {
-			rsp, err = m.Response, InternalServerError.Msg(m.Error.Error())
+			rsp, err = m.Response, InternalServerError.SetMsg(m.Error.Error())
 		}
 		releaseAsyncResult(m)
 	case <-t.C:
 		m.Cancel()
-		err = TimeOutError.Msg(fmt.Sprintf("[%s]. Cannot obtain response during timeout=%s", c.Addr, timeout))
+		err = TimeOutError.SetMsg(fmt.Sprintf("[%s]. Cannot obtain response during timeout=%s", c.Addr, timeout))
 	}
 	releaseTimer(t)
 
@@ -374,11 +375,11 @@ retry:
 	return
 }
 
-func (c *Client) CallAsync(req Packet, skipResponse bool) (*AsyncResult, *CodeError) {
+func (c *Client) CallAsync(req Packet, skipResponse bool) (*AsyncResult, *dogError.CodeError) {
 	return c.callAsync(req, skipResponse, false)
 }
 
-func (c *Client) callAsync(req Packet, skipResponse bool, usePool bool) (m *AsyncResult, err *CodeError) {
+func (c *Client) callAsync(req Packet, skipResponse bool, usePool bool) (m *AsyncResult, err *dogError.CodeError) {
 	if skipResponse {
 		usePool = true
 	}
