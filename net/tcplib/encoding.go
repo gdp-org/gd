@@ -143,7 +143,6 @@ func (e *TcpPacketEncoder) Encode(p Packet) error {
 	return errors.New("TcpPacketEncoder Encode occur error")
 }
 
-// of course, Decode Function need you to judge packet SOH, EOH and packet length.
 func (d *TcpPacketDecoder) Decode() (Packet, error) {
 	packet := &TcpPacket{}
 
