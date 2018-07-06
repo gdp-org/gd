@@ -22,15 +22,17 @@ var (
 	NoTcpPort    = errors.New("no tcp serve port")
 )
 
+type Handler func([]byte) (uint16, []byte)
+
 type TcpServer struct {
 	Addr string
-	m    map[uint32]HandlerFunc
+	m    map[uint32]Handler
 	ss   *Server
 }
 
 func init() {
 	AppTcpServer = &TcpServer{
-		m: make(map[uint32]HandlerFunc),
+		m: make(map[uint32]Handler),
 	}
 	AppTcpServer.ss = &Server{
 		Handler: AppTcpServer.dispatchPacket,
@@ -71,7 +73,7 @@ func (s *TcpServer) Stop() {
 	s.ss.serverStopChan <- struct{ bool }{true}
 }
 
-func (s *TcpServer) AddTcpHandler(headCmd uint32, f HandlerFunc) {
+func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {
 	if _, ok := s.m[headCmd]; ok {
 		logging.Warning("[RegisterHandler] head cmd [%d] already registered.", headCmd)
 		return
@@ -90,5 +92,8 @@ func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 		logging.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
 		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint16(InvalidParam.Code()))
 	}
-	return f(req)
+
+	code, body := f(req.(*TcpPacket).Body)
+
+	return NewTcpPacketWithRet(packet.Cmd, body, packet.Seq, code)
 }

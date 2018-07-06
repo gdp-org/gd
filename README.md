@@ -45,14 +45,16 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("test success!!!"))
 }
 
-func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
-	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
-	return
+func HandlerTcpTest(req []byte) (uint16,[]byte) {
+	logging.Debug("tcp server request: %s", string(req))
+	code := uint16(0)
+	resp := []byte("Are you ok?")
+	return code,resp
 }
 
 func main() {
-	App := godog.NewApplication("test")
+	AppName := "test"
+	App := godog.NewApplication(AppName)
 	
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
@@ -71,7 +73,7 @@ func main() {
 // you can use command to test service that it is in another file <serviceTest.txt>.
 ```
 `tcpClient` show how to call tcpserver
->* You can find it in "godog/test/tcpClient_test.go"
+>* You can find it in "godog/test/tcpClientTest.go"
 
 ```
 import (
@@ -97,7 +99,7 @@ func main() {
 ```
 
 `config module` provides the related configuration of the project.
->* You can find it in "godog/test/config_test.go"
+>* You can find it in "godog/test/configTest.go"
 
 ```
 import (

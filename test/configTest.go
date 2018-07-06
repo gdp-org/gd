@@ -9,12 +9,11 @@ import (
 	"github.com/xuyu/logging" // import logging module
 	"godog/config"
 	_ "godog/log" // init log
-	"testing"
 )
 
 var AppConfig *config.DogAppConfig
 
-func TestConfig(t *testing.T) {
+func main() {
 	AppConfig = config.AppConfig
 
 	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.

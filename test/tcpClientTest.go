@@ -8,15 +8,14 @@ package main
 import (
 	"github.com/xuyu/logging"
 	"godog/net/tcplib"
-	"testing"
 )
 
-func TestClient(t *testing.T) {
+func main() {
 	c := tcplib.NewClient(500, 0)
 	// remember alter addr
-	c.AddAddr("192.168.1.107:10241")
+	c.AddAddr("127.0.0.1:10241")
 
-	body := []byte("test success")
+	body := []byte("How are you?")
 
 	rsp, err := c.Invoke(1024, body)
 	if err != nil {
