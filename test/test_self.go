@@ -10,7 +10,6 @@ import (
 	"godog"
 	me "godog/error"
 	"godog/net/httplib"
-	"godog/net/tcplib"
 	"net/http"
 )
 
@@ -58,10 +57,11 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 	resp = "test success!!!"
 }
 
-func HandlerTcpTestSelf(req tcplib.Packet) (rsp tcplib.Packet) {
-	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
-	return
+func HandlerTcpTestSelf(req []byte) (uint16, []byte) {
+	logging.Debug("tcp server request: %s", string(req))
+	code := uint16(0)
+	resp := []byte("Are you ok")
+	return code, resp
 }
 
 func register() {

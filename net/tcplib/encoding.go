@@ -8,7 +8,9 @@ package tcplib
 import (
 	"bufio"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
+	"hash/crc32"
 	"io"
 	"sync/atomic"
 )
@@ -43,25 +45,26 @@ func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder,
  */
 
 const (
-	HeaderLen = 13
-	SohLen    = 1
-	EohLen    = 2
+	HeaderLen = 20
+	Version   = 1
+	Padding   = 0
 )
 
 type TcpPacket struct {
-	SOH uint8
 	Header
 	Body []byte
-	EOH  uint8
 }
 
 type Header struct {
-	Seq       uint32
-	ErrCode   uint16
-	Cmd       uint32
 	PacketLen uint32
+	Seq       uint32
+	Cmd       uint32
+	CheckSum  uint32
+	ErrCode   uint16
 	Version   uint8
-	CheckSum  uint16
+	Padding   uint8
+	SOH       uint8
+	EOH       uint8
 }
 
 var (
@@ -95,18 +98,26 @@ func NewTcpPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
 }
 
 func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *TcpPacket {
-	return &TcpPacket{
-		SOH: SOH,
+	packet := &TcpPacket{
 		Header: Header{
-			Version:   0,
+			PacketLen: uint32(len(body)) + HeaderLen,
+			Seq:       seq,
 			Cmd:       cmd,
 			CheckSum:  0,
-			Seq:       seq,
 			ErrCode:   ret,
-			PacketLen: uint32(len(body)) + HeaderLen + 2},
+			Version:   Version,
+			Padding:   Padding,
+			SOH:       SOH,
+			EOH:       EOH,
+		},
 		Body: body,
-		EOH:  EOH,
 	}
+
+	packetByte, _ := json.Marshal(packet)
+	checkSum := crc32.ChecksumIEEE(packetByte)
+	packet.CheckSum = checkSum
+
+	return packet
 }
 
 type TcpPacketEncoder struct {
@@ -119,22 +130,56 @@ type TcpPacketDecoder struct {
 
 func (e *TcpPacketEncoder) Encode(p Packet) error {
 	if packet, ok := p.(*TcpPacket); ok {
-		if err := binary.Write(e.bw, binary.BigEndian, packet.SOH); err != nil {
-			return err
-		}
 		if err := binary.Write(e.bw, binary.BigEndian, packet.Header); err != nil {
 			return err
 		}
 		if err := binary.Write(e.bw, binary.BigEndian, packet.Body); err != nil {
 			return err
 		}
-		if err := binary.Write(e.bw, binary.BigEndian, packet.EOH); err != nil {
-			return err
-		}
 
 		return nil
 	}
-	return errors.New("SelfPacketEncoder Encode occur error")
+	return errors.New("TcpPacketEncoder Encode occur error")
+}
+
+func (d *TcpPacketDecoder) Decode() (Packet, error) {
+	packet := &TcpPacket{}
+
+	if err := binary.Read(d.br, binary.BigEndian, &packet.Header); err != nil {
+		return nil, err
+	}
+
+	if packet.Header.PacketLen < HeaderLen {
+		return nil, errors.New("invalid packet")
+	}
+
+	if packet.Header.SOH != SOH {
+		return nil, errors.New("invalid SOH")
+	}
+
+	if packet.Header.EOH != EOH {
+		return nil, errors.New("invalid EOH")
+	}
+
+	bodyLen := packet.Header.PacketLen - HeaderLen
+	packet.Body = make([]byte, bodyLen)
+
+	if err := binary.Read(d.br, binary.BigEndian, packet.Body); err != nil {
+		return nil, err
+	}
+
+	checkSum1 := packet.Header.CheckSum
+	packet.Header.CheckSum = 0
+	packetByte, _ := json.Marshal(packet)
+	checkSum2 := crc32.ChecksumIEEE(packetByte)
+
+	if checkSum1 != checkSum2 {
+		return nil, errors.New("invalid CheckSum")
+	}
+
+	packet.Header.CheckSum = checkSum1
+
+	return packet, nil
 }
 
 func (e *TcpPacketEncoder) Flush() error {
@@ -144,29 +189,4 @@ func (e *TcpPacketEncoder) Flush() error {
 		}
 	}
 	return nil
-}
-
-// of course, Decode Function need you to judge packet SOH, EOH and packet length.
-func (d *TcpPacketDecoder) Decode() (Packet, error) {
-	packet := &TcpPacket{}
-
-	if err := binary.Read(d.br, binary.BigEndian, &packet.SOH); err != nil {
-		return nil, err
-	}
-
-	if err := binary.Read(d.br, binary.BigEndian, &packet.Header); err != nil {
-		return nil, err
-	}
-
-	bodyLen := packet.PacketLen - HeaderLen - SohLen - EohLen
-	packet.Body = make([]byte, bodyLen)
-	if err := binary.Read(d.br, binary.BigEndian, packet.Body); err != nil {
-		return nil, err
-	}
-
-	if err := binary.Read(d.br, binary.BigEndian, &packet.EOH); err != nil {
-		return nil, err
-	}
-
-	return packet, nil
 }

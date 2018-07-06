@@ -8,7 +8,6 @@ package main
 import (
 	"github.com/xuyu/logging"
 	"godog"
-	"godog/net/tcplib"
 	"net/http"
 )
 
@@ -19,14 +18,16 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("test success!!!"))
 }
 
-func HandlerTcpTest(req tcplib.Packet) (rsp tcplib.Packet) {
-	cReq := req.(*tcplib.TcpPacket)
-	rsp = tcplib.NewTcpPacketWithSeq(cReq.Cmd, []byte("1024 hello."), cReq.Seq)
-	return
+func HandlerTcpTest(req []byte) (uint16, []byte) {
+	logging.Debug("tcp server request: %s", string(req))
+	code := uint16(0)
+	resp := []byte("Are you ok?")
+	return code, resp
 }
 
 func main() {
-	App = godog.NewApplication("test")
+	AppName := "test"
+	App = godog.NewApplication(AppName)
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
 
