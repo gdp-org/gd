@@ -30,12 +30,12 @@ func Signal() {
 		for {
 			select {
 			case <-Shutdown:
-				logging.Info("[Application.signal] receive signal SIGINT or SIGTERM, to stop server...")
+				logging.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
 				tcplib.AppTcpServer.Stop()
 				Running <- false
 			case <-Hup:
 			}
 		}
 	}()
-	logging.Info("[Application.signal] register signal ok")
+	logging.Info("[Signal] register signal ok")
 }

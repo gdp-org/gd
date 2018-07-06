@@ -55,7 +55,7 @@ func (s *TcpServer) Run() error {
 
 	localIp := utils.GetLocalIP()
 	addr := fmt.Sprintf("%s:%d", localIp, port)
-	logging.Info("[tcpServer] Try to listen: %s", addr)
+	logging.Info("[Run] Tcp try to listen ip:%s, port: %d", localIp, port)
 
 	s.Addr = addr
 	s.ss.Addr = addr
@@ -75,12 +75,12 @@ func (s *TcpServer) Stop() {
 
 func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {
 	if _, ok := s.m[headCmd]; ok {
-		logging.Warning("[RegisterHandler] head cmd [%d] already registered.", headCmd)
+		logging.Warning("[AddTcpHandler] head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.m[headCmd] = f
-	logging.Info("[RegisterHandler] register head cmd [%d] success.", headCmd)
+	logging.Info("[AddTcpHandler] register head cmd [%d] success.", headCmd)
 }
 
 func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {

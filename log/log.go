@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	initLogger(config.AppConfig.BaseConfig.Log.File, config.AppConfig.BaseConfig.Log.Level, config.AppConfig.BaseConfig.Log.Name, config.AppConfig.BaseConfig.Log.Suffix, config.AppConfig.BaseConfig.Prog.Daemon)
+	initLogger(config.AppConfig.BaseConfig.Log.File, config.AppConfig.BaseConfig.Log.Level, config.AppConfig.BaseConfig.Log.Name, config.AppConfig.BaseConfig.Log.Suffix, config.AppConfig.BaseConfig.Log.Daemon)
 }
 
 func initLogger(logFile, logLevel, name, suffix string, daemon bool) error {

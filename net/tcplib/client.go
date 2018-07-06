@@ -40,7 +40,7 @@ func (c *Client) Start() {
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		logging.Warning("gorpc.Client: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		logging.Warning("[Start]: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -91,7 +91,7 @@ func (c *Client) Stop() {
 	defer c.stopLock.Unlock()
 	c.stopLock.Lock()
 	if c.clientStopChan == nil {
-		logging.Error("[godog.Client]: the client must be started before stopping it")
+		logging.Error("[Stop]: the client must be started before stopping it")
 	}
 	close(c.clientStopChan)
 	c.stopWg.Wait()
@@ -115,7 +115,7 @@ func clientHandler(c *Client) {
 		go func() {
 			if conn, err = c.Dial(c.Addr); err != nil {
 				if stopping.Load() == nil {
-					logging.Error("[godog.Client]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
+					logging.Error("[clientHandler]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
 				}
 			}
 			close(dialChan)
@@ -188,7 +188,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		logging.Error(c.Addr + ", " + err.Error())
+		logging.Error("[clientHandleConnection] occur error: ",c.Addr + ", " + err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -480,7 +480,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		logging.Error("BUG: Active timer trapped into acquireTimer()")
+		logging.Error("[acquireTimer] BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }

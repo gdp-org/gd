@@ -86,7 +86,7 @@ func main() {
 	// remember alter addr 
 	c.AddAddr("127.0.0.1:10241")
 
-	body := []byte("test success")
+	body := []byte("How are you?")
 
 	//cmd:1024
 	rsp, err := c.Invoke(1024, body)

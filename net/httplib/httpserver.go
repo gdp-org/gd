@@ -56,17 +56,16 @@ func (h *HttpServer) JudgeInitHandler() bool {
 func (h *HttpServer) AddHandlerFunc(addr string, handler HandlerFunc) {
 	_, ok := h.handlerMap[addr]
 	if ok {
-		logging.Warning("[App.AddHandlerFunc] Try to replace handler to addr = %s", addr)
+		logging.Warning("[AddHandlerFunc] Try to replace handler to addr = %s", addr)
 	}
 
 	h.handlerMap[addr] = handler
-	logging.Info("[App.AddHandlerFunc] Add/Replace [addr: %s] ok", addr)
+	logging.Info("[AddHandlerFunc] Add/Replace [addr: %s] ok", addr)
 }
 
 func (h *HttpServer) Register() {
 	for k, v := range h.handlerMap {
 		HandleFunc(k, v)
-		logging.Info("[App.register] register handler[addr: %s]", k)
 	}
 }
 
@@ -78,7 +77,7 @@ func (h *HttpServer) Run() error {
 
 	// http service
 	if config.AppConfig.BaseConfig.Server.HttpPort == 0 {
-		logging.Debug("No http Serve port for application ")
+		logging.Debug("[Run] No http Serve port for application ")
 		return NoHttpPort
 	} else {
 		Serve(config.AppConfig.BaseConfig.Server.HttpPort, h.handler)

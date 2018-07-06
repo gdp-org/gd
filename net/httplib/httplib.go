@@ -66,7 +66,7 @@ type Handler interface {
 func Serve(httpPort int, handler http.Handler) {
 	localIp := utils.GetLocalIP()
 	srvPort := fmt.Sprintf("%s:%d", localIp, httpPort)
-	logging.Info("[Serve] Try to listen on port: %s", srvPort)
+	logging.Info("[Serve] Http try to listen ip:%s, port: %d",localIp, httpPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
@@ -102,7 +102,7 @@ func newRequest(method, url string, body string) (*Request, error) {
 
 	request, err := http.NewRequest(req.Method, req.URL, strings.NewReader(req.Body))
 	if err != nil {
-		logging.Error("[NewRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
+		logging.Error("[newRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
 		return nil, err
 	}
 
@@ -116,14 +116,14 @@ func (req *Request) addHeader(key string, value string) {
 }
 
 func (req *Request) doRequest() (*Response, error) {
-	logging.Debug("[Request.DoRequest, id: %s] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
+	logging.Debug("[doRequest, id: %s] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
 
 	client := &http.Client{}
 	client.Timeout = time.Duration(10 * time.Second)
 
 	response, err := client.Do(req.Req)
 	if err != nil {
-		logging.Error("[Request.DoRequest] Failed to talk with remote server, error = %s ", err.Error())
+		logging.Error("[doRequest] Failed to talk with remote server, error = %s ", err.Error())
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (req *Request) doRequest() (*Response, error) {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		logging.Error("[Request.DoRequest] Read Response Body, error = %s", err.Error())
+		logging.Error("[doRequest] Read Response Body, error = %s", err.Error())
 		return nil, err
 	}
 
@@ -234,8 +234,8 @@ func getResponseInfo(err *me.MError, data interface{}) []byte {
 
 	ret, ee := json.Marshal(response)
 	if ee != nil {
-		logging.Error("[GetResponseInfo] Failed, %s, data = %v", err.ToString(), data)
-		panic("[GetResponseInfo] Failed, " + ee.Error())
+		logging.Error("[getResponseInfo] Failed, %s, data = %v", err.ToString(), data)
+		panic("[getResponseInfo] Failed, " + ee.Error())
 	}
 
 	return ret
@@ -259,7 +259,7 @@ func LogGetResponseInfo(req *http.Request, err *me.MError, data interface{}) []b
 		Body: body,
 	}
 
-	logging.Debug("HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
+	logging.Debug("[LogGetResponseInfo] HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
 
 	return ret
 }
