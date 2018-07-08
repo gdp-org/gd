@@ -45,7 +45,7 @@ func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder,
  */
 
 const (
-	HeaderLen = 20
+	HeaderLen = 24
 	Version   = 1
 	Padding   = 0
 )
@@ -60,7 +60,7 @@ type Header struct {
 	Seq       uint32
 	Cmd       uint32
 	CheckSum  uint32
-	ErrCode   uint16
+	ErrCode   uint32
 	Version   uint8
 	Padding   uint8
 	SOH       uint8
@@ -85,7 +85,7 @@ func (p *TcpPacket) ID() uint32 {
 }
 
 func (p *TcpPacket) SetErrCode(code uint32) {
-	p.ErrCode = uint16(code)
+	p.ErrCode = code
 }
 
 func NewTcpPacket(cmd uint32, body []byte) *TcpPacket {
@@ -97,7 +97,7 @@ func NewTcpPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
 	return NewTcpPacketWithRet(cmd, body, seq, 0)
 }
 
-func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint16) *TcpPacket {
+func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint32) *TcpPacket {
 	packet := &TcpPacket{
 		Header: Header{
 			PacketLen: uint32(len(body)) + HeaderLen,

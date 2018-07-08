@@ -88,7 +88,7 @@ func (err *CodeError) SetMsg(msg string) *CodeError {
 	return err
 }
 
-func SetCodeType(code int,errType string) *CodeError {
+func SetCodeType(code int, errType string) *CodeError {
 	err := &CodeError{
 		errCode: code,
 		errType: errType,

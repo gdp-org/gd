@@ -207,7 +207,7 @@ func Call(method, url string, body string, headers, params map[string][]string) 
 	return resp.Body, nil
 }
 
-func SendToServer(method,url string, headers, params map[string][]string, req, resp interface{})error{
+func SendToServer(method, url string, headers, params map[string][]string, req, resp interface{}) error {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return err
@@ -227,11 +227,11 @@ func SendToServer(method,url string, headers, params map[string][]string, req, r
 		headers["Content-Type"] = []string{"application/json"}
 	}
 
-	logging.Debug("[SendToServer] send to server req:%#v",req)
+	logging.Debug("[SendToServer] send to server req:%#v", req)
 
 	response, err := Call(method, url, string(body), headers, params)
 	if err != nil {
-		logging.Error("[SendToServer] occur error:%s",err.Error())
+		logging.Error("[SendToServer] occur error:%s", err.Error())
 		return err
 	}
 

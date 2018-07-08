@@ -90,10 +90,10 @@ func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 	f, ok := s.m[headCmd]
 	if !ok {
 		logging.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
-		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint16(InvalidParam.Code()))
+		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
 	code, body := f(req.(*TcpPacket).Body)
 
-	return NewTcpPacketWithRet(packet.Cmd, body, packet.Seq, code)
+	return NewTcpPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
 }
