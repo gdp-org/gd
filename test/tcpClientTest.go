@@ -13,7 +13,7 @@ import (
 func main() {
 	c := tcplib.NewClient(500, 0)
 	// remember alter addr
-	c.AddAddr("127.0.0.1:10241")
+	c.AddAddr("192.168.1.108:10241")
 
 	body := []byte("How are you?")
 

@@ -249,8 +249,6 @@ func serverRequest(s *Server, responsesChan chan<- *serverMessage, stopChan <-ch
 	select {
 	case responsesChan <- m:
 	default:
-		// Select hack for better performance.
-		// See https://github.com/valyala/gorpc/pull/1 for details.
 		select {
 		case responsesChan <- m:
 		case <-stopChan:
