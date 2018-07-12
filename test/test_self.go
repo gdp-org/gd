@@ -68,7 +68,7 @@ func register() {
 	// http
 	Apps.AppHttp.AddHandlerFunc("/test/self", HandlerTestSelf)
 	// Tcp
-	App.AppTcpServer.AddTcpHandler(1024, HandlerTcpTestSelf)
+	Apps.AppTcpServer.AddTcpHandler(1024, HandlerTcpTestSelf)
 }
 
 func main() {
