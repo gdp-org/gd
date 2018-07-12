@@ -32,7 +32,7 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var merr *me.MError
+	var merr *me.CodeError
 	req := &test{}
 	resp := ""
 
@@ -48,7 +48,7 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 	// get request data
 	err := httplib.GetRequestBody(r, &req)
 	if err != nil {
-		merr = me.MakeHttpError(me.ERR_CODE_PARA_ERROR, err)
+		merr = me.MakeCodeError(me.ParameterError, err)
 		return
 	}
 	logging.Info("test recv request: %#v", req)

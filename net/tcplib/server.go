@@ -8,6 +8,7 @@ package tcplib
 import (
 	"fmt"
 	"github.com/xuyu/logging"
+	dogError "godog/error"
 	"io"
 	"net"
 	"runtime"
@@ -33,7 +34,7 @@ type Server struct {
 	Decoder          MessageDecoderFunc
 }
 
-func (s *Server) Start() *CodeError {
+func (s *Server) Start() *dogError.CodeError {
 	if s.Handler == nil {
 		panic("Server.Handler cannot be nil")
 	}
@@ -67,7 +68,7 @@ func (s *Server) Start() *CodeError {
 
 	var err error
 	if s.Listener, err = net.Listen("tcp", s.Addr); err != nil {
-		ce := InternalServerError.Msg(fmt.Sprintf("[%s]. Cannot listen to: [%s]", s.Addr, err))
+		ce := InternalServerError.SetMsg(fmt.Sprintf("[%s]. Cannot listen to: [%s]", s.Addr, err))
 		return ce
 	}
 
@@ -77,7 +78,7 @@ func (s *Server) Start() *CodeError {
 	return nil
 }
 
-func (s *Server) Serve() *CodeError {
+func (s *Server) Serve() *dogError.CodeError {
 	if err := s.Start(); err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 		go func() {
 			if conn, clientAddr, err = accept(s.Listener); err != nil {
 				if stopping.Load() == nil {
-					logging.Error("[%s] cannot accept new connection: [%s]", s.Addr, err)
+					logging.Error("[serverHandler] [%s] cannot accept new connection: [%s]", s.Addr, err)
 				}
 			} else {
 				if err = setupKeepalive(conn); err != nil {
@@ -124,7 +125,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			<-acceptChan
 			return
 		case <-acceptChan:
-			logging.Info("[%s] connected.", clientAddr)
+			logging.Info("[serverHandler] [%s] connected.", clientAddr)
 		}
 
 		if err != nil {
@@ -192,13 +193,13 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 		<-writerDone
 	}
 	responsesChan = nil
-	logging.Info("[%s] disconnected.", clientAddr)
+	logging.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
 }
 
 func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			logging.Error("[%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
+			logging.Error("[serverReader] [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
 		}
 		close(done)
 	}()
@@ -214,7 +215,7 @@ func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan cha
 	for {
 		if req, err = dec.Decode(); err != nil {
 			if !isClientDisconnect(err) && !isServerStop(stopChan) {
-				logging.Error("[%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
+				logging.Error("[serverReader] [%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
 			}
 			return
 		}
@@ -248,8 +249,6 @@ func serverRequest(s *Server, responsesChan chan<- *serverMessage, stopChan <-ch
 	select {
 	case responsesChan <- m:
 	default:
-		// Select hack for better performance.
-		// See https://github.com/valyala/gorpc/pull/1 for details.
 		select {
 		case responsesChan <- m:
 		case <-stopChan:
@@ -265,7 +264,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 			stackTrace := make([]byte, 1<<20)
 			n := runtime.Stack(stackTrace, false)
 			errStr := fmt.Sprintf("Panic occured: %v\n Stack trace: %s", x, stackTrace[:n])
-			logging.Error("[%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
+			logging.Error("[callHandlerWithRecover] [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
 		}
 	}()
 	rsp = handler(req)
@@ -280,7 +279,7 @@ func serverWriter(s *Server, conn net.Conn, clientAddr string, responsesChan <-c
 	var err error
 	var enc MessageEncoder
 	if enc, err = s.Encoder(conn, s.SendBufferSize); err != nil {
-		err = fmt.Errorf("Init encoder error:%s", err.Error())
+		err = fmt.Errorf("init encoder error:%s", err.Error())
 		return
 	}
 	var flushChan <-chan time.Time
@@ -317,7 +316,7 @@ func serverWriter(s *Server, conn net.Conn, clientAddr string, responsesChan <-c
 		serverMessagePool.Put(m)
 
 		if err := enc.Encode(rsp); err != nil {
-			logging.Error("[%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
+			logging.Error("[serverWriter] [%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
 			return
 		}
 	}

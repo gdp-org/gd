@@ -24,7 +24,8 @@ Godog is a basic framework with golang, which can help developers develop server
 
 It contains `config module`,`error module`,`logging module`,`net module` and `service module`. You can use any of the modules according to your needs. More modules will be added later. I hope you can join in and we make it more richer and useful that it can be used by more projects.
 
->* [logging](https://github.com/xuyu/logging)  module is third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.  
+>* [logging](https://github.com/xuyu/logging)  module is third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.
+>* I modified the `log module`, adding the printing of file name and row number.   
 
 ## Usage
 
@@ -86,7 +87,7 @@ func main() {
 	// remember alter addr 
 	c.AddAddr("127.0.0.1:10241")
 
-	body := []byte("test success")
+	body := []byte("How are you?")
 
 	//cmd:1024
 	rsp, err := c.Invoke(1024, body)
@@ -149,7 +150,7 @@ func main(){
 }
 ```
 
-`error module` provides the relation usages of error which you find in getResponseInfo function of “net/http/httplib.go”
+`error module` provides the relation usages of error that you can find it in godog.
 
 ## License
 

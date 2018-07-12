@@ -20,11 +20,11 @@ import (
 )
 
 var (
-	HTTP_METHOD_GET    = "GET"
-	HTTP_METHOD_PUT    = "PUT"
-	HTTP_METHOD_POST   = "POST"
-	HTTP_METHOD_PATCH  = "PATCH"
-	HTTP_METHOD_DELETE = "DELETE"
+	HttpGet    = "GET"
+	HttpPut    = "PUT"
+	HttpPost   = "POST"
+	HttpPatch  = "PATCH"
+	HttpDelete = "DELETE"
 
 	CONTENT_NONE = ""
 	CONTENT_JSON = "application/json"
@@ -66,7 +66,7 @@ type Handler interface {
 func Serve(httpPort int, handler http.Handler) {
 	localIp := utils.GetLocalIP()
 	srvPort := fmt.Sprintf("%s:%d", localIp, httpPort)
-	logging.Info("[Serve] Try to listen on port: %s", srvPort)
+	logging.Info("[Serve] Http try to listen ip:%s, port: %d", localIp, httpPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
@@ -93,6 +93,7 @@ func HandleFunc(addr string, handler HandlerFunc) {
 	http.HandleFunc(addr, handler)
 }
 
+// Http client operation
 func newRequest(method, url string, body string) (*Request, error) {
 	req := &Request{
 		Method: method,
@@ -102,7 +103,7 @@ func newRequest(method, url string, body string) (*Request, error) {
 
 	request, err := http.NewRequest(req.Method, req.URL, strings.NewReader(req.Body))
 	if err != nil {
-		logging.Error("[NewRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
+		logging.Error("[newRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
 		return nil, err
 	}
 
@@ -116,14 +117,14 @@ func (req *Request) addHeader(key string, value string) {
 }
 
 func (req *Request) doRequest() (*Response, error) {
-	logging.Debug("[Request.DoRequest, id: %s] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
+	logging.Debug("[doRequest, id: %s] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
 
 	client := &http.Client{}
 	client.Timeout = time.Duration(10 * time.Second)
 
 	response, err := client.Do(req.Req)
 	if err != nil {
-		logging.Error("[Request.DoRequest] Failed to talk with remote server, error = %s ", err.Error())
+		logging.Error("[doRequest] Failed to talk with remote server, error = %s ", err.Error())
 		return nil, err
 	}
 
@@ -131,7 +132,7 @@ func (req *Request) doRequest() (*Response, error) {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		logging.Error("[Request.DoRequest] Read Response Body, error = %s", err.Error())
+		logging.Error("[doRequest] Read Response Body, error = %s", err.Error())
 		return nil, err
 	}
 
@@ -206,6 +207,42 @@ func Call(method, url string, body string, headers, params map[string][]string) 
 	return resp.Body, nil
 }
 
+func SendToServer(method, url string, headers, params map[string][]string, req, resp interface{}) error {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	contentType := false
+	if headers == nil {
+		headers = map[string][]string{}
+	}
+	for k := range headers {
+		k = strings.ToLower(k)
+		if k == "content-type" {
+			contentType = true
+		}
+	}
+	if !contentType {
+		headers["Content-Type"] = []string{"application/json"}
+	}
+
+	logging.Debug("[SendToServer] send to server req:%#v", req)
+
+	response, err := Call(method, url, string(body), headers, params)
+	if err != nil {
+		logging.Error("[SendToServer] occur error:%s", err.Error())
+		return err
+	}
+
+	if err = json.Unmarshal([]byte(response), resp); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Http server operation
 type ResponseData struct {
 	Result int         `json:"code"`
 	Msg    string      `json:"msg"`
@@ -221,10 +258,10 @@ type LogRequestInfo struct {
 	Body         interface{}
 }
 
-func getResponseInfo(err *me.MError, data interface{}) []byte {
+func getResponseInfo(err *me.CodeError, data interface{}) []byte {
 	response := &ResponseData{}
 	if err == nil {
-		response.Result = me.ERR_CODE_SUCCESS
+		response.Result = me.Success
 		response.Msg = "ok"
 	} else {
 		response.Result = err.Code()
@@ -234,14 +271,14 @@ func getResponseInfo(err *me.MError, data interface{}) []byte {
 
 	ret, ee := json.Marshal(response)
 	if ee != nil {
-		logging.Error("[GetResponseInfo] Failed, %s, data = %v", err.ToString(), data)
-		panic("[GetResponseInfo] Failed, " + ee.Error())
+		logging.Error("[getResponseInfo] Failed, %s, data = %v", err.ToString(), data)
+		panic("[getResponseInfo] Failed, " + ee.Error())
 	}
 
 	return ret
 }
 
-func LogGetResponseInfo(req *http.Request, err *me.MError, data interface{}) []byte {
+func LogGetResponseInfo(req *http.Request, err *me.CodeError, data interface{}) []byte {
 	ret := getResponseInfo(err, data)
 
 	body := ""
@@ -259,7 +296,7 @@ func LogGetResponseInfo(req *http.Request, err *me.MError, data interface{}) []b
 		Body: body,
 	}
 
-	logging.Debug("HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
+	logging.Debug("[LogGetResponseInfo] HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
 
 	return ret
 }

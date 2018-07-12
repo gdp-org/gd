@@ -3,6 +3,9 @@ package logging
 import (
 	"fmt"
 	"io"
+	"path"
+	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -46,6 +49,15 @@ func (l *Logger) Log(level logLevel, format string, values ...interface{}) {
 		Message:    fmt.Sprintf(format, values...),
 		LoggerName: l.Name,
 	}
+
+	_, file, line, ok := runtime.Caller(2)
+	if !ok {
+		file = "???"
+		line = 0
+	}
+	_, filename := path.Split(file)
+	rd.Message = "[" + filename + ":" + strconv.Itoa(line) + "] " + rd.Message
+
 	for name, h := range l.Handlers {
 		h.Emit(name, rd)
 	}

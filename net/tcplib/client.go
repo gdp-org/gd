@@ -8,6 +8,7 @@ package tcplib
 import (
 	"fmt"
 	"github.com/xuyu/logging"
+	dogError "godog/error"
 	"io"
 	"runtime"
 	"sync"
@@ -40,7 +41,7 @@ func (c *Client) Start() {
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		logging.Warning("gorpc.Client: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		logging.Warning("[Start]: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -91,7 +92,7 @@ func (c *Client) Stop() {
 	defer c.stopLock.Unlock()
 	c.stopLock.Lock()
 	if c.clientStopChan == nil {
-		logging.Error("[godog.Client]: the client must be started before stopping it")
+		logging.Error("[Stop]: the client must be started before stopping it")
 	}
 	close(c.clientStopChan)
 	c.stopWg.Wait()
@@ -115,7 +116,7 @@ func clientHandler(c *Client) {
 		go func() {
 			if conn, err = c.Dial(c.Addr); err != nil {
 				if stopping.Load() == nil {
-					logging.Error("[godog.Client]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
+					logging.Error("[clientHandler]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
 				}
 			}
 			close(dialChan)
@@ -188,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		logging.Error(c.Addr + ", " + err.Error())
+		logging.Error("[clientHandleConnection] occur error: ", c.Addr+", "+err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -326,23 +327,23 @@ func clientReader(c *Client, conn io.Reader, pendingRequests map[uint32]*AsyncRe
 	}
 }
 
-func (c *Client) Call(req Packet) (rsp Packet, err *CodeError) {
+func (c *Client) Call(req Packet) (rsp Packet, err *dogError.CodeError) {
 	return c.CallTimeout(req, c.RequestTimeout, 0)
 }
 
-func (c *Client) CallRetry(req Packet, retryNum uint32) (rsp Packet, err *CodeError) {
+func (c *Client) CallRetry(req Packet, retryNum uint32) (rsp Packet, err *dogError.CodeError) {
 	return c.CallTimeout(req, c.RequestTimeout, retryNum)
 }
 
 // udp: skip response
-func (c *Client) SendUDP(req Packet) (err *CodeError) {
+func (c *Client) SendUDP(req Packet) (err *dogError.CodeError) {
 	if _, err = c.CallAsync(req, true); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Client) CallTimeout(req Packet, timeout time.Duration, retryNum uint32) (rsp Packet, err *CodeError) {
+func (c *Client) CallTimeout(req Packet, timeout time.Duration, retryNum uint32) (rsp Packet, err *dogError.CodeError) {
 	var tryNum uint32
 retry:
 	var m *AsyncResult
@@ -355,18 +356,18 @@ retry:
 		if m.Error == nil {
 			rsp, err = m.Response, nil
 		} else {
-			rsp, err = m.Response, InternalServerError.Msg(m.Error.Error())
+			rsp, err = m.Response, InternalServerError.SetMsg(m.Error.Error())
 		}
 		releaseAsyncResult(m)
 	case <-t.C:
 		m.Cancel()
-		err = TimeOutError.Msg(fmt.Sprintf("[%s]. Cannot obtain response during timeout=%s", c.Addr, timeout))
+		err = TimeOutError.SetMsg(fmt.Sprintf("[%s]. Cannot obtain response during timeout=%s", c.Addr, timeout))
 	}
 	releaseTimer(t)
 
 	if err != nil && err.Code() == TimeOutError.Code() {
 		tryNum++
-		if tryNum < retryNum {
+		if tryNum <= retryNum {
 			goto retry
 		}
 	}
@@ -374,11 +375,11 @@ retry:
 	return
 }
 
-func (c *Client) CallAsync(req Packet, skipResponse bool) (*AsyncResult, *CodeError) {
+func (c *Client) CallAsync(req Packet, skipResponse bool) (*AsyncResult, *dogError.CodeError) {
 	return c.callAsync(req, skipResponse, false)
 }
 
-func (c *Client) callAsync(req Packet, skipResponse bool, usePool bool) (m *AsyncResult, err *CodeError) {
+func (c *Client) callAsync(req Packet, skipResponse bool, usePool bool) (m *AsyncResult, err *dogError.CodeError) {
 	if skipResponse {
 		usePool = true
 	}
@@ -480,7 +481,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		logging.Error("BUG: Active timer trapped into acquireTimer()")
+		logging.Error("[acquireTimer] BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }

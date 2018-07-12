@@ -26,12 +26,12 @@ type BaseConfigure struct {
 		File   string
 		Level  string
 		Name   string
+		Daemon bool
 		Suffix string
 	}
 
 	Prog struct {
 		CPU        int
-		Daemon     bool
 		HealthPort int
 	}
 
@@ -54,7 +54,7 @@ func (a *DogAppConfig) initNewConfigure() {
 	total := map[string]interface{}{}
 	err := a.getConfig(a.BaseConfig, &total)
 	if err != nil {
-		logging.Error("[config.Go] Cannot parse config file, error = %s", err.Error())
+		logging.Error("[initNewConfigure] Cannot parse config file, error = %s", err.Error())
 		panic(err)
 	}
 
@@ -74,7 +74,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 	}
 
 	if err := utils.ParseJSON(*configFile, appCfg); err != nil {
-		logging.Error("[initNewConfigure] Parse config %s. error: %s\n", *configFile, err.Error())
+		logging.Error("[getConfig] Parse config %s. error: %s\n", *configFile, err.Error())
 		return err
 	}
 
@@ -86,11 +86,11 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 
 func (a *DogAppConfig) Set(key string, value string) {
 	if v, ok := a.data[key]; ok {
-		logging.Warning("[dogAppConfig.Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
+		logging.Warning("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
 	}
 
 	a.data[key] = value
-	logging.Info("[dogAppConfig.Set] Add/Replace [key: %s, value: %#+v] into config ok", key, value)
+	logging.Info("[Set] Add/Replace [key: %s, value: %#+v] into config ok", key, value)
 }
 
 func (a *DogAppConfig) Get(key string) string {
@@ -98,6 +98,6 @@ func (a *DogAppConfig) Get(key string) string {
 		return v
 	}
 
-	logging.Error("[dogAppConfig.Get] Failed to get value of key[%s], value is NULL", key)
+	logging.Error("[Get] Failed to get value of key[%s], value is NULL", key)
 	return ""
 }
