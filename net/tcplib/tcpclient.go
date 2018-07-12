@@ -67,6 +67,7 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *dogError.Co
 	addr := &net.TCPAddr{}
 
 	if len(c.addrs) > 0 {
+		rand.Seed(time.Now().UnixNano())
 		idx := rand.Intn(len(c.addrs))
 		addr = c.addrs[idx]
 	} else {
