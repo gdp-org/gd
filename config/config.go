@@ -7,6 +7,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"github.com/xuyu/logging"
 	"godog/utils"
@@ -18,7 +19,7 @@ var (
 
 type DogAppConfig struct {
 	BaseConfig *BaseConfigure
-	data       map[string]string
+	data       map[string]interface{}
 }
 
 type BaseConfigure struct {
@@ -44,7 +45,7 @@ type BaseConfigure struct {
 func init() {
 	AppConfig = &DogAppConfig{
 		BaseConfig: new(BaseConfigure),
-		data:       make(map[string]string),
+		data:       make(map[string]interface{}),
 	}
 
 	AppConfig.initNewConfigure()
@@ -60,6 +61,12 @@ func (a *DogAppConfig) initNewConfigure() {
 
 	for k, v := range total {
 		if s, ok := v.(string); ok {
+			a.Set(k, s)
+		}
+		if s, ok := v.(float64); ok {
+			a.Set(k, s)
+		}
+		if s, ok := v.(bool); ok {
 			a.Set(k, s)
 		}
 	}
@@ -84,20 +91,49 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 	return nil
 }
 
-func (a *DogAppConfig) Set(key string, value string) {
+func (a *DogAppConfig) Set(key string, value interface{}) {
 	if v, ok := a.data[key]; ok {
 		logging.Warning("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
 	}
 
 	a.data[key] = value
-	logging.Info("[Set] Add/Replace [key: %s, value: %#+v] into config ok", key, value)
 }
 
-func (a *DogAppConfig) Get(key string) string {
+func (a *DogAppConfig) String(key string) (string,error) {
 	if v, ok := a.data[key]; ok {
-		return v
+		switch v.(type) {
+		case string:
+			return v.(string),nil
+		default:
+			return "",errors.New("value type isn't string")
+		}
 	}
 
-	logging.Error("[Get] Failed to get value of key[%s], value is NULL", key)
-	return ""
+	return "",errors.New("failed to get value of key. No key")
+}
+
+func (a *DogAppConfig) Int(key string) (int,error) {
+	if v, ok := a.data[key]; ok {
+		switch v.(type) {
+		case float64:
+			return int(v.(float64)),nil
+		default:
+			return 0,errors.New("value type isn't int")
+		}
+	}
+
+	return 0,errors.New("failed to get value of key. No key")
+}
+
+func (a *DogAppConfig) Bool(key string) (bool,error) {
+	if v, ok := a.data[key]; ok {
+		switch v.(type) {
+		case bool:
+			return v.(bool),nil
+		default:
+			return false,errors.New("value type isn't int")
+		}
+	}
+
+	return false,errors.New("failed to get value of key. No key")
 }
