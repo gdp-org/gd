@@ -20,9 +20,9 @@ Start with cloning godog:
 
 ## Introduction
 
-Godog is a basic framework with golang, which can help developers develop server quickly. It provides rich modules to help you.
+Godog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-It contains `config module`,`error module`,`logging module`,`net module` and `service module`. You can use any of the modules according to your needs. More modules will be added later. I hope you can join in and we make it more richer and useful that it can be used by more projects.
+The framework contains `config module`,`error module`,`logging module`,`net module` and `service module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
 >* [logging](https://github.com/xuyu/logging)  module is third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.
 >* I modified the `log module`, adding the printing of file name and row number.   

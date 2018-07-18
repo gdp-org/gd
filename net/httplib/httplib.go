@@ -149,7 +149,7 @@ func (req *Request) doRequest() (*Response, error) {
 	}, nil
 }
 
-func Serialize(source map[string]interface{}) (string, error) {
+func JsonSerialize(source map[string]interface{}) (string, error) {
 	text, err := json.Marshal(&source)
 	if err != nil {
 		logging.Error("[Serialize] Failed to convert map to json byte, error: %s", err.Error())
@@ -217,12 +217,14 @@ func SendToServer(method, url string, headers, params map[string][]string, req, 
 	if headers == nil {
 		headers = map[string][]string{}
 	}
+
 	for k := range headers {
 		k = strings.ToLower(k)
 		if k == "content-type" {
 			contentType = true
 		}
 	}
+
 	if !contentType {
 		headers["Content-Type"] = []string{"application/json"}
 	}
