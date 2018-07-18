@@ -99,41 +99,41 @@ func (a *DogAppConfig) Set(key string, value interface{}) {
 	a.data[key] = value
 }
 
-func (a *DogAppConfig) String(key string) (string,error) {
+func (a *DogAppConfig) String(key string) (string, error) {
 	if v, ok := a.data[key]; ok {
 		switch v.(type) {
 		case string:
-			return v.(string),nil
+			return v.(string), nil
 		default:
-			return "",errors.New("value type isn't string")
+			return "", errors.New("value type isn't string")
 		}
 	}
 
-	return "",errors.New("failed to get value of key. No key")
+	return "", errors.New("failed to get value of key. No key")
 }
 
-func (a *DogAppConfig) Int(key string) (int,error) {
+func (a *DogAppConfig) Int(key string) (int, error) {
 	if v, ok := a.data[key]; ok {
 		switch v.(type) {
 		case float64:
-			return int(v.(float64)),nil
+			return int(v.(float64)), nil
 		default:
-			return 0,errors.New("value type isn't int")
+			return 0, errors.New("value type isn't int")
 		}
 	}
 
-	return 0,errors.New("failed to get value of key. No key")
+	return 0, errors.New("failed to get value of key. No key")
 }
 
-func (a *DogAppConfig) Bool(key string) (bool,error) {
+func (a *DogAppConfig) Bool(key string) (bool, error) {
 	if v, ok := a.data[key]; ok {
 		switch v.(type) {
 		case bool:
-			return v.(bool),nil
+			return v.(bool), nil
 		default:
-			return false,errors.New("value type isn't int")
+			return false, errors.New("value type isn't int")
 		}
 	}
 
-	return false,errors.New("failed to get value of key. No key")
+	return false, errors.New("failed to get value of key. No key")
 }

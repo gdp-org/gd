@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	url,err := config.AppConfig.String("redis")
+	url, err := config.AppConfig.String("redis")
 	if err != nil {
 		logging.Warning("[init] get config redis url occur error: ", err)
 		return
