@@ -118,7 +118,7 @@ func (h *Handler) handleRecord(name string, rd *Record) {
 		return
 	}
 
-	ts,_ := formatTimeHeader(rd.Time)
+	ts, _ := formatTimeHeader(rd.Time)
 	s := h.format(name, string(ts), rd)
 	h.mutex.Lock()
 	if h.writer == nil {
@@ -146,7 +146,7 @@ func (h *Handler) handleRecord(name string, rd *Record) {
 func formatTimeHeader(when time.Time) ([]byte, int) {
 	y, mo, d := when.Date()
 	h, mi, s := when.Clock()
-	ns := when.Nanosecond()/1000000
+	ns := when.Nanosecond() / 1000000
 	//len("2006/01/02 15:04:05.123 ")==24
 	var buf [24]byte
 
