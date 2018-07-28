@@ -43,13 +43,35 @@ func main() {
 	logging.Debug("log suffix:%s", suffix)
 
 	// you can add configuration items directly in conf.json
-	value := AppConfig.Get("key")
-	logging.Debug("value:%s", value)
+	stringValue, err := AppConfig.String("stringKey")
+	if err != nil {
+		logging.Error("get key occur error: %s", err)
+		return
+	}
+	logging.Debug("value:%s", stringValue)
+
+	intValue, err := AppConfig.Int("intKey")
+	if err != nil {
+		logging.Error("get key occur error: %s", err)
+		return
+	}
+	logging.Debug("value:%d", intValue)
+
+	BoolValue, err := AppConfig.Bool("boolKey")
+	if err != nil {
+		logging.Error("get key occur error: %s", err)
+		return
+	}
+	logging.Debug("value:%t", BoolValue)
 
 	// you can add config key-value if you need.
 	AppConfig.Set("yourKey", "yourValue")
 
 	// get config key
-	yourValue := AppConfig.Get("yourKey")
+	yourValue, err := AppConfig.String("yourKey")
+	if err != nil {
+		logging.Error("get key occur error: %s", err)
+		return
+	}
 	logging.Debug("yourValue:%s", yourValue)
 }

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/xuyu/logging"
 	"godog/config"
-	"godog/utils"
 )
 
 /*
@@ -53,9 +52,8 @@ func (s *TcpServer) Run() error {
 		return NoTcpPort
 	}
 
-	localIp := utils.GetLocalIP()
-	addr := fmt.Sprintf("%s:%d", localIp, port)
-	logging.Info("[Run] Tcp try to listen ip:%s, port: %d", localIp, port)
+	addr := fmt.Sprintf(":%d", port)
+	logging.Info("[Run] Tcp try to listen port: %d", port)
 
 	s.Addr = addr
 	s.ss.Addr = addr

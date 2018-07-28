@@ -3,6 +3,12 @@
 	"ignore": "",
 	"package": [
 		{
+			"checksumSHA1": "mElmW6maeZ/0R45dni2OkMSDUak=",
+			"path": "github.com/xuyu/goredis",
+			"revision": "89fbe9474b3758ff3adf0b7b29c95aeed115fb7b",
+			"revisionTime": "2016-09-29T02:12:45Z"
+		},
+		{
 			"checksumSHA1": "oZxN/nwcgrl8+SIVVbXSbQrOcd0=",
 			"path": "github.com/xuyu/logging",
 			"revision": "8a07c475aa4823912dccacff99449185f7626dc0",

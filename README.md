@@ -22,10 +22,10 @@ Start with cloning godog:
 
 Godog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-The framework contains `config module`,`error module`,`logging module`,`net module` and `service module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
+The framework contains `config module`,`error module`,`logging module`,`net module`,`store mudle` and `service module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [logging](https://github.com/xuyu/logging)  module is third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.
->* I modified the `log module`, adding the printing of file name and row number.   
+>* [logging](https://github.com/xuyu/logging)  module and [goredis](https://github.com/xuyu/goredis) module are third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.
+>* I modified the `log module`, adding the printing of file name, row number and time.   
 
 ## Usage
 
@@ -137,9 +137,29 @@ func main(){
 	suffix := AppConfig.BaseConfig.Log.Suffix
 	fmt.Printf("log suffix:%s\n",suffix)
 
+
 	// you can add configuration items directly in conf.json
-	value := AppConfig.Get("key")
-	fmt.Printf("value:%s\n",value)
+	stringValue,err := AppConfig.String("stringKey")
+	if err != nil {
+		logging.Error("get key occur error: %s",err)
+		return
+	}
+	logging.Debug("value:%s", stringValue)
+
+	intValue,err := AppConfig.Int("intKey")
+	if err != nil {
+		logging.Error("get key occur error: %s",err)
+		return
+	}
+	logging.Debug("value:%d", intValue)
+
+	BoolValue,err := AppConfig.Bool("boolKey")
+	if err != nil {
+		logging.Error("get key occur error: %s",err)
+		return
+	}
+	logging.Debug("value:%t", BoolValue)
+	
 
 	// you can add config key-value if you need.
 	AppConfig.Set("yourKey","yourValue")

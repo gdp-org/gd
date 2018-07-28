@@ -15,5 +15,11 @@
     "TcpPort": 10241
   },
 
-  "key":"value"
+  "redis" : "tcp://127.0.0.1:6379/0?timeout=60s&maxidle=10",
+  "mysql" : "mysql://root:password@tcp(127.0.0.1:3306)/test",
+  "mysqlMaxConn": 30,
+
+  "stringKey":"value",
+  "intKey":10,
+  "boolKey":true
 }

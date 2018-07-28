@@ -64,9 +64,8 @@ type Handler interface {
 }
 
 func Serve(httpPort int, handler http.Handler) {
-	localIp := utils.GetLocalIP()
-	srvPort := fmt.Sprintf("%s:%d", localIp, httpPort)
-	logging.Info("[Serve] Http try to listen ip:%s, port: %d", localIp, httpPort)
+	srvPort := fmt.Sprintf(":%d", httpPort)
+	logging.Info("[Serve] Http try to listen port: %d", httpPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
