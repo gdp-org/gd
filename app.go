@@ -6,7 +6,6 @@
 package godog
 
 import (
-	"github.com/xuyu/logging"
 	"godog/config"
 	"godog/dumpPanic"
 	_ "godog/log"
@@ -51,30 +50,30 @@ func (app *Application) initCPU() error {
 }
 
 func (app *Application) Run() error {
-	logging.Info("[App.Run] start")
+	Info("[App.Run] start")
 	// register signal
 	dumpPanic.Signal()
 
 	// dump when error occurs
 	file, err := dumpPanic.Dump(app.appName)
 	if err != nil {
-		logging.Error("[App.Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+		Error("[App.Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
 
 	// output exit info
 	defer func() {
-		logging.Info("[App.Run] server stop...code: %d", runtime.NumGoroutine())
+		Info("[App.Run] server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
-		logging.Info("[App.Run] server stop...ok")
+		Info("[App.Run] server stop...ok")
 		if err := dumpPanic.ReviewDumpPanic(file); err != nil {
-			logging.Error("[App.Run] Failed to review dump dumpPanic file, error = %s", err.Error())
+			Error("[App.Run] Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
 	}()
 
 	// init cpu
 	err = app.initCPU()
 	if err != nil {
-		logging.Error("[App.Run] Cannot init Cpu module, error = %s", err.Error())
+		Error("[App.Run] Cannot init Cpu module, error = %s", err.Error())
 		return err
 	}
 
@@ -85,9 +84,9 @@ func (app *Application) Run() error {
 	err = app.AppHttp.Run()
 	if err != nil {
 		if err == httplib.NoHttpPort {
-			logging.Info("[App.Run] Hasn't http server port")
+			Info("[App.Run] Hasn't http server port")
 		} else {
-			logging.Error("[App.Run] Http server occur error in running application, error = %s", err.Error())
+			Error("[App.Run] Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
 	}
@@ -96,9 +95,9 @@ func (app *Application) Run() error {
 	err = app.AppTcpServer.Run()
 	if err != nil {
 		if err == tcplib.NoTcpPort {
-			logging.Info("[App.Run] Hasn't tcp server port")
+			Info("[App.Run] Hasn't tcp server port")
 		} else {
-			logging.Error("[App.Run] Tcp server occur error in running application, error = %s", err.Error())
+			Error("[App.Run] Tcp server occur error in running application, error = %s", err.Error())
 			return err
 		}
 	}
