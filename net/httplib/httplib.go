@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"github.com/xuyu/logging"
 	me "godog/error"
-	"godog/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -76,8 +75,7 @@ func Serve(httpPort int, handler http.Handler) {
 }
 
 func Health(healthPort int, handler http.Handler) {
-	localIp := utils.GetLocalIP()
-	srvPort := fmt.Sprintf("%s:%d", localIp, healthPort)
+	srvPort := fmt.Sprintf("%d", healthPort)
 	logging.Info("[Health] Try to monitor health condition on port: %s", srvPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
