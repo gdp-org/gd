@@ -8,7 +8,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/xuyu/logging"
+	"godog"
 	"godog/store/db"
 	"time"
 )
@@ -39,7 +39,7 @@ func (t *Test) Add() error {
 	sql := db.InsertOne(tableName, insertData)
 	stmt, err := db.MysqlHandle.Prepare(sql)
 	if err != nil {
-		logging.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
+		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
 		return err
 	}
 
@@ -47,13 +47,13 @@ func (t *Test) Add() error {
 
 	res, err := stmt.Exec(t.Name, t.CardId, t.Sex, t.Birthday, t.Status, t.CreateTs)
 	if err != nil {
-		logging.Error("errors occur while stmt.Exec(): %s", err.Error())
+		godog.Error("errors occur while stmt.Exec(): %s", err.Error())
 		return err
 	}
 
 	num, err := res.RowsAffected()
 	if err != nil {
-		logging.Error("errors occur while res.RowsAffected(): %s", err.Error())
+		godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (t *Test) Update(birthday uint64) error {
 	sql := db.Update(tableName, whereMap, dataMap)
 	stmt, err := db.MysqlHandle.Prepare(sql)
 	if err != nil {
-		logging.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
+		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
 		return err
 	}
 
@@ -84,13 +84,13 @@ func (t *Test) Update(birthday uint64) error {
 
 	res, err := stmt.Exec(birthday)
 	if err != nil {
-		logging.Error("errors occur while stmt.Exec(): %s", err.Error())
+		godog.Error("errors occur while stmt.Exec(): %s", err.Error())
 		return err
 	}
 
 	num, err := res.RowsAffected()
 	if err != nil {
-		logging.Error("errors occur while res.RowsAffected(): %s", err.Error())
+		godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
 		return err
 	}
 
@@ -106,7 +106,7 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
 
 	rows, err := db.MysqlHandle.Query(sql, cardId)
 	if err != nil {
-		logging.Error("occur error :%s", err)
+		godog.Error("occur error :%s", err)
 		return nil, err
 	}
 
@@ -118,7 +118,7 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
 		app.CardId = cardId
 		err = rows.Scan(&app.Name, &app.Sex, &app.Birthday, &app.Status, &app.CreateTs)
 		if err != nil {
-			logging.Error("occur error :%s", err)
+			godog.Error("occur error :%s", err)
 			return nil, err
 		}
 	}
@@ -137,7 +137,7 @@ func testAdd() {
 	}
 
 	if err := t.Add(); err != nil {
-		logging.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
+		godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
@@ -148,7 +148,7 @@ func testUpdate() {
 	}
 
 	if err := t.Update(1025); err != nil {
-		logging.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
+		godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
@@ -158,11 +158,11 @@ func testQuery() {
 
 	tt, err := t.Query(1024)
 	if err != nil {
-		logging.Error("query occur error:", err)
+		godog.Error("query occur error:", err)
 		return
 	}
 
-	logging.Debug("query: %v", *tt)
+	godog.Debug("query: %v", *tt)
 }
 
 func main() {

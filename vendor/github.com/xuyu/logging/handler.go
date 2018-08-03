@@ -148,7 +148,7 @@ func formatTimeHeader(when time.Time) ([]byte, int) {
 	h, mi, s := when.Clock()
 	ns := when.Nanosecond() / 1000000
 	//len("2006/01/02 15:04:05.123 ")==24
-	var buf [24]byte
+	var buf [23]byte
 
 	buf[0] = y1[y/1000%10]
 	buf[1] = y2[y/100]
@@ -174,7 +174,7 @@ func formatTimeHeader(when time.Time) ([]byte, int) {
 	buf[21] = ns1[ns%100/10]
 	buf[22] = ns1[ns%10]
 
-	buf[23] = ' '
+	//buf[23] = ' '
 
 	return buf[0:], d
 }

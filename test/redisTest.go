@@ -6,14 +6,22 @@
 package main
 
 import (
-	"github.com/xuyu/logging"
+	"godog"
 	"godog/store/cache"
 )
 
 func main() {
 	key := "key"
 	if err := cache.RedisHandle.Set(key, "value", 10, 0, false, true); err != nil {
-		logging.Error("redis set occur error:%s", err)
+		godog.Error("redis set occur error:%s", err)
 		return
 	}
+
+	value, err := cache.RedisHandle.Get(key)
+	if err != nil {
+		godog.Error("redis get occur error:%s", err)
+		return
+	}
+
+	godog.Debug("value:%s", string(value))
 }

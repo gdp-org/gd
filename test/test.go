@@ -6,7 +6,6 @@
 package main
 
 import (
-	"github.com/xuyu/logging"
 	"godog"
 	me "godog/error"
 	"godog/net/httplib"
@@ -39,7 +38,7 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 	// defer write response
 	defer func() {
 		if merr != nil {
-			logging.Error("test, errorCode: %d, errMsg: %s", merr.Code(), merr.Detail())
+			godog.Error("test, errorCode: %d, errMsg: %s", merr.Code(), merr.Detail())
 		}
 
 		w.Write(httplib.LogGetResponseInfo(r, merr, resp))
@@ -51,14 +50,14 @@ func HandlerTestSelf(w http.ResponseWriter, r *http.Request) {
 		merr = me.MakeCodeError(me.ParameterError, err)
 		return
 	}
-	logging.Info("test recv request: %#v", req)
+	godog.Info("test recv request: %#v", req)
 
 	// response data
 	resp = "test success!!!"
 }
 
 func HandlerTcpTestSelf(req []byte) (uint16, []byte) {
-	logging.Debug("tcp server request: %s", string(req))
+	godog.Debug("tcp server request: %s", string(req))
 	code := uint16(0)
 	resp := []byte("Are you ok")
 	return code, resp
@@ -77,7 +76,7 @@ func main() {
 
 	err := Apps.Run()
 	if err != nil {
-		logging.Error("Error occurs, error = %s", err.Error())
+		godog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }

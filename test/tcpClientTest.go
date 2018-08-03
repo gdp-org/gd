@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/xuyu/logging"
+	"godog"
 	"godog/net/tcplib"
 )
 
@@ -19,8 +19,8 @@ func main() {
 
 	rsp, err := c.Invoke(1024, body)
 	if err != nil {
-		logging.Error("Error when sending request to server: %s", err)
+		godog.Error("Error when sending request to server: %s", err)
 	}
 
-	logging.Debug("resp=%s", string(rsp))
+	godog.Debug("resp=%s", string(rsp))
 }

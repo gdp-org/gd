@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/xuyu/logging" // import logging module
+	"godog"
 	"godog/config"
 	_ "godog/log" // init log
 )
@@ -21,7 +22,7 @@ func main() {
 
 	// AppConfig.BaseConfig.Log.File is the path of log file.
 	file := AppConfig.BaseConfig.Log.File
-	logging.Debug("log file:%s", file)
+	godog.Debug("log file:%s", file)
 
 	// AppConfig.BaseConfig.Log.Level is log level.
 	// DEBUG   logLevel = 1
@@ -30,17 +31,17 @@ func main() {
 	// ERROR   logLevel = 4
 	// DISABLE logLevel = 255
 	level := AppConfig.BaseConfig.Log.Level
-	logging.Debug("log level:%s", level)
+	godog.Debug("log level:%s", level)
 
 	// AppConfig.BaseConfig.Log.Name is service name
 	name := AppConfig.BaseConfig.Log.Name
-	logging.Debug("name:%s", name)
+	godog.Debug("name:%s", name)
 
 	// AppConfig.BaseConfig.Log.Suffix is suffix of log file.
 	// suffix = "060102-15" . It indicates that the log is cut per hour
 	// suffix = "060102" . It indicates that the log is cut per day
 	suffix := AppConfig.BaseConfig.Log.Suffix
-	logging.Debug("log suffix:%s", suffix)
+	godog.Debug("log suffix:%s", suffix)
 
 	// you can add configuration items directly in conf.json
 	stringValue, err := AppConfig.String("stringKey")
@@ -48,21 +49,21 @@ func main() {
 		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%s", stringValue)
+	godog.Debug("value:%s", stringValue)
 
 	intValue, err := AppConfig.Int("intKey")
 	if err != nil {
 		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%d", intValue)
+	godog.Debug("value:%d", intValue)
 
 	BoolValue, err := AppConfig.Bool("boolKey")
 	if err != nil {
 		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%t", BoolValue)
+	godog.Debug("value:%t", BoolValue)
 
 	// you can add config key-value if you need.
 	AppConfig.Set("yourKey", "yourValue")
@@ -73,5 +74,5 @@ func main() {
 		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("yourValue:%s", yourValue)
+	godog.Debug("yourValue:%s", yourValue)
 }
