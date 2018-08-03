@@ -6,7 +6,6 @@
 package main
 
 import (
-	"github.com/xuyu/logging" // import logging module
 	"godog"
 	"godog/config"
 	_ "godog/log" // init log
@@ -46,21 +45,21 @@ func main() {
 	// you can add configuration items directly in conf.json
 	stringValue, err := AppConfig.String("stringKey")
 	if err != nil {
-		logging.Error("get key occur error: %s", err)
+		godog.Error("get key occur error: %s", err)
 		return
 	}
 	godog.Debug("value:%s", stringValue)
 
 	intValue, err := AppConfig.Int("intKey")
 	if err != nil {
-		logging.Error("get key occur error: %s", err)
+		godog.Error("get key occur error: %s", err)
 		return
 	}
 	godog.Debug("value:%d", intValue)
 
 	BoolValue, err := AppConfig.Bool("boolKey")
 	if err != nil {
-		logging.Error("get key occur error: %s", err)
+		godog.Error("get key occur error: %s", err)
 		return
 	}
 	godog.Debug("value:%t", BoolValue)
@@ -71,7 +70,7 @@ func main() {
 	// get config key
 	yourValue, err := AppConfig.String("yourKey")
 	if err != nil {
-		logging.Error("get key occur error: %s", err)
+		godog.Error("get key occur error: %s", err)
 		return
 	}
 	godog.Debug("yourValue:%s", yourValue)
