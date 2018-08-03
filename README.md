@@ -15,7 +15,7 @@ email : chuck.ch1024@outlook.com
 Start with cloning godog:
 
 ```
->git clone https://github.com/chuck1024/godog.git
+> git clone https://github.com/chuck1024/godog.git
 ```
 
 ## Introduction
@@ -34,39 +34,44 @@ The framework contains `config module`,`error module`,`logging module`,`net modu
 >* use `control+c` to stop process
 
 ```
+/**
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+ */
+
+package main
+
 import (
-	"fmt"
 	"godog"
-	"godog/net/tcplib"
 	"net/http"
 )
 
+var App *godog.Application
+
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("connected : %s",r.RemoteAddr)
+	godog.Debug("connected : %s", r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 
-func HandlerTcpTest(req []byte) (uint16,[]byte) {
-	logging.Debug("tcp server request: %s", string(req))
+func HandlerTcpTest(req []byte) (uint16, []byte) {
+	godog.Debug("tcp server request: %s", string(req))
 	code := uint16(0)
 	resp := []byte("Are you ok?")
-	return code,resp
+	return code, resp
 }
 
 func main() {
 	AppName := "test"
-	App := godog.NewApplication(AppName)
-	
+	App = godog.NewApplication(AppName)
 	// Http
 	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
-	
+
 	// Tcp
-	// cmd:1024
 	App.AppTcpServer.AddTcpHandler(1024, HandlerTcpTest)
 
 	err := App.Run()
 	if err != nil {
-		fmt.Printf("Error occurs, error = %s\n", err.Error())
+		godog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
@@ -77,38 +82,56 @@ func main() {
 >* You can find it in "godog/test/tcpClientTest.go"
 
 ```
+/**
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+ */
+
+package main
+
 import (
-	"fmt"
+	"godog"
 	"godog/net/tcplib"
 )
 
 func main() {
 	c := tcplib.NewClient(500, 0)
-	// remember alter addr 
+	// remember alter addr
 	c.AddAddr("127.0.0.1:10241")
 
 	body := []byte("How are you?")
 
-	//cmd:1024
 	rsp, err := c.Invoke(1024, body)
 	if err != nil {
-		logging.Error("Error when sending request to server: %s", err)
+		godog.Error("Error when sending request to server: %s", err)
 	}
 
-	fmt.Printf("resp=%s\n", string(rsp))
+	godog.Debug("resp=%s", string(rsp))
 }
+
 ```
 
 `config module` provides the related configuration of the project.
 >* You can find it in "godog/test/configTest.go"
 
 ```
+/**
+ * Copyright 2018 godog Author. All Rights Reserved.
+ * Author: Chuck1024
+ */
+
+package main
+
 import (
-	"fmt"
+	"github.com/xuyu/logging" // import logging module
+	"godog"
 	"godog/config"
+	_ "godog/log" // init log
 )
 
-func main(){
+var AppConfig *config.DogAppConfig
+
+func main() {
 	AppConfig = config.AppConfig
 
 	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
@@ -116,7 +139,7 @@ func main(){
 
 	// AppConfig.BaseConfig.Log.File is the path of log file.
 	file := AppConfig.BaseConfig.Log.File
-	fmt.Printf("log file:%s\n",file)
+	godog.Debug("log file:%s", file)
 
 	// AppConfig.BaseConfig.Log.Level is log level.
 	// DEBUG   logLevel = 1
@@ -125,53 +148,263 @@ func main(){
 	// ERROR   logLevel = 4
 	// DISABLE logLevel = 255
 	level := AppConfig.BaseConfig.Log.Level
-	fmt.Printf("log level:%s\n",level)
+	godog.Debug("log level:%s", level)
 
 	// AppConfig.BaseConfig.Log.Name is service name
 	name := AppConfig.BaseConfig.Log.Name
-	fmt.Printf("name:%s\n",name)
+	godog.Debug("name:%s", name)
 
 	// AppConfig.BaseConfig.Log.Suffix is suffix of log file.
 	// suffix = "060102-15" . It indicates that the log is cut per hour
 	// suffix = "060102" . It indicates that the log is cut per day
 	suffix := AppConfig.BaseConfig.Log.Suffix
-	fmt.Printf("log suffix:%s\n",suffix)
-
+	godog.Debug("log suffix:%s", suffix)
 
 	// you can add configuration items directly in conf.json
-	stringValue,err := AppConfig.String("stringKey")
+	stringValue, err := AppConfig.String("stringKey")
 	if err != nil {
-		logging.Error("get key occur error: %s",err)
+		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%s", stringValue)
+	godog.Debug("value:%s", stringValue)
 
-	intValue,err := AppConfig.Int("intKey")
+	intValue, err := AppConfig.Int("intKey")
 	if err != nil {
-		logging.Error("get key occur error: %s",err)
+		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%d", intValue)
+	godog.Debug("value:%d", intValue)
 
-	BoolValue,err := AppConfig.Bool("boolKey")
+	BoolValue, err := AppConfig.Bool("boolKey")
 	if err != nil {
-		logging.Error("get key occur error: %s",err)
+		logging.Error("get key occur error: %s", err)
 		return
 	}
-	logging.Debug("value:%t", BoolValue)
-	
+	godog.Debug("value:%t", BoolValue)
 
 	// you can add config key-value if you need.
-	AppConfig.Set("yourKey","yourValue")
+	AppConfig.Set("yourKey", "yourValue")
 
 	// get config key
-	yourValue := AppConfig.Get("yourKey")
-	fmt.Printf("yourValue:%s\n",yourValue)
+	yourValue, err := AppConfig.String("yourKey")
+	if err != nil {
+		logging.Error("get key occur error: %s", err)
+		return
+	}
+	godog.Debug("yourValue:%s", yourValue)
 }
 ```
 
 `error module` provides the relation usages of error that you can find it in godog.
 
+`store module` provides the relation usages of db and redis.
+>* You can find it in "godog/test/dbTest.go" and "godog/test/redisTest.go"
+
+```
+/**
+ * Copyright 2018 godog Author. All rights reserved.
+ * Author: Chuck1024
+ */
+
+package main
+
+import (
+	"errors"
+	"fmt"
+	"godog"
+	"godog/store/db"
+	"time"
+)
+
+const (
+	tableName = "test"
+)
+
+type Test struct {
+	Name     string `json:"name"`
+	CardId   uint64 `json:"card_id"`
+	Sex      string `json:"sex"`
+	Birthday uint64 `json:"birthday"`
+	Status   uint8  `json:"status"`
+	CreateTs uint64 `json:"create_time"`
+}
+
+func (t *Test) Add() error {
+	insertData := map[string]interface{}{
+		"name":        t.Name,
+		"card_id":     t.CardId,
+		"sex":         t.Sex,
+		"birthday":    t.Birthday,
+		"status":      t.Status,
+		"create_time": t.CreateTs,
+	}
+
+	sql := db.InsertOne(tableName, insertData)
+	stmt, err := db.MysqlHandle.Prepare(sql)
+	if err != nil {
+		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
+		return err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(t.Name, t.CardId, t.Sex, t.Birthday, t.Status, t.CreateTs)
+	if err != nil {
+		godog.Error("errors occur while stmt.Exec(): %s", err.Error())
+		return err
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
+		return err
+	}
+
+	if num != 1 {
+		return errors.New("none row Affected")
+	}
+
+	return nil
+}
+
+func (t *Test) Update(birthday uint64) error {
+	dataMap := map[string]interface{}{
+		"birthday": birthday,
+	}
+
+	whereMap := map[string]string{
+		"card_id": fmt.Sprintf("%d", t.CardId),
+	}
+
+	sql := db.Update(tableName, whereMap, dataMap)
+	stmt, err := db.MysqlHandle.Prepare(sql)
+	if err != nil {
+		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
+		return err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(birthday)
+	if err != nil {
+		godog.Error("errors occur while stmt.Exec(): %s", err.Error())
+		return err
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
+		return err
+	}
+
+	if num != 1 {
+		return errors.New("none row Affected")
+	}
+
+	return nil
+}
+
+func (t *Test) Query(cardId uint64) (*Test, error) {
+	sql := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
+
+	rows, err := db.MysqlHandle.Query(sql, cardId)
+	if err != nil {
+		godog.Error("occur error :%s", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var app *Test = nil
+	for rows.Next() {
+		app = &Test{}
+		app.CardId = cardId
+		err = rows.Scan(&app.Name, &app.Sex, &app.Birthday, &app.Status, &app.CreateTs)
+		if err != nil {
+			godog.Error("occur error :%s", err)
+			return nil, err
+		}
+	}
+
+	return app, nil
+}
+
+func testAdd() {
+	t := &Test{
+		Name:     "chuck",
+		CardId:   1025,
+		Sex:      "male",
+		Birthday: 1024,
+		Status:   1,
+		CreateTs: uint64(time.Now().Unix()),
+	}
+
+	if err := t.Add(); err != nil {
+		godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
+		return
+	}
+}
+
+func testUpdate() {
+	t := &Test{
+		CardId: 1024,
+	}
+
+	if err := t.Update(1025); err != nil {
+		godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
+		return
+	}
+}
+
+func testQuery() {
+	t := &Test{}
+
+	tt, err := t.Query(1024)
+	if err != nil {
+		godog.Error("query occur error:", err)
+		return
+	}
+
+	godog.Debug("query: %v", *tt)
+}
+
+func main() {
+    testAdd()
+	testQuery()
+	testUpdate()
+	testQuery()
+}
+```
+
+```
+/**
+ * Copyright 2018 godog Author. All rights reserved.
+ * Author: Chuck1024
+ */
+
+package main
+
+import (
+	"godog"
+	"godog/store/cache"
+)
+
+func main() {
+	key := "key"
+	if err := cache.RedisHandle.Set(key, "value", 10, 0, false, true); err != nil {
+		godog.Error("redis set occur error:%s", err)
+		return
+	}
+
+	value, err := cache.RedisHandle.Get(key)
+	if err != nil {
+		godog.Error("redis get occur error:%s", err)
+		return
+	}
+
+	godog.Debug("value:%s", string(value))
+}
+```
 ## License
 
 Godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  
