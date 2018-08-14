@@ -223,7 +223,7 @@ func SendToServer(method, url string, headers, params map[string][]string, req, 
 	}
 
 	if !contentType {
-		headers["Content-Type"] = []string{"application/json"}
+		headers["Content-Type"] = []string{CONTENT_JSON}
 	}
 
 	logging.Debug("[SendToServer] send to server req:%#v", req)
