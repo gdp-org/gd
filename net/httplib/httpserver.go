@@ -16,6 +16,7 @@ type InitHandlerFunc func() error
 var (
 	AppHttp    *HttpServer
 	NoHttpPort = errors.New("no http serve port")
+	NoPort     = 0
 )
 
 type HttpServer struct {
@@ -71,13 +72,13 @@ func (h *HttpServer) Register() {
 
 func (h *HttpServer) Run() error {
 	// http health
-	if config.AppConfig.BaseConfig.Prog.HealthPort != 0 && h.health != nil {
+	if config.AppConfig.BaseConfig.Prog.HealthPort != NoPort && h.health != nil {
 		Health(config.AppConfig.BaseConfig.Prog.HealthPort, h.health)
 	}
 
 	// http service
-	if config.AppConfig.BaseConfig.Server.HttpPort == 0 {
-		logging.Debug("[Run] No http Serve port for application ")
+	if config.AppConfig.BaseConfig.Server.HttpPort == NoPort {
+		logging.Info("[Run] No http Serve port for application ")
 		return NoHttpPort
 	} else {
 		Serve(config.AppConfig.BaseConfig.Server.HttpPort, h.handler)

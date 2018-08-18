@@ -103,5 +103,5 @@ func (app *Application) Run() error {
 	}
 
 	<-dumpPanic.Running
-	return err
+	return nil
 }

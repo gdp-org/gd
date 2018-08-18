@@ -7,6 +7,8 @@ package dumpPanic
 
 import (
 	"github.com/xuyu/logging"
+	"godog/config"
+	"godog/net/httplib"
 	"godog/net/tcplib"
 	"os"
 	"os/signal"
@@ -31,7 +33,9 @@ func Signal() {
 			select {
 			case <-Shutdown:
 				logging.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
-				tcplib.AppTcpServer.Stop()
+				if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
+					tcplib.AppTcpServer.Stop()
+				}
 				Running <- false
 			case <-Hup:
 			}

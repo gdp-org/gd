@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/xuyu/logging"
 	"godog/config"
+	"godog/net/httplib"
 )
 
 /*
@@ -47,7 +48,7 @@ func (s *TcpServer) Start() {
 
 func (s *TcpServer) Run() error {
 	port := config.AppConfig.BaseConfig.Server.TcpPort
-	if port == 0 {
+	if port == httplib.NoPort {
 		logging.Info("[Run] no tcp serve port")
 		return NoTcpPort
 	}

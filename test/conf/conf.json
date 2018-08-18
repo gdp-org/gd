@@ -8,7 +8,7 @@
   },
   "Prog": {
     "CPU": 0,
-    "HealthPort": ""
+    "HealthPort": 0
   },
   "Server": {
     "HttpPort":10240,
