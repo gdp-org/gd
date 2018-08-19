@@ -19,30 +19,24 @@ var (
 	MysqlHandle *sql.DB
 )
 
-func init() {
-	url, err := config.AppConfig.String("mysql")
-	if err != nil {
-		logging.Warning("[init] get config mysql url occur error: ", err)
-		return
-	}
-
+func Init(URL string) {
 	maxConnections, err := config.AppConfig.Int("mysqlMaxConn")
 	if err != nil {
 		logging.Warning("[init] get config mysqlMaxConn occur error: ", err)
 		return
 	}
 
-	if ok, err := regexp.MatchString("^mysql://.*:.*@.*/.*$", url); !ok || err != nil {
-		logging.Error("[init] Mysql config syntax err:mysql_zone,%s,shutdown", url)
+	if ok, err := regexp.MatchString("^mysql://.*:.*@.*/.*$", URL); !ok || err != nil {
+		logging.Error("[init] Mysql config syntax err:mysql_zone,%s,shutdown", URL)
 		panic("conf error")
 		return
 	}
 
-	url = strings.Replace(url, "mysql://", "", 1)
-	db, err := sql.Open("mysql", url)
+	URL = strings.Replace(URL, "mysql://", "", 1)
+	db, err := sql.Open("mysql", URL)
 	if err != nil {
-		logging.Error("[init] Failed mysql url=" + url + ",err=" + err.Error())
-		panic("failed mysql url=" + url)
+		logging.Error("[init] Failed mysql url=" + URL + ",err=" + err.Error())
+		panic("failed mysql url=" + URL)
 		return
 	}
 
@@ -50,7 +44,7 @@ func init() {
 	db.SetMaxOpenConns(maxConnections)
 	db.SetMaxIdleConns(10)
 
-	logging.Info("Mysql conn ok: %s", url)
+	logging.Info("Mysql conn ok: %s", URL)
 	MysqlHandle = db
 }
 

@@ -166,5 +166,13 @@ func testQuery() {
 }
 
 func main() {
+	url, err := godog.AppConfig.String("mysql")
+	if err != nil {
+		godog.Warning("[init] get config mysql url occur error: ", err)
+		return
+	}
+
+	db.Init(url)
+
 	testQuery()
 }

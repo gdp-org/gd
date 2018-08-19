@@ -3,10 +3,28 @@
 	"ignore": "",
 	"package": [
 		{
-			"checksumSHA1": "mElmW6maeZ/0R45dni2OkMSDUak=",
-			"path": "github.com/xuyu/goredis",
-			"revision": "89fbe9474b3758ff3adf0b7b29c95aeed115fb7b",
-			"revisionTime": "2016-09-29T02:12:45Z"
+			"checksumSHA1": "A0WQcr3HD8hya3oWd8FXTIE4Pys=",
+			"path": "github.com/chasex/redis-go-cluster",
+			"revision": "222d81891f1d3fa7cf8b5655020352c3e5b4ec0f",
+			"revisionTime": "2016-12-07T02:39:22Z"
+		},
+		{
+			"checksumSHA1": "CugKDIiTN7Xl2ID3yQ17ytRmNOY=",
+			"path": "github.com/garyburd/redigo/internal",
+			"revision": "569eae59ada904ea8db7a225c2b47165af08735a",
+			"revisionTime": "2018-04-04T16:07:26Z"
+		},
+		{
+			"checksumSHA1": "DsobywS3zeHUgxjSOCUt4SLS2ik=",
+			"path": "github.com/garyburd/redigo/redis",
+			"revision": "569eae59ada904ea8db7a225c2b47165af08735a",
+			"revisionTime": "2018-04-04T16:07:26Z"
+		},
+		{
+			"checksumSHA1": "gThpJEKVKT6KmmRc4rQG17zRJMI=",
+			"path": "github.com/garyburd/redigo/redisx",
+			"revision": "569eae59ada904ea8db7a225c2b47165af08735a",
+			"revisionTime": "2018-04-04T16:07:26Z"
 		},
 		{
 			"checksumSHA1": "oZxN/nwcgrl8+SIVVbXSbQrOcd0=",
@@ -15,5 +33,5 @@
 			"revisionTime": "2014-06-24T02:37:06Z"
 		}
 	],
-	"rootPath": "godog"
+	"rootPath": "github.com/chuck1024/godog"
 }

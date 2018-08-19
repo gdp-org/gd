@@ -24,8 +24,10 @@ Godog is a basic framework implemented by golang, which is aiming at helping dev
 
 The framework contains `config module`,`error module`,`logging module`,`net module`,`store mudle` and `service module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [logging](https://github.com/xuyu/logging)  module and [goredis](https://github.com/xuyu/goredis) module are third-party library. Author is [**xuyu**](https://github.com/xuyu). Thanks for xuyu here.
->* I modified the `log module`, adding the printing of file name, row number and time.   
+>* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis) and [redis-go-cluster](https://github.com/chasex/redis-go-cluster) are third-party library. 
+>* Author are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd) and [**chasex**](https://github.com/chasex)
+>* I modified the `logging module`, adding the printing of file name, row number and time.
+>* Thanks for them here. 
 
 ## Usage
 
@@ -42,34 +44,34 @@ The framework contains `config module`,`error module`,`logging module`,`net modu
 package main
 
 import (
-	"github.com/chuck1024/godog"
-	"net/http"
+    "github.com/chuck1024/godog"
+    "net/http"
 )
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	godog.Debug("connected : %s", r.RemoteAddr)
-	w.Write([]byte("test success!!!"))
+    godog.Debug("connected : %s", r.RemoteAddr)
+    w.Write([]byte("test success!!!"))
 }
 
 func HandlerTcpTest(req []byte) (uint16, []byte) {
-	godog.Debug("tcp server request: %s", string(req))
-	code := uint16(0)
-	resp := []byte("Are you ok?")
-	return code, resp
+    godog.Debug("tcp server request: %s", string(req))
+    code := uint16(0)
+    resp := []byte("Are you ok?")
+    return code, resp
 }
 
 func main() {
-	// Http
-	godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
+    // Http
+    godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
 
-	// Tcp
-	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
+    // Tcp
+    godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
 
-	err := godog.Run()
-	if err != nil {
-		godog.Error("Error occurs, error = %s", err.Error())
-		return
-	}
+    err := godog.Run()
+    if err != nil {
+        godog.Error("Error occurs, error = %s", err.Error())
+        return
+    }
 }
 
 // you can use command to test service that it is in another file <serviceTest.txt>.
@@ -87,22 +89,22 @@ func main() {
 package main
 
 import (
-	"github.com/chuck1024/godog"
+    "github.com/chuck1024/godog"
 )
 
 func main() {
-	c := godog.NewTcpClient(500, 0)
-	// remember alter addr
-	c.AddAddr("127.0.0.1:10241")
+    c := godog.NewTcpClient(500, 0)
+    // remember alter addr
+    c.AddAddr("127.0.0.1:10241")
 
-	body := []byte("How are you?")
+    body := []byte("How are you?")
 
-	rsp, err := c.Invoke(1024, body)
-	if err != nil {
-		godog.Error("Error when sending request to server: %s", err)
-	}
+    rsp, err := c.Invoke(1024, body)
+    if err != nil {
+        godog.Error("Error when sending request to server: %s", err)
+    }
 
-	godog.Debug("resp=%s", string(rsp))
+    godog.Debug("resp=%s", string(rsp))
 }
 
 ```
@@ -119,69 +121,69 @@ func main() {
 package main
 
 import (
-	"github.com/chuck1024/godog"
-	_ "github.com/chuck1024/godog/log" // init log
+    "github.com/chuck1024/godog"
+    _ "github.com/chuck1024/godog/log" // init log
 )
 
 func main() {
-	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
-	// The location of config.json is "conf/conf.json". Of course, you change it if you want.
+    // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
+    // The location of config.json is "conf/conf.json". Of course, you change it if you want.
 
-	// AppConfig.BaseConfig.Log.File is the path of log file.
-	file := godog.AppConfig.BaseConfig.Log.File
-	godog.Debug("log file:%s", file)
+    // AppConfig.BaseConfig.Log.File is the path of log file.
+    file := godog.AppConfig.BaseConfig.Log.File
+    godog.Debug("log file:%s", file)
 
-	// AppConfig.BaseConfig.Log.Level is log level.
-	// DEBUG   logLevel = 1
-	// INFO    logLevel = 2
-	// WARNING logLevel = 3
-	// ERROR   logLevel = 4
-	// DISABLE logLevel = 255
-	level := godog.AppConfig.BaseConfig.Log.Level
-	godog.Debug("log level:%s", level)
+    // AppConfig.BaseConfig.Log.Level is log level.
+    // DEBUG   logLevel = 1
+    // INFO    logLevel = 2
+    // WARNING logLevel = 3
+    // ERROR   logLevel = 4
+    // DISABLE logLevel = 255
+    level := godog.AppConfig.BaseConfig.Log.Level
+    godog.Debug("log level:%s", level)
 
-	// AppConfig.BaseConfig.Server.AppName is service name
-	name := godog.AppConfig.BaseConfig.Server.AppName
-	godog.Debug("name:%s", name)
+    // AppConfig.BaseConfig.Server.AppName is service name
+    name := godog.AppConfig.BaseConfig.Server.AppName
+    godog.Debug("name:%s", name)
 
-	// AppConfig.BaseConfig.Log.Suffix is suffix of log file.
-	// suffix = "060102-15" . It indicates that the log is cut per hour
-	// suffix = "060102" . It indicates that the log is cut per day
-	suffix := godog.AppConfig.BaseConfig.Log.Suffix
-	godog.Debug("log suffix:%s", suffix)
+    // AppConfig.BaseConfig.Log.Suffix is suffix of log file.
+    // suffix = "060102-15" . It indicates that the log is cut per hour
+    // suffix = "060102" . It indicates that the log is cut per day
+    suffix := godog.AppConfig.BaseConfig.Log.Suffix
+    godog.Debug("log suffix:%s", suffix)
 
-	// you can add configuration items directly in conf.json
-	stringValue, err := godog.AppConfig.String("stringKey")
-	if err != nil {
-		godog.Error("get key occur error: %s", err)
-		return
-	}
-	godog.Debug("value:%s", stringValue)
+    // you can add configuration items directly in conf.json
+    stringValue, err := godog.AppConfig.String("stringKey")
+    if err != nil {
+        godog.Error("get key occur error: %s", err)
+        return
+    }
+    godog.Debug("value:%s", stringValue)
 
-	intValue, err := godog.AppConfig.Int("intKey")
-	if err != nil {
-		godog.Error("get key occur error: %s", err)
-		return
-	}
-	godog.Debug("value:%d", intValue)
+    intValue, err := godog.AppConfig.Int("intKey")
+    if err != nil {
+        godog.Error("get key occur error: %s", err)
+        return
+    }
+    godog.Debug("value:%d", intValue)
 
-	BoolValue, err := godog.AppConfig.Bool("boolKey")
-	if err != nil {
-		godog.Error("get key occur error: %s", err)
-		return
-	}
-	godog.Debug("value:%t", BoolValue)
+    BoolValue, err := godog.AppConfig.Bool("boolKey")
+    if err != nil {
+        godog.Error("get key occur error: %s", err)
+        return
+    }
+    godog.Debug("value:%t", BoolValue)
 
-	// you can add config key-value if you need.
-	godog.AppConfig.Set("yourKey", "yourValue")
+    // you can add config key-value if you need.
+    godog.AppConfig.Set("yourKey", "yourValue")
 
-	// get config key
-	yourValue, err := godog.AppConfig.String("yourKey")
-	if err != nil {
-		godog.Error("get key occur error: %s", err)
-		return
-	}
-	godog.Debug("yourValue:%s", yourValue)
+    // get config key
+    yourValue, err := godog.AppConfig.String("yourKey")
+    if err != nil {
+        godog.Error("get key occur error: %s", err)
+        return
+    }
+    godog.Debug("yourValue:%s", yourValue)
 }
 
 ```
@@ -360,6 +362,14 @@ func testQuery() {
 }
 
 func main() {
+    url, err := godog.AppConfig.String("mysql")
+    if err != nil {
+        godog.Warning("[init] get config mysql url occur error: ", err)
+        return
+    }
+
+    db.Init(url)
+
     testAdd()
     testQuery()
     testUpdate()
@@ -381,19 +391,24 @@ import (
 )
 
 func main() {
+    URL,_ := godog.AppConfig.String("redis")
+    cache.Init(URL)
+    
     key := "key"
-    if err := cache.RedisHandle.Set(key, "value", 10, 0, false, true); err != nil {
+    err := cache.Set( key, "value")
+    if err != nil {
         godog.Error("redis set occur error:%s", err)
         return
     }
 
-    value, err := cache.RedisHandle.Get(key)
+    godog.Debug("set success:%s",key)
+
+    value, err := cache.Get(key)
     if err != nil {
-        godog.Error("redis get occur error:%s", err)
+        godog.Error("redis get occur error: %s", err)
         return
     }
-
-    godog.Debug("value:%s", string(value))
+    godog.Debug("get value: %s",value)
 }
 ```
 ## License

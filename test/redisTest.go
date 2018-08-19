@@ -11,17 +11,21 @@ import (
 )
 
 func main() {
+	URL, _ := godog.AppConfig.String("redis")
+	cache.Init(URL)
 	key := "key"
-	if err := cache.RedisHandle.Set(key, "value", 10, 0, false, true); err != nil {
+	err := cache.Set(key, "value")
+	if err != nil {
 		godog.Error("redis set occur error:%s", err)
 		return
 	}
 
-	value, err := cache.RedisHandle.Get(key)
+	godog.Debug("set success:%s", key)
+
+	value, err := cache.Get(key)
 	if err != nil {
-		godog.Error("redis get occur error:%s", err)
+		godog.Error("redis get occur error: %s", err)
 		return
 	}
-
-	godog.Debug("value:%s", string(value))
+	godog.Debug("get value: %s", value)
 }
