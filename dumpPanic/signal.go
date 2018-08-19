@@ -6,10 +6,10 @@
 package dumpPanic
 
 import (
+	"github.com/chuck1024/godog/config"
+	"github.com/chuck1024/godog/net/httplib"
+	"github.com/chuck1024/godog/net/tcplib"
 	"github.com/xuyu/logging"
-	"godog/config"
-	"godog/net/httplib"
-	"godog/net/tcplib"
 	"os"
 	"os/signal"
 	"syscall"

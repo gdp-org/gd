@@ -7,8 +7,8 @@ package tcplib
 
 import (
 	"fmt"
+	dogError "github.com/chuck1024/godog/error"
 	"github.com/xuyu/logging"
-	dogError "godog/error"
 	"io"
 	"runtime"
 	"sync"

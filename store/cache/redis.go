@@ -6,9 +6,9 @@
 package cache
 
 import (
+	"github.com/chuck1024/godog/config"
 	"github.com/xuyu/goredis"
 	"github.com/xuyu/logging"
-	"godog/config"
 )
 
 var (

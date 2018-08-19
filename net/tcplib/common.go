@@ -6,7 +6,7 @@
 package tcplib
 
 import (
-	"godog/error"
+	"github.com/chuck1024/godog/error"
 	"time"
 )
 

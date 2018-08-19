@@ -6,7 +6,7 @@
 package main
 
 import (
-	"godog"
+	"github.com/chuck1024/godog"
 	"net/http"
 )
 

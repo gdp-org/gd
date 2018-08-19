@@ -8,9 +8,9 @@ package tcplib
 import (
 	"errors"
 	"fmt"
+	"github.com/chuck1024/godog/config"
+	"github.com/chuck1024/godog/net/httplib"
 	"github.com/xuyu/logging"
-	"godog/config"
-	"godog/net/httplib"
 )
 
 /*

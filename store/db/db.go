@@ -8,9 +8,9 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/chuck1024/godog/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xuyu/logging"
-	"godog/config"
 	"regexp"
 	"strings"
 )

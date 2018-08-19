@@ -6,8 +6,8 @@
 package main
 
 import (
-	"godog"
-	_ "godog/log" // init log
+	"github.com/chuck1024/godog"
+	_ "github.com/chuck1024/godog/log" // init log
 )
 
 func main() {

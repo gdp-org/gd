@@ -42,7 +42,7 @@ The framework contains `config module`,`error module`,`logging module`,`net modu
 package main
 
 import (
-	"godog"
+	"github.com/chuck1024/godog"
 	"net/http"
 )
 
@@ -87,7 +87,7 @@ func main() {
 package main
 
 import (
-	"godog"
+	"github.com/chuck1024/godog"
 )
 
 func main() {
@@ -119,8 +119,8 @@ func main() {
 package main
 
 import (
-	"godog"
-	_ "godog/log" // init log
+	"github.com/chuck1024/godog"
+	_ "github.com/chuck1024/godog/log" // init log
 )
 
 func main() {
@@ -202,8 +202,8 @@ package main
 import (
     "errors"
     "fmt"
-    "godog"
-    "godog/store/db"
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/store/db"
     "time"
 )
 
@@ -376,8 +376,8 @@ func main() {
 package main
 
 import (
-    "godog"
-    "godog/store/cache"
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/store/cache"
 )
 
 func main() {

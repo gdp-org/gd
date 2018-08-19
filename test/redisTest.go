@@ -6,8 +6,8 @@
 package main
 
 import (
-	"godog"
-	"godog/store/cache"
+	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/store/cache"
 )
 
 func main() {

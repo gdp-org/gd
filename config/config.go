@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"github.com/chuck1024/godog/utils"
 	"github.com/xuyu/logging"
-	"godog/utils"
 )
 
 var (

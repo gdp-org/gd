@@ -8,8 +8,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"godog"
-	"godog/store/db"
+	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/store/db"
 	"time"
 )
 

@@ -6,9 +6,9 @@
 package tcplib
 
 import (
+	dogError "github.com/chuck1024/godog/error"
+	"github.com/chuck1024/godog/utils"
 	"github.com/xuyu/logging"
-	dogError "godog/error"
-	"godog/utils"
 	"math/rand"
 	"net"
 	"sync"

@@ -6,9 +6,9 @@
 package main
 
 import (
-	"godog"
-	me "godog/error"
-	"godog/net/httplib"
+	"github.com/chuck1024/godog"
+	me "github.com/chuck1024/godog/error"
+	"github.com/chuck1024/godog/net/httplib"
 	"net/http"
 )
 

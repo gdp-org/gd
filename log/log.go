@@ -6,8 +6,8 @@
 package log
 
 import (
+	"github.com/chuck1024/godog/config"
 	"github.com/xuyu/logging"
-	"godog/config"
 	"os"
 	"path/filepath"
 )

@@ -7,8 +7,8 @@ package httplib
 
 import (
 	"errors"
+	"github.com/chuck1024/godog/config"
 	"github.com/xuyu/logging"
-	"godog/config"
 )
 
 type InitHandlerFunc func() error
