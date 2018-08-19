@@ -12,8 +12,6 @@ import (
 	"net/http"
 )
 
-var Apps *godog.Application
-
 type test struct {
 	Data string
 }
@@ -65,16 +63,15 @@ func HandlerTcpTestSelf(req []byte) (uint16, []byte) {
 
 func register() {
 	// http
-	Apps.AppHttp.AddHandlerFunc("/test/self", HandlerTestSelf)
+	godog.AppHttp.AddHttpHandler("/test/self", HandlerTestSelf)
 	// Tcp
-	Apps.AppTcpServer.AddTcpHandler(1024, HandlerTcpTestSelf)
+	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTestSelf)
 }
 
 func main() {
-	Apps = godog.NewApplication("test")
 	register()
 
-	err := Apps.Run()
+	err := godog.Run()
 	if err != nil {
 		godog.Error("Error occurs, error = %s", err.Error())
 		return

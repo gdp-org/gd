@@ -18,8 +18,8 @@ import (
  */
 
 var (
-	AppTcpServer *TcpServer
-	NoTcpPort    = errors.New("no tcp serve port")
+	AppTcp    *TcpServer
+	NoTcpPort = errors.New("no tcp serve port")
 )
 
 type Handler func([]byte) (uint16, []byte)
@@ -31,11 +31,11 @@ type TcpServer struct {
 }
 
 func init() {
-	AppTcpServer = &TcpServer{
+	AppTcp = &TcpServer{
 		m: make(map[uint32]Handler),
 	}
-	AppTcpServer.ss = &Server{
-		Handler: AppTcpServer.dispatchPacket,
+	AppTcp.ss = &Server{
+		Handler: AppTcp.dispatchPacket,
 	}
 }
 

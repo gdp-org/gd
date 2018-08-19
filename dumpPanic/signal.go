@@ -34,7 +34,7 @@ func Signal() {
 			case <-Shutdown:
 				logging.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
 				if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
-					tcplib.AppTcpServer.Stop()
+					tcplib.AppTcp.Stop()
 				}
 				Running <- false
 			case <-Hup:

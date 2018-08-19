@@ -16,46 +16,40 @@ import (
 )
 
 var (
-	App *Application
-)
-
-type Application struct {
-	appName      string
 	AppConfig    *config.DogAppConfig
 	AppHttp      *httplib.HttpServer
-	AppTcpServer *tcplib.TcpServer
+	AppTcp       *tcplib.TcpServer
 	AppTcpClient *tcplib.TcpClient
+)
+
+func init() {
+	AppConfig = config.AppConfig
+	AppHttp = httplib.AppHttp
+	AppTcp = tcplib.AppTcp
 }
 
-func NewApplication(name string) *Application {
-	App = &Application{
-		appName:      name,
-		AppConfig:    config.AppConfig,
-		AppHttp:      httplib.AppHttp,
-		AppTcpServer: tcplib.AppTcpServer,
-		AppTcpClient: tcplib.AppTcpClient,
-	}
-
-	return App
+func NewTcpClient(timeout, retryNum uint32) *tcplib.TcpClient {
+	AppTcpClient = tcplib.NewClient(timeout, retryNum)
+	return AppTcpClient
 }
 
-func (app *Application) initCPU() error {
-	if config.AppConfig.BaseConfig.Prog.CPU == 0 {
+func initCPU() error {
+	if AppConfig.BaseConfig.Prog.CPU == httplib.NoPort {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	} else {
-		runtime.GOMAXPROCS(config.AppConfig.BaseConfig.Prog.CPU)
+		runtime.GOMAXPROCS(AppConfig.BaseConfig.Prog.CPU)
 	}
 
 	return nil
 }
 
-func (app *Application) Run() error {
+func Run() error {
 	Info("[App.Run] start")
 	// register signal
 	dumpPanic.Signal()
 
 	// dump when error occurs
-	file, err := dumpPanic.Dump(app.appName)
+	file, err := dumpPanic.Dump(AppConfig.BaseConfig.Server.AppName)
 	if err != nil {
 		Error("[App.Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
@@ -71,18 +65,17 @@ func (app *Application) Run() error {
 	}()
 
 	// init cpu
-	err = app.initCPU()
+	err = initCPU()
 	if err != nil {
 		Error("[App.Run] Cannot init Cpu module, error = %s", err.Error())
 		return err
 	}
 
 	// register handler
-	app.AppHttp.Register()
+	AppHttp.Register()
 
 	// http run
-	err = app.AppHttp.Run()
-	if err != nil {
+	if err = AppHttp.Run(); err != nil {
 		if err == httplib.NoHttpPort {
 			Info("[App.Run] Hasn't http server port")
 		} else {
@@ -92,8 +85,7 @@ func (app *Application) Run() error {
 	}
 
 	// tcp server
-	err = app.AppTcpServer.Run()
-	if err != nil {
+	if err = AppTcp.Run(); err != nil {
 		if err == tcplib.NoTcpPort {
 			Info("[App.Run] Hasn't tcp server port")
 		} else {

@@ -26,7 +26,6 @@ type BaseConfigure struct {
 	Log struct {
 		File   string
 		Level  string
-		Name   string
 		Daemon bool
 		Suffix string
 	}
@@ -37,6 +36,7 @@ type BaseConfigure struct {
 	}
 
 	Server struct {
+		AppName  string
 		HttpPort int
 		TcpPort  int
 	}

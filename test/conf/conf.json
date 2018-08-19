@@ -2,7 +2,6 @@
   "Log": {
     "File":"log/app.log",
     "Level": "debug",
-    "Name": "test",
     "Daemon": false,
     "Suffix": "060102-15"
   },
@@ -11,6 +10,7 @@
     "HealthPort": 0
   },
   "Server": {
+    "AppName": "app",
     "HttpPort":10240,
     "TcpPort": 10241
   },

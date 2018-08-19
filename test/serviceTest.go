@@ -10,8 +10,6 @@ import (
 	"net/http"
 )
 
-var App *godog.Application
-
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 	godog.Debug("connected : %s", r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
@@ -25,15 +23,13 @@ func HandlerTcpTest(req []byte) (uint16, []byte) {
 }
 
 func main() {
-	AppName := "test"
-	App = godog.NewApplication(AppName)
 	// Http
-	App.AppHttp.AddHandlerFunc("/test", HandlerHttpTest)
+	godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
 
 	// Tcp
-	App.AppTcpServer.AddTcpHandler(1024, HandlerTcpTest)
+	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
 
-	err := App.Run()
+	err := godog.Run()
 	if err != nil {
 		godog.Error("Error occurs, error = %s", err.Error())
 		return

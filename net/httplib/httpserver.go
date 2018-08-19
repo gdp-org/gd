@@ -54,7 +54,7 @@ func (h *HttpServer) JudgeInitHandler() bool {
 	return true
 }
 
-func (h *HttpServer) AddHandlerFunc(addr string, handler HandlerFunc) {
+func (h *HttpServer) AddHttpHandler(addr string, handler HandlerFunc) {
 	_, ok := h.handlerMap[addr]
 	if ok {
 		logging.Warning("[AddHandlerFunc] Try to replace handler to addr = %s", addr)

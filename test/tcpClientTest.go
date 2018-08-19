@@ -7,11 +7,10 @@ package main
 
 import (
 	"godog"
-	"godog/net/tcplib"
 )
 
 func main() {
-	c := tcplib.NewClient(500, 0)
+	c := godog.NewTcpClient(500, 0)
 	// remember alter addr
 	c.AddAddr("127.0.0.1:10241")
 
