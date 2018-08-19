@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Author. All rights reserved.
+ * Copyright 2018 godog Author. All rights reserved.
  * Author: Chuck1024
  */
 
