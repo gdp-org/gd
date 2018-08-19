@@ -44,30 +44,30 @@ func initCPU() error {
 }
 
 func Run() error {
-	Info("[App.Run] start")
+	Info("[Run] start")
 	// register signal
 	dumpPanic.Signal()
 
 	// dump when error occurs
 	file, err := dumpPanic.Dump(AppConfig.BaseConfig.Server.AppName)
 	if err != nil {
-		Error("[App.Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+		Error("[Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
 
 	// output exit info
 	defer func() {
-		Info("[App.Run] server stop...code: %d", runtime.NumGoroutine())
+		Info("[Run] server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
-		Info("[App.Run] server stop...ok")
+		Info("[Run] server stop...ok")
 		if err := dumpPanic.ReviewDumpPanic(file); err != nil {
-			Error("[App.Run] Failed to review dump dumpPanic file, error = %s", err.Error())
+			Error("[Run] Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
 	}()
 
 	// init cpu
 	err = initCPU()
 	if err != nil {
-		Error("[App.Run] Cannot init Cpu module, error = %s", err.Error())
+		Error("[Run] Cannot init Cpu module, error = %s", err.Error())
 		return err
 	}
 
@@ -77,9 +77,9 @@ func Run() error {
 	// http run
 	if err = AppHttp.Run(); err != nil {
 		if err == httplib.NoHttpPort {
-			Info("[App.Run] Hasn't http server port")
+			Info("[Run] Hasn't http server port")
 		} else {
-			Error("[App.Run] Http server occur error in running application, error = %s", err.Error())
+			Error("[Run] Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
 	}
@@ -87,9 +87,9 @@ func Run() error {
 	// tcp server
 	if err = AppTcp.Run(); err != nil {
 		if err == tcplib.NoTcpPort {
-			Info("[App.Run] Hasn't tcp server port")
+			Info("[Run] Hasn't tcp server port")
 		} else {
-			Error("[App.Run] Tcp server occur error in running application, error = %s", err.Error())
+			Error("[Run] Tcp server occur error in running application, error = %s", err.Error())
 			return err
 		}
 	}
