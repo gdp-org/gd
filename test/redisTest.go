@@ -14,6 +14,7 @@ func main() {
 	URL, _ := godog.AppConfig.String("redis")
 	cache.Init(URL)
 	key := "key"
+	
 	err := cache.Set(key, "value")
 	if err != nil {
 		godog.Error("redis set occur error:%s", err)
