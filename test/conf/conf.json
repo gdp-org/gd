@@ -15,7 +15,7 @@
     "TcpPort": 10241
   },
 
-  "redis" : "tcp://127.0.0.1:6379/0?cluster=false&idleTimeout=1s&maxIdle=10",
+  "redis" : "tcp://127.0.0.1:6379/0?cluster=false&idleTimeout=60s&maxIdle=10&maxActive=10",
   "mysql" : "mysql://root:password@tcp(127.0.0.1:3306)/test",
   "mysqlMaxConn": 30,
 

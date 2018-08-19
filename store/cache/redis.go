@@ -22,7 +22,7 @@ const (
 	DefaultDatabases = 0
 	DefaultTimeout   = 15 * time.Second
 	DefaultMaxIdle   = 1
-	DefaultMaxActive = -1
+	DefaultMaxActive = 0
 )
 
 var (
@@ -117,13 +117,13 @@ func redisConfigFromURLString(rawUrl string) (*RedisConfig, error) {
 }
 
 func Init(URL string) {
-	client = &RedisClient{}
 	redisConfig, err := redisConfigFromURLString(URL)
 	if err != nil {
 		logging.Error("[DialURL] redisConfigFromURLString occur error: %s", err)
 		return
 	}
 
+	client = &RedisClient{config:redisConfig}
 	if redisConfig.Cluster {
 		client.client = initCluster(redisConfig)
 	} else {
@@ -132,7 +132,7 @@ func Init(URL string) {
 }
 
 func GetClient() RedisHandle {
-	return client.client
+	return client.Get()
 }
 
 func initPool(conf *RedisConfig) *RedisPool {

@@ -9,6 +9,7 @@ import (
 	redisCluster "github.com/chasex/redis-go-cluster"
 	"github.com/garyburd/redigo/redis"
 	"sync"
+	"time"
 )
 
 type RedisHandle interface {
@@ -23,17 +24,46 @@ type RedisPool struct {
 }
 
 func (c *RedisPool) Get() RedisHandle {
-	return c
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	for {
+		r := c.pool.Get()
+		if r.Err() != nil {
+			return nil
+		}
+		return &Connector{Pool: c, Conn: r}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	return nil
 }
 
 func (c *RedisPool) Close() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.pool.Get().Close()
+
 }
 
 func (c *RedisPool) Do(cmd string, args ...interface{}) (interface{}, error) {
-	return c.pool.Get().Do(cmd, args...)
+	return nil,nil
+}
+
+type Connector struct {
+	Pool *RedisPool
+	Conn redis.Conn
+}
+
+func (c *Connector) Get() RedisHandle {
+	return c
+}
+
+func (c *Connector) Close() {
+	c.Pool.mutex.Lock()
+	defer c.Pool.mutex.Unlock()
+
+	c.Conn.Close()
+}
+
+func (c *Connector) Do(cmd string, args ...interface{}) (interface{}, error) {
+	return c.Conn.Do(cmd, args...)
 }
 
 type ClusterClient struct {
