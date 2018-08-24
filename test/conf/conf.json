@@ -1,7 +1,7 @@
 {
   "Log": {
     "File":"log/app.log",
-    "Level": "ERROR",
+    "Level": "Debug",
     "Daemon": false,
     "Suffix": "060102-15"
   },
