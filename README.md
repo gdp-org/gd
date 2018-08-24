@@ -15,7 +15,7 @@ email : chuck.ch1024@outlook.com
 Start with cloning godog:
 
 ```
-> git clone https://github.com/chuck1024/godog.git
+> go get https://github.com/chuck1024/godog.git
 ```
 
 ## Introduction
