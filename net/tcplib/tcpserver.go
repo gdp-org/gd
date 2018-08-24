@@ -18,32 +18,37 @@ import (
  */
 
 var (
-	AppTcp    *TcpServer
+	AppTcp    = NewTcpServer()
 	NoTcpPort = errors.New("no tcp serve port")
 )
 
 type Handler func([]byte) (uint16, []byte)
 
 type TcpServer struct {
-	Addr string
+	addr string
 	m    map[uint32]Handler
 	ss   *Server
 }
 
-func init() {
-	AppTcp = &TcpServer{
+func NewTcpServer() *TcpServer {
+	s := &TcpServer{
 		m: make(map[uint32]Handler),
 	}
-	AppTcp.ss = &Server{
-		Handler: AppTcp.dispatchPacket,
+
+	s.ss = &Server{
+		Handler: s.dispatchPacket,
 	}
+
+	return s
 }
 
-func (s *TcpServer) Start() {
-	err := s.ss.Start()
+func (s *TcpServer) Start() error {
+	err := s.ss.Serve()
 	if err != nil {
 		logging.Error("%s", err.Error())
+		return err
 	}
+	return nil
 }
 
 func (s *TcpServer) Run() error {
@@ -56,10 +61,10 @@ func (s *TcpServer) Run() error {
 	addr := fmt.Sprintf(":%d", port)
 	logging.Info("[Run] Tcp try to listen port: %d", port)
 
-	s.Addr = addr
+	s.addr = addr
 	s.ss.Addr = addr
 
-	err := s.ss.Serve()
+	err := s.Start()
 	if err != nil {
 		logging.Error("%s", err.Error())
 		return err
@@ -70,6 +75,11 @@ func (s *TcpServer) Run() error {
 
 func (s *TcpServer) Stop() {
 	s.ss.serverStopChan <- struct{ bool }{true}
+}
+
+func (s *TcpServer) SetAddr(addr string) {
+	s.addr = addr
+	s.ss.Addr = addr
 }
 
 func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {

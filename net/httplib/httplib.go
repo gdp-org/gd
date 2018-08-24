@@ -8,7 +8,6 @@ package httplib
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	me "github.com/chuck1024/godog/error"
 	"github.com/xuyu/logging"
 	"io"
@@ -54,40 +53,6 @@ type Response struct {
 
 	ContentLength    int64
 	TransferEncoding []string
-}
-
-type HandlerFunc func(http.ResponseWriter, *http.Request)
-
-type Handler interface {
-	ServeHTTP(http.ResponseWriter, *http.Request)
-}
-
-func Serve(httpPort int, handler http.Handler) {
-	srvPort := fmt.Sprintf(":%d", httpPort)
-	logging.Info("[Serve] Http try to listen port: %d", httpPort)
-	go func() {
-		err := http.ListenAndServe(srvPort, handler)
-		if err != nil {
-			logging.Error("[Serve] Listen failed, error = %s", err.Error())
-			return
-		}
-	}()
-}
-
-func Health(healthPort int, handler http.Handler) {
-	srvPort := fmt.Sprintf("%d", healthPort)
-	logging.Info("[Health] Try to monitor health condition on port: %s", srvPort)
-	go func() {
-		err := http.ListenAndServe(srvPort, handler)
-		if err != nil {
-			logging.Error("[Health] monitor failed, error = %s", err.Error())
-			return
-		}
-	}()
-}
-
-func HandleFunc(addr string, handler HandlerFunc) {
-	http.HandleFunc(addr, handler)
 }
 
 // Http client operation

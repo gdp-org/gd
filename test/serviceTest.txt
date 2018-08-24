@@ -4,4 +4,4 @@
  */
 
 http server test:
->curl http://127.0.0.1:10240/test
+>$ curl http://127.0.0.1:10240/test

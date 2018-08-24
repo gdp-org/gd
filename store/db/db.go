@@ -15,21 +15,17 @@ import (
 	"strings"
 )
 
-var (
-	MysqlHandle *sql.DB
-)
-
-func Init(URL string) {
+func Init(URL string) *sql.DB {
 	maxConnections, err := config.AppConfig.Int("mysqlMaxConn")
 	if err != nil {
 		logging.Warning("[init] get config mysqlMaxConn occur error: ", err)
-		return
+		return nil
 	}
 
 	if ok, err := regexp.MatchString("^mysql://.*:.*@.*/.*$", URL); !ok || err != nil {
 		logging.Error("[init] Mysql config syntax err:mysql_zone,%s,shutdown", URL)
 		panic("conf error")
-		return
+		return nil
 	}
 
 	URL = strings.Replace(URL, "mysql://", "", 1)
@@ -37,15 +33,16 @@ func Init(URL string) {
 	if err != nil {
 		logging.Error("[init] Failed mysql url=" + URL + ",err=" + err.Error())
 		panic("failed mysql url=" + URL)
-		return
+		return nil
 	}
 
 	logging.Debug("[init] maxConnections=%d", maxConnections)
 	db.SetMaxOpenConns(maxConnections)
 	db.SetMaxIdleConns(10)
 
-	logging.Info("Mysql conn ok: %s", URL)
-	MysqlHandle = db
+	logging.Info("[init] Mysql conn ok: %s", URL)
+
+	return db
 }
 
 func Where(whereMap map[string]string) string {

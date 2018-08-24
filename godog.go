@@ -16,17 +16,11 @@ import (
 )
 
 var (
-	AppConfig    *config.DogAppConfig
-	AppHttp      *httplib.HttpServer
-	AppTcp       *tcplib.TcpServer
+	AppConfig    = config.AppConfig
+	AppHttp      = httplib.AppHttp
+	AppTcp       = tcplib.AppTcp
 	AppTcpClient *tcplib.TcpClient
 )
-
-func init() {
-	AppConfig = config.AppConfig
-	AppHttp = httplib.AppHttp
-	AppTcp = tcplib.AppTcp
-}
 
 func NewTcpClient(timeout, retryNum uint32) *tcplib.TcpClient {
 	AppTcpClient = tcplib.NewClient(timeout, retryNum)

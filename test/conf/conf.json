@@ -1,6 +1,6 @@
 {
   "Log": {
-    "File":"log/app.log",
+    "File":"log/godog.log",
     "Level": "Debug",
     "Daemon": false,
     "Suffix": "060102-15"
@@ -10,7 +10,7 @@
     "HealthPort": 0
   },
   "Server": {
-    "AppName": "app",
+    "AppName": "godog",
     "HttpPort":10240,
     "TcpPort": 10241
   },

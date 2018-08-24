@@ -6,6 +6,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/chuck1024/godog"
@@ -15,6 +16,10 @@ import (
 
 const (
 	tableName = "test"
+)
+
+var (
+	MysqlHandle *sql.DB
 )
 
 type Test struct {
@@ -36,8 +41,8 @@ func (t *Test) Add() error {
 		"create_time": t.CreateTs,
 	}
 
-	sql := db.InsertOne(tableName, insertData)
-	stmt, err := db.MysqlHandle.Prepare(sql)
+	sqlData := db.InsertOne(tableName, insertData)
+	stmt, err := MysqlHandle.Prepare(sqlData)
 	if err != nil {
 		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
 		return err
@@ -73,8 +78,8 @@ func (t *Test) Update(birthday uint64) error {
 		"card_id": fmt.Sprintf("%d", t.CardId),
 	}
 
-	sql := db.Update(tableName, whereMap, dataMap)
-	stmt, err := db.MysqlHandle.Prepare(sql)
+	sqlData := db.Update(tableName, whereMap, dataMap)
+	stmt, err := MysqlHandle.Prepare(sqlData)
 	if err != nil {
 		godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
 		return err
@@ -102,9 +107,9 @@ func (t *Test) Update(birthday uint64) error {
 }
 
 func (t *Test) Query(cardId uint64) (*Test, error) {
-	sql := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
+	sqlData := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
 
-	rows, err := db.MysqlHandle.Query(sql, cardId)
+	rows, err := MysqlHandle.Query(sqlData, cardId)
 	if err != nil {
 		godog.Error("occur error :%s", err)
 		return nil, err
@@ -172,7 +177,7 @@ func main() {
 		return
 	}
 
-	db.Init(url)
+	MysqlHandle = db.Init(url)
 
 	testQuery()
 }

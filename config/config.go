@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	AppConfig *DogAppConfig
+	AppConfig = NewDogConfig()
 )
 
 type DogAppConfig struct {
@@ -42,13 +42,14 @@ type BaseConfigure struct {
 	}
 }
 
-func init() {
-	AppConfig = &DogAppConfig{
+func NewDogConfig() *DogAppConfig {
+	c := &DogAppConfig{
 		BaseConfig: new(BaseConfigure),
 		data:       make(map[string]interface{}),
 	}
 
-	AppConfig.initNewConfigure()
+	c.initNewConfigure()
+	return c
 }
 
 func (a *DogAppConfig) initNewConfigure() {

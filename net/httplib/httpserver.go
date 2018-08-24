@@ -7,17 +7,24 @@ package httplib
 
 import (
 	"errors"
+	"fmt"
 	"github.com/chuck1024/godog/config"
 	"github.com/xuyu/logging"
+	"net/http"
 )
 
 type InitHandlerFunc func() error
+type HandlerFunc func(http.ResponseWriter, *http.Request)
 
 var (
-	AppHttp    *HttpServer
+	AppHttp    = NewHttpServer()
 	NoHttpPort = errors.New("no http serve port")
 	NoPort     = 0
 )
+
+type Handler interface {
+	ServeHTTP(http.ResponseWriter, *http.Request)
+}
 
 type HttpServer struct {
 	health      Handler
@@ -26,8 +33,8 @@ type HttpServer struct {
 	handlerMap  map[string]HandlerFunc
 }
 
-func init() {
-	AppHttp = &HttpServer{
+func NewHttpServer() *HttpServer {
+	return &HttpServer{
 		health:      nil,
 		handler:     nil,
 		initHandler: nil,
@@ -54,6 +61,34 @@ func (h *HttpServer) JudgeInitHandler() bool {
 	return true
 }
 
+func (h *HttpServer) Serve(httpPort int, handler http.Handler) {
+	srvPort := fmt.Sprintf(":%d", httpPort)
+	logging.Info("[Serve] Http try to listen port: %d", httpPort)
+	go func() {
+		err := http.ListenAndServe(srvPort, handler)
+		if err != nil {
+			logging.Error("[Serve] Listen failed, error = %s", err.Error())
+			return
+		}
+	}()
+}
+
+func (h *HttpServer) Health(healthPort int, handler http.Handler) {
+	srvPort := fmt.Sprintf("%d", healthPort)
+	logging.Info("[Health] Try to monitor health condition on port: %s", srvPort)
+	go func() {
+		err := http.ListenAndServe(srvPort, handler)
+		if err != nil {
+			logging.Error("[Health] monitor failed, error = %s", err.Error())
+			return
+		}
+	}()
+}
+
+func (h *HttpServer) HandleFunc(addr string, handler HandlerFunc) {
+	http.HandleFunc(addr, handler)
+}
+
 func (h *HttpServer) AddHttpHandler(addr string, handler HandlerFunc) {
 	_, ok := h.handlerMap[addr]
 	if ok {
@@ -66,14 +101,14 @@ func (h *HttpServer) AddHttpHandler(addr string, handler HandlerFunc) {
 
 func (h *HttpServer) Register() {
 	for k, v := range h.handlerMap {
-		HandleFunc(k, v)
+		h.HandleFunc(k, v)
 	}
 }
 
 func (h *HttpServer) Run() error {
 	// http health
 	if config.AppConfig.BaseConfig.Prog.HealthPort != NoPort && h.health != nil {
-		Health(config.AppConfig.BaseConfig.Prog.HealthPort, h.health)
+		h.Health(config.AppConfig.BaseConfig.Prog.HealthPort, h.health)
 	}
 
 	// http service
@@ -81,7 +116,7 @@ func (h *HttpServer) Run() error {
 		logging.Info("[Run] No http Serve port for application ")
 		return NoHttpPort
 	} else {
-		Serve(config.AppConfig.BaseConfig.Server.HttpPort, h.handler)
+		h.Serve(config.AppConfig.BaseConfig.Server.HttpPort, h.handler)
 	}
 
 	return nil
