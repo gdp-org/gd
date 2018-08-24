@@ -50,6 +50,7 @@ func (l *Logger) Log(level logLevel, format string, values ...interface{}) {
 		LoggerName: l.Name,
 	}
 
+	// add by Chuck1024
 	_, file, line, ok := runtime.Caller(2)
 	if !ok {
 		file = "???"

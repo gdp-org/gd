@@ -123,7 +123,7 @@ func Init(URL string) {
 		return
 	}
 
-	client = &RedisClient{config:redisConfig}
+	client = &RedisClient{config: redisConfig}
 	if redisConfig.Cluster {
 		client.client = initCluster(redisConfig)
 	} else {

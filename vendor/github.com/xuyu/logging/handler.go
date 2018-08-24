@@ -12,6 +12,7 @@ const (
 	DefaultTimeLayout = "2006-01-02 15:04:05"
 )
 
+// add by Chuck1024
 const (
 	y1  = `0123456789`
 	y2  = `0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789`
@@ -143,6 +144,7 @@ func (h *Handler) handleRecord(name string, rd *Record) {
 	h.mutex.Unlock()
 }
 
+// add by Chuck1024
 func formatTimeHeader(when time.Time) ([]byte, int) {
 	y, mo, d := when.Date()
 	h, mi, s := when.Clock()

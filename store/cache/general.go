@@ -43,7 +43,7 @@ func (c *RedisPool) Close() {
 }
 
 func (c *RedisPool) Do(cmd string, args ...interface{}) (interface{}, error) {
-	return nil,nil
+	return nil, nil
 }
 
 type Connector struct {

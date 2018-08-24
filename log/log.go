@@ -27,12 +27,12 @@ func initLogger(logFile, logLevel, name, suffix string, daemon bool) error {
 		return err
 	}
 
-	handler.SetLevelString(logLevel)
 	handler.SetFormat(func(name, timeString string, rd *logging.Record) string {
 		return "[" + timeString + "] " + name + " " + rd.Level.String() + " " + rd.Message + "\n"
 	})
 
 	logging.AddHandler(name, handler)
+	logging.ResetLogLevel(logLevel)
 
 	if daemon {
 		logging.DisableStdout()
