@@ -6,6 +6,7 @@
 package cache
 
 import (
+	"errors"
 	redisCluster "github.com/chasex/redis-go-cluster"
 	"github.com/garyburd/redigo/redis"
 	"github.com/xuyu/logging"
@@ -27,6 +28,7 @@ const (
 
 var (
 	client *RedisClient
+	ErrNil = errors.New("nil reply")
 )
 
 type RedisConfig struct {
