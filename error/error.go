@@ -7,6 +7,7 @@ package error
 
 import (
 	"fmt"
+	"net/http"
 )
 
 var (
@@ -93,6 +94,17 @@ func SetCodeType(code int, errType string) *CodeError {
 		errCode: code,
 		errType: errType,
 	}
+	return err
+}
+
+func MakeHttpErrorByStatusCode(statusCode int) *CodeError {
+	statusText := http.StatusText(statusCode)
+	err := &CodeError{
+		errCode: statusCode,
+		errType: statusText,
+		errMsg:  statusText,
+	}
+
 	return err
 }
 
