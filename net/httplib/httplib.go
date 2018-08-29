@@ -79,7 +79,7 @@ func (req *Request) addHeader(key string, value string) {
 }
 
 func (req *Request) doRequest() (*Response, error) {
-	logging.Debug("[doRequest, id: %s] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
+	logging.Debug("[doRequest] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
 
 	client := &http.Client{}
 	client.Timeout = time.Duration(10 * time.Second)
