@@ -7,7 +7,7 @@ package main
 
 import (
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/store/cache"
+	"github.com/chuck1024/godog/dao/cache"
 )
 
 func main() {

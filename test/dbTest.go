@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/store/db"
+	"github.com/chuck1024/godog/dao/db"
 	"time"
 )
 
