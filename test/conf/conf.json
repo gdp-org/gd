@@ -1,7 +1,7 @@
 {
   "Log": {
     "File":"log/godog.log",
-    "Level": "Debug",
+    "Level": "DEBUG",
     "Daemon": false,
     "Suffix": "060102-15"
   },

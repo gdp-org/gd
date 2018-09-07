@@ -36,4 +36,4 @@ func main() {
 	}
 }
 
-// you can use command to test service that it is in another file <serviceTest.txt>.
+// you can use command to test service that it is in another file <service.txt>.

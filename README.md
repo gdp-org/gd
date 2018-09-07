@@ -31,7 +31,7 @@ The framework contains `config module`,`error module`,`logging module`,`net modu
 ## Usage
 
 `service module` provides golang server. It is a simple demo that you can develop it on the basis of it. 
->* You can find it in "godog/test/serviceTest.go"
+>* You can find it in "godog/test/service.go"
 >* use `control+c` to stop process
 
 ```
@@ -77,7 +77,7 @@ func main() {
 ```
 
 `tcpClient` show how to call tcpserver
->* You can find it in "godog/test/tcpClientTest.go"
+>* You can find it in "godog/test/tcp_client_test.go"
 
 ```
 /**
@@ -85,13 +85,14 @@ func main() {
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
     "github.com/chuck1024/godog"
+    "testing"
 )
 
-func main() {
+func TestTcpClient(t *testing.T) {
     c := godog.NewTcpClient(500, 0)
     // remember alter addr
     c.AddAddr("127.0.0.1:10241")
@@ -109,7 +110,7 @@ func main() {
 ```
 
 `config module` provides the related configuration of the project.
->* You can find it in "godog/test/configTest.go"
+>* You can find it in "godog/test/config_test.go"
 
 ```
 /**
@@ -117,14 +118,15 @@ func main() {
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
     "github.com/chuck1024/godog"
     _ "github.com/chuck1024/godog/log" // init log
+    "testing"
 )
 
-func main() {
+func TestConfig(t *testing.T) {
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
 
@@ -190,7 +192,7 @@ func main() {
 `error module` provides the relation usages of error that you can find it in godog.
 
 `store module` provides the relation usages of db and redis.
->* You can find it in "godog/test/dbTest.go" and "godog/test/redisTest.go"
+>* You can find it in "godog/test/db_test.go" and "godog/test/redis_test.go"
 
 ```
 /**
@@ -198,7 +200,7 @@ func main() {
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
     "errors"
@@ -206,13 +208,18 @@ import (
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/store/db"
     "time"
+    "testing"
 )
 
 const (
     tableName = "test"
 )
 
-type Test struct {
+var (
+    MysqlHandle *sql.DB
+)
+
+type TestDB struct {
     Name     string `json:"name"`
     CardId   uint64 `json:"card_id"`
     Sex      string `json:"sex"`
@@ -221,7 +228,7 @@ type Test struct {
     CreateTs uint64 `json:"create_time"`
 }
 
-func (t *Test) Add() error {
+func (t *TestDB) Add() error {
     insertData := map[string]interface{}{
         "name":        t.Name,
         "card_id":     t.CardId,
@@ -259,7 +266,7 @@ func (t *Test) Add() error {
     return nil
 }
 
-func (t *Test) Update(birthday uint64) error {
+func (t *TestDB) Update(birthday uint64) error {
     dataMap := map[string]interface{}{
         "birthday": birthday,
     }
@@ -296,7 +303,7 @@ func (t *Test) Update(birthday uint64) error {
     return nil
 }
 
-func (t *Test) Query(cardId uint64) (*Test, error) {
+func (t *TestDB) Query(cardId uint64) (*Test, error) {
     sql := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
 
     rows, err := db.MysqlHandle.Query(sql, cardId)
@@ -307,9 +314,9 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
 
     defer rows.Close()
 
-    var app *Test = nil
+    var app *TestDB = nil
     for rows.Next() {
-        app = &Test{}
+        app = &TestDB{}
         app.CardId = cardId
         err = rows.Scan(&app.Name, &app.Sex, &app.Birthday, &app.Status, &app.CreateTs)
         if err != nil {
@@ -321,8 +328,16 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
     return app, nil
 }
 
-func testAdd() {
-    t := &Test{
+func TestAdd(t *testing.T) {
+    url, err := godog.AppConfig.String("mysql")
+    if err != nil {
+        godog.Warning("[init] get config mysql url occur error: ", err)
+        return
+    }
+
+    MysqlHandle = db.Init(url)
+    
+    td := &TestDB{
         Name:     "chuck",
         CardId:   1025,
         Sex:      "male",
@@ -331,48 +346,49 @@ func testAdd() {
         CreateTs: uint64(time.Now().Unix()),
     }
 
-    if err := t.Add(); err != nil {
+    if err := td.Add(); err != nil {
         godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
         return
     }
 }
 
-func testUpdate() {
-    t := &Test{
-        CardId: 1024,
-    }
-
-    if err := t.Update(1025); err != nil {
-        godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
-        return
-    }
-}
-
-func testQuery() {
-    t := &Test{}
-
-    tt, err := t.Query(1024)
-    if err != nil {
-        godog.Error("query occur error:", err)
-        return
-    }
-
-    godog.Debug("query: %v", *tt)
-}
-
-func main() {
+func TestUpdate(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
         godog.Warning("[init] get config mysql url occur error: ", err)
         return
     }
 
-    db.Init(url)
+    MysqlHandle = db.Init(url)
+    
+    td := &TestDB{
+        CardId: 1024,
+    }
 
-    testAdd()
-    testQuery()
-    testUpdate()
-    testQuery()
+    if err := td.Update(1025); err != nil {
+        godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
+        return
+    }
+}
+
+func TestQuery(t *testing.T) {
+    url, err := godog.AppConfig.String("mysql")
+    if err != nil {
+        godog.Warning("[init] get config mysql url occur error: ", err)
+        return
+    }
+
+    MysqlHandle = db.Init(url)
+    
+    td := &TestDB{}
+
+    tt, err := td.Query(1024)
+    if err != nil {
+        godog.Error("query occur error:", err)
+        return
+    }
+
+    godog.Debug("query: %v", *tt)
 }
 ```
 
@@ -382,14 +398,15 @@ func main() {
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/store/cache"
+    "testing
 )
 
-func main() {
+func TestRedis(t *testing.T) {
     URL,_ := godog.AppConfig.String("redis")
     cache.Init(URL)
     

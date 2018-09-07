@@ -3,14 +3,15 @@
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
 	"github.com/chuck1024/godog"
 	_ "github.com/chuck1024/godog/log" // init log
+	"testing"
 )
 
-func main() {
+func TestConfig(t *testing.T) {
 	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
 	// The location of config.json is "conf/conf.json". Of course, you change it if you want.
 

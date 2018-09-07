@@ -3,13 +3,14 @@
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
 	"github.com/chuck1024/godog"
+	"testing"
 )
 
-func main() {
+func TestTcpClient(t *testing.T) {
 	c := godog.NewTcpClient(500, 0)
 	// remember alter addr
 	c.AddAddr("127.0.0.1:10241")

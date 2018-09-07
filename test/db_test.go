@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
 	"database/sql"
@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/dao/db"
+	"testing"
 	"time"
 )
 
@@ -22,7 +23,7 @@ var (
 	MysqlHandle *sql.DB
 )
 
-type Test struct {
+type TestDB struct {
 	Name     string `json:"name"`
 	CardId   uint64 `json:"card_id"`
 	Sex      string `json:"sex"`
@@ -31,7 +32,7 @@ type Test struct {
 	CreateTs uint64 `json:"create_time"`
 }
 
-func (t *Test) Add() error {
+func (t *TestDB) Add() error {
 	insertData := map[string]interface{}{
 		"name":        t.Name,
 		"card_id":     t.CardId,
@@ -69,7 +70,7 @@ func (t *Test) Add() error {
 	return nil
 }
 
-func (t *Test) Update(birthday uint64) error {
+func (t *TestDB) Update(birthday uint64) error {
 	dataMap := map[string]interface{}{
 		"birthday": birthday,
 	}
@@ -106,7 +107,7 @@ func (t *Test) Update(birthday uint64) error {
 	return nil
 }
 
-func (t *Test) Query(cardId uint64) (*Test, error) {
+func (t *TestDB) Query(cardId uint64) (*TestDB, error) {
 	sqlData := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
 
 	rows, err := MysqlHandle.Query(sqlData, cardId)
@@ -117,9 +118,9 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
 
 	defer rows.Close()
 
-	var app *Test = nil
+	var app *TestDB = nil
 	for rows.Next() {
-		app = &Test{}
+		app = &TestDB{}
 		app.CardId = cardId
 		err = rows.Scan(&app.Name, &app.Sex, &app.Birthday, &app.Status, &app.CreateTs)
 		if err != nil {
@@ -131,8 +132,15 @@ func (t *Test) Query(cardId uint64) (*Test, error) {
 	return app, nil
 }
 
-func testAdd() {
-	t := &Test{
+func TestAdd(t *testing.T) {
+	url, err := godog.AppConfig.String("mysql")
+	if err != nil {
+		godog.Warning("[init] get config mysql url occur error: ", err)
+		return
+	}
+
+	MysqlHandle = db.Init(url)
+	td := &TestDB{
 		Name:     "chuck",
 		CardId:   1025,
 		Sex:      "male",
@@ -141,36 +149,31 @@ func testAdd() {
 		CreateTs: uint64(time.Now().Unix()),
 	}
 
-	if err := t.Add(); err != nil {
+	if err := td.Add(); err != nil {
 		godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
 
-func testUpdate() {
-	t := &Test{
+func TestUpdate(t *testing.T) {
+	url, err := godog.AppConfig.String("mysql")
+	if err != nil {
+		godog.Warning("[init] get config mysql url occur error: ", err)
+		return
+	}
+
+	MysqlHandle = db.Init(url)
+	td := &TestDB{
 		CardId: 1024,
 	}
 
-	if err := t.Update(1025); err != nil {
+	if err := td.Update(1025); err != nil {
 		godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
 
-func testQuery() {
-	t := &Test{}
-
-	tt, err := t.Query(1024)
-	if err != nil {
-		godog.Error("query occur error:", err)
-		return
-	}
-
-	godog.Debug("query: %v", *tt)
-}
-
-func main() {
+func TestQuery(t *testing.T) {
 	url, err := godog.AppConfig.String("mysql")
 	if err != nil {
 		godog.Warning("[init] get config mysql url occur error: ", err)
@@ -179,5 +182,13 @@ func main() {
 
 	MysqlHandle = db.Init(url)
 
-	testQuery()
+	td := &TestDB{}
+
+	tt, err := td.Query(1024)
+	if err != nil {
+		godog.Error("query occur error:", err)
+		return
+	}
+
+	godog.Debug("query: %v", *tt)
 }

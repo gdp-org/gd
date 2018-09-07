@@ -3,14 +3,15 @@
  * Author: Chuck1024
  */
 
-package main
+package main_test
 
 import (
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/dao/cache"
+	"testing"
 )
 
-func main() {
+func TestRedis(t *testing.T) {
 	URL, _ := godog.AppConfig.String("redis")
 	cache.Init(URL)
 	key := "key"
