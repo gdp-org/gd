@@ -10,7 +10,6 @@ import (
 	dogError "github.com/chuck1024/godog/error"
 	"github.com/xuyu/logging"
 	"io"
-	"net"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -27,7 +26,7 @@ type Server struct {
 	PendingResponses int
 	SendBufferSize   int
 	RecvBufferSize   int
-	Listener         net.Listener
+	Listener         Listener
 	serverStopChan   chan struct{ bool }
 	stopWg           sync.WaitGroup
 	Encoder          MessageEncoderFunc
@@ -66,8 +65,11 @@ func (s *Server) Start() *dogError.CodeError {
 		s.Decoder = defaultMessageDecoder
 	}
 
-	var err error
-	if s.Listener, err = net.Listen("tcp", s.Addr); err != nil {
+	if s.Listener == nil {
+		s.Listener = &defaultListener{}
+	}
+
+	if err := s.Listener.Init(s.Addr); err != nil {
 		ce := InternalServerError.SetMsg(fmt.Sprintf("[%s]. Cannot listen to: [%s]", s.Addr, err))
 		return ce
 	}
@@ -98,7 +100,7 @@ func (s *Server) Stop() {
 func serverHandler(s *Server, workersCh chan struct{}) {
 	defer s.stopWg.Done()
 
-	var conn net.Conn
+	var conn io.ReadWriteCloser
 	var clientAddr string
 	var err error
 	var stopping atomic.Value
@@ -106,13 +108,9 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 	for {
 		acceptChan := make(chan struct{})
 		go func() {
-			if conn, clientAddr, err = accept(s.Listener); err != nil {
+			if conn, clientAddr, err = s.Listener.Accept(); err != nil {
 				if stopping.Load() == nil {
 					logging.Error("[serverHandler] [%s] cannot accept new connection: [%s]", s.Addr, err)
-				}
-			} else {
-				if err = setupKeepalive(conn); err != nil {
-					conn.Close()
 				}
 			}
 			close(acceptChan)
@@ -143,30 +141,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 	}
 }
 
-func accept(ln net.Listener) (conn net.Conn, clientAddr string, err error) {
-	c, err := ln.Accept()
-	if err != nil {
-		return nil, "", err
-	}
-	if err = setupKeepalive(c); err != nil {
-		c.Close()
-		return nil, "", err
-	}
-	return c, c.RemoteAddr().String(), nil
-}
-
-func setupKeepalive(conn net.Conn) error {
-	tcpConn := conn.(*net.TCPConn)
-	if err := tcpConn.SetKeepAlive(true); err != nil {
-		return err
-	}
-	if err := tcpConn.SetKeepAlivePeriod(30 * time.Second); err != nil {
-		return err
-	}
-	return nil
-}
-
-func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workersCh chan struct{}) {
+func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr string, workersCh chan struct{}) {
 	defer s.stopWg.Done()
 
 	responsesChan := make(chan *serverMessage, s.PendingResponses)
@@ -196,7 +171,7 @@ func serverHandleConnection(s *Server, conn net.Conn, clientAddr string, workers
 	logging.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
 }
 
-func serverReader(s *Server, conn net.Conn, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
+func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			logging.Error("[serverReader] [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
@@ -271,7 +246,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 	return
 }
 
-func serverWriter(s *Server, conn net.Conn, clientAddr string, responsesChan <-chan *serverMessage, stopChan <-chan struct{}, done chan<- struct{}) {
+func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, responsesChan <-chan *serverMessage, stopChan <-chan struct{}, done chan<- struct{}) {
 	defer func() {
 		close(done)
 	}()
