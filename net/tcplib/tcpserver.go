@@ -74,7 +74,7 @@ func (s *TcpServer) Run() error {
 }
 
 func (s *TcpServer) Stop() {
-	close(s.ss.serverStopChan)
+	s.ss.Stop()
 }
 
 func (s *TcpServer) SetAddr(addr string) {

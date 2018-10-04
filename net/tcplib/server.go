@@ -147,9 +147,9 @@ func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr strin
 	responsesChan := make(chan *serverMessage, s.PendingResponses)
 	stopChan := make(chan struct{})
 	readerDone := make(chan struct{})
-	go serverReader(s, conn, clientAddr, responsesChan, stopChan, readerDone, workersCh)
-
 	writerDone := make(chan struct{})
+
+	go serverReader(s, conn, clientAddr, responsesChan, stopChan, readerDone, workersCh)
 	go serverWriter(s, conn, clientAddr, responsesChan, stopChan, writerDone)
 
 	select {
@@ -167,6 +167,7 @@ func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr strin
 		<-readerDone
 		<-writerDone
 	}
+
 	responsesChan = nil
 	logging.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
 }
@@ -257,6 +258,7 @@ func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 		err = fmt.Errorf("init encoder error:%s", err.Error())
 		return
 	}
+
 	var flushChan <-chan time.Time
 	t := time.NewTimer(s.FlushDelay)
 
@@ -281,6 +283,7 @@ func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 				continue
 			}
 		}
+
 		if flushChan == nil {
 			flushChan = getFlushChan(t, s.FlushDelay)
 		}

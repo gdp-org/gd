@@ -30,7 +30,6 @@ var (
 var closedFlushChan = make(chan time.Time)
 
 func init() {
-
 	close(closedFlushChan)
 }
 
