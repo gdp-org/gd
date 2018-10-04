@@ -27,7 +27,7 @@ type Server struct {
 	SendBufferSize   int
 	RecvBufferSize   int
 	Listener         Listener
-	serverStopChan   chan struct{ bool }
+	serverStopChan   chan struct{}
 	stopWg           sync.WaitGroup
 	Encoder          MessageEncoderFunc
 	Decoder          MessageDecoderFunc
@@ -41,7 +41,7 @@ func (s *Server) Start() *dogError.CodeError {
 	if s.serverStopChan != nil {
 		panic("server is already running. Stop it before starting it again")
 	}
-	s.serverStopChan = make(chan struct{ bool })
+	s.serverStopChan = make(chan struct{})
 
 	if s.Concurrency <= 0 {
 		s.Concurrency = DefaultConcurrency
