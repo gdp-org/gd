@@ -85,11 +85,8 @@ func main() {
     // Http
     godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
 
-    // choose default tcp server
-    godog.NewTcpServer()
-
-    // choose godog tcp server
-    //godog.NewDogTcpServer()
+    // default tcp server, you can choose godog tcp server
+    //godog.AppTcp = tcplib.AppDog
 
     // Tcp
     godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
