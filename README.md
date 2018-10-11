@@ -62,7 +62,7 @@ type Header struct {
 }
 
 PS: of course, you can add new TcpPacket according to yourself rule.
-    DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol
+    DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol.
 ```
 
 >* You can find it in "test/service.go"
