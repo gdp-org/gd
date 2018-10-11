@@ -8,7 +8,7 @@ package httplib
 import (
 	"bytes"
 	"encoding/json"
-	me "github.com/chuck1024/godog/error"
+	de "github.com/chuck1024/godog/error"
 	"github.com/xuyu/logging"
 	"io"
 	"io/ioutil"
@@ -222,10 +222,10 @@ type LogRequestInfo struct {
 	Body         interface{}
 }
 
-func getResponseInfo(err *me.CodeError, data interface{}) []byte {
+func getResponseInfo(err *de.CodeError, data interface{}) []byte {
 	response := &ResponseData{}
 	if err == nil {
-		response.Result = me.Success
+		response.Result = de.Success
 		response.Msg = "ok"
 	} else {
 		response.Result = err.Code()
@@ -242,7 +242,7 @@ func getResponseInfo(err *me.CodeError, data interface{}) []byte {
 	return ret
 }
 
-func LogGetResponseInfo(req *http.Request, err *me.CodeError, data interface{}) []byte {
+func LogGetResponseInfo(req *http.Request, err *de.CodeError, data interface{}) []byte {
 	ret := getResponseInfo(err, data)
 
 	body := ""
