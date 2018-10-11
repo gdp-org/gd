@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/tcplib"
 	"net/http"
 )
 
@@ -27,7 +28,7 @@ func main() {
 	godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
 
 	// default tcp server, you can choose godog tcp server
-	//godog.AppTcp = tcplib.AppDog
+	godog.AppTcp = tcplib.AppDog
 
 	// Tcp
 	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
