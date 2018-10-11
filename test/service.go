@@ -18,7 +18,7 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 func HandlerTcpTest(req []byte) (uint32, []byte) {
 	godog.Debug("tcp server request: %s", string(req))
 	code := uint32(200)
-	resp := []byte("Are you ok??")
+	resp := []byte("Are you ok?")
 	return code, resp
 }
 
@@ -26,11 +26,8 @@ func main() {
 	// Http
 	godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
 
-	// choose default tcp server
-	godog.NewTcpServer()
-
-	// choose godog tcp server
-	//godog.NewDogTcpServer()
+	// default tcp server, you can choose godog tcp server
+	//godog.AppTcp = tcplib.AppDog
 
 	// Tcp
 	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)

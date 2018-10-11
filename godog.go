@@ -18,21 +18,13 @@ import (
 var (
 	AppConfig    = config.AppConfig
 	AppHttp      = httplib.AppHttp
-	AppTcp       *tcplib.TcpServer
+	AppTcp       = tcplib.AppTcp
 	AppTcpClient *tcplib.TcpClient
 )
 
 func NewTcpClient(timeout, retryNum uint32) *tcplib.TcpClient {
 	AppTcpClient = tcplib.NewClient(timeout, retryNum)
 	return AppTcpClient
-}
-
-func NewTcpServer() {
-	AppTcp = tcplib.AppTcp
-}
-
-func NewDogTcpServer() {
-	AppTcp = tcplib.AppDog
 }
 
 func initCPU() error {
