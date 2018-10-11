@@ -14,7 +14,7 @@ import (
 )
 
 /*
- * tcp server
+ * default tcp server
  */
 
 var (
@@ -22,7 +22,7 @@ var (
 	NoTcpPort = errors.New("no tcp serve port")
 )
 
-type Handler func([]byte) (uint16, []byte)
+type Handler func([]byte) (uint32, []byte)
 
 type TcpServer struct {
 	addr string

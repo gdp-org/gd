@@ -1,4 +1,4 @@
-# godog
+# GoDog
 
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗" in Chinese, which is very cute.
 
@@ -20,9 +20,9 @@ Start with cloning godog:
 
 ## Introduction
 
-Godog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
+GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-The framework contains `config module`,`error module`,`logging module`,`net module`,`store mudle` and `service module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
+The framework contains `config module`,`error module`,`log module`,`net module` and `dao module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
 >* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis) and [redis-go-cluster](https://github.com/chasex/redis-go-cluster) are third-party library. 
 >* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd) and [**chasex**](https://github.com/chasex).Thanks for them here. 
@@ -30,23 +30,45 @@ The framework contains `config module`,`error module`,`logging module`,`net modu
 
 ## Usage
 
-`service module` provides golang server. It is a simple demo that you can develop it on the basis of it. 
->* You can find it in "godog/test/service.go"
+`net module` provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
+
+Focus on the tcp server.
+```
+default tcp packet:
+type TcpPacket struct {
+    Seq       uint32
+    ErrCode   uint32
+    Cmd       uint32 // also be a string, for dispatch.
+    PacketLen uint32
+    Body      []byte
+}
+
+godog tcp packet:
+type DogPacket struct {
+    Header
+    Body []byte
+}
+
+type Header struct {
+    PacketLen uint32
+    Seq       uint32
+    Cmd       uint32
+    CheckSum  uint32
+    ErrCode   uint32
+    Version   uint8
+    Padding   uint8
+    SOH       uint8
+    EOH       uint8
+}
+
+PS: of course, you can add new TcpPacket according to yourself rule.
+    DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol
+```
+
+>* You can find it in "test/service.go"
 >* use `control+c` to stop process
 
 ```
-/**
- * Copyright 2018 godog Author. All Rights Reserved.
- * Author: Chuck1024
- */
-
-package main
-
-import (
-    "github.com/chuck1024/godog"
-    "net/http"
-)
-
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
     godog.Debug("connected : %s", r.RemoteAddr)
     w.Write([]byte("test success!!!"))
@@ -54,7 +76,7 @@ func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
 
 func HandlerTcpTest(req []byte) (uint16, []byte) {
     godog.Debug("tcp server request: %s", string(req))
-    code := uint16(0)
+    code := uint16(200)
     resp := []byte("Are you ok?")
     return code, resp
 }
@@ -62,6 +84,12 @@ func HandlerTcpTest(req []byte) (uint16, []byte) {
 func main() {
     // Http
     godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
+
+    // choose default tcp server
+    godog.NewTcpServer()
+
+    // choose godog tcp server
+    //godog.NewDogTcpServer()
 
     // Tcp
     godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
@@ -76,22 +104,10 @@ func main() {
 // you can use command to test service that it is in another file <serviceTest.txt>.
 ```
 
-`tcpClient` show how to call tcpserver
->* You can find it in "godog/test/tcp_client_test.go"
+`tcpclient` show how to call tcp server
+>* You can find it in "test/tcp_client_test.go"
 
 ```
-/**
- * Copyright 2018 godog Author. All Rights Reserved.
- * Author: Chuck1024
- */
-
-package main_test
-
-import (
-    "github.com/chuck1024/godog"
-    "testing"
-)
-
 func TestTcpClient(t *testing.T) {
     c := godog.NewTcpClient(500, 0)
     // remember alter addr
@@ -104,28 +120,21 @@ func TestTcpClient(t *testing.T) {
         godog.Error("Error when sending request to server: %s", err)
     }
 
+    // or use godog protocol
+    //rsp, err = c.DogInvoke(1024, body)
+    //if err != nil {
+        //godog.Error("Error when sending request to server: %s", err)
+    //}
+
     godog.Debug("resp=%s", string(rsp))
 }
 
 ```
 
 `config module` provides the related configuration of the project.
->* You can find it in "godog/test/config_test.go"
+>* You can find it in "test/config_test.go"
 
 ```
-/**
- * Copyright 2018 godog Author. All Rights Reserved.
- * Author: Chuck1024
- */
-
-package main_test
-
-import (
-    "github.com/chuck1024/godog"
-    _ "github.com/chuck1024/godog/log" // init log
-    "testing"
-)
-
 func TestConfig(t *testing.T) {
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
@@ -191,143 +200,10 @@ func TestConfig(t *testing.T) {
 
 `error module` provides the relation usages of error that you can find it in godog.
 
-`store module` provides the relation usages of db and redis.
->* You can find it in "godog/test/db_test.go" and "godog/test/redis_test.go"
+`dao module` provides the relation usages of db and redis.
+>* You can find it in "test/db_test.go" and "test/redis_test.go"
 
 ```
-/**
- * Copyright 2018 godog Author. All rights reserved.
- * Author: Chuck1024
- */
-
-package main_test
-
-import (
-    "errors"
-    "fmt"
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/store/db"
-    "time"
-    "testing"
-)
-
-const (
-    tableName = "test"
-)
-
-var (
-    MysqlHandle *sql.DB
-)
-
-type TestDB struct {
-    Name     string `json:"name"`
-    CardId   uint64 `json:"card_id"`
-    Sex      string `json:"sex"`
-    Birthday uint64 `json:"birthday"`
-    Status   uint8  `json:"status"`
-    CreateTs uint64 `json:"create_time"`
-}
-
-func (t *TestDB) Add() error {
-    insertData := map[string]interface{}{
-        "name":        t.Name,
-        "card_id":     t.CardId,
-        "sex":         t.Sex,
-        "birthday":    t.Birthday,
-        "status":      t.Status,
-        "create_time": t.CreateTs,
-    }
-
-    sql := db.InsertOne(tableName, insertData)
-    stmt, err := db.MysqlHandle.Prepare(sql)
-    if err != nil {
-        godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
-        return err
-    }
-
-    defer stmt.Close()
-
-    res, err := stmt.Exec(t.Name, t.CardId, t.Sex, t.Birthday, t.Status, t.CreateTs)
-    if err != nil {
-        godog.Error("errors occur while stmt.Exec(): %s", err.Error())
-        return err
-    }
-
-    num, err := res.RowsAffected()
-    if err != nil {
-        godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
-        return err
-    }
-
-    if num != 1 {
-        return errors.New("none row Affected")
-    }
-
-    return nil
-}
-
-func (t *TestDB) Update(birthday uint64) error {
-    dataMap := map[string]interface{}{
-        "birthday": birthday,
-    }
-
-    whereMap := map[string]string{
-        "card_id": fmt.Sprintf("%d", t.CardId),
-    }
-
-    sql := db.Update(tableName, whereMap, dataMap)
-    stmt, err := db.MysqlHandle.Prepare(sql)
-    if err != nil {
-        godog.Error("errors occur while util.Db_zone.Prepare(): %s", err.Error())
-        return err
-    }
-
-    defer stmt.Close()
-
-    res, err := stmt.Exec(birthday)
-    if err != nil {
-        godog.Error("errors occur while stmt.Exec(): %s", err.Error())
-        return err
-    }
-
-    num, err := res.RowsAffected()
-    if err != nil {
-        godog.Error("errors occur while res.RowsAffected(): %s", err.Error())
-        return err
-    }
-
-    if num != 1 {
-        return errors.New("none row Affected")
-    }
-
-    return nil
-}
-
-func (t *TestDB) Query(cardId uint64) (*Test, error) {
-    sql := `SELECT name,sex,birthday,status,create_time FROM ` + tableName + ` WHERE card_id = ? `
-
-    rows, err := db.MysqlHandle.Query(sql, cardId)
-    if err != nil {
-        godog.Error("occur error :%s", err)
-        return nil, err
-    }
-
-    defer rows.Close()
-
-    var app *TestDB = nil
-    for rows.Next() {
-        app = &TestDB{}
-        app.CardId = cardId
-        err = rows.Scan(&app.Name, &app.Sex, &app.Birthday, &app.Status, &app.CreateTs)
-        if err != nil {
-            godog.Error("occur error :%s", err)
-            return nil, err
-        }
-    }
-
-    return app, nil
-}
-
 func TestAdd(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
@@ -393,19 +269,6 @@ func TestQuery(t *testing.T) {
 ```
 
 ```
-/**
- * Copyright 2018 godog Author. All rights reserved.
- * Author: Chuck1024
- */
-
-package main_test
-
-import (
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/store/cache"
-    "testing
-)
-
 func TestRedis(t *testing.T) {
     URL,_ := godog.AppConfig.String("redis")
     cache.Init(URL)
@@ -430,4 +293,3 @@ func TestRedis(t *testing.T) {
 ## License
 
 godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  
-

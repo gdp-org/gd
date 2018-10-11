@@ -18,13 +18,21 @@ import (
 var (
 	AppConfig    = config.AppConfig
 	AppHttp      = httplib.AppHttp
-	AppTcp       = tcplib.AppTcp
+	AppTcp       *tcplib.TcpServer
 	AppTcpClient *tcplib.TcpClient
 )
 
 func NewTcpClient(timeout, retryNum uint32) *tcplib.TcpClient {
 	AppTcpClient = tcplib.NewClient(timeout, retryNum)
 	return AppTcpClient
+}
+
+func NewTcpServer() {
+	AppTcp = tcplib.AppTcp
+}
+
+func NewDogTcpServer() {
+	AppTcp = tcplib.AppDog
 }
 
 func initCPU() error {
@@ -40,7 +48,7 @@ func initCPU() error {
 func Run() error {
 	Info("[Run] start")
 	// register signal
-	dumpPanic.Signal()
+	dumpPanic.Signal(AppTcp)
 
 	// dump when error occurs
 	file, err := dumpPanic.Dump(AppConfig.BaseConfig.Server.AppName)

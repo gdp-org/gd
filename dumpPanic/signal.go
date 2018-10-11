@@ -27,14 +27,14 @@ func init() {
 	signal.Notify(Hup, syscall.SIGHUP)
 }
 
-func Signal() {
+func Signal(AppTcp *tcplib.TcpServer) {
 	go func() {
 		for {
 			select {
 			case <-Shutdown:
 				logging.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
 				if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
-					tcplib.AppTcp.Stop()
+					AppTcp.Stop()
 				}
 				Running <- false
 			case <-Hup:

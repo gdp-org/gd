@@ -22,5 +22,11 @@ func TestTcpClient(t *testing.T) {
 		godog.Error("Error when sending request to server: %s", err)
 	}
 
+	// or use godog protocol
+	//rsp, err = c.DogInvoke(1024, body)
+	//if err != nil {
+	//	godog.Error("Error when sending request to server: %s", err)
+	//}
+
 	godog.Debug("resp=%s", string(rsp))
 }

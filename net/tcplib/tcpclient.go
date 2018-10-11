@@ -16,7 +16,7 @@ import (
 )
 
 /*
- * tcp client
+ * default tcp client
  */
 
 var (

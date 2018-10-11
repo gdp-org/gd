@@ -335,7 +335,7 @@ func (c *Client) CallRetry(req Packet, retryNum uint32) (rsp Packet, err *dogErr
 	return c.CallTimeout(req, c.RequestTimeout, retryNum)
 }
 
-// udp: skip response
+// skip response
 func (c *Client) SendUDP(req Packet) (err *dogError.CodeError) {
 	if _, err = c.CallAsync(req, true); err != nil {
 		return err
