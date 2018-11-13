@@ -8,6 +8,7 @@ package godog
 import (
 	"github.com/chuck1024/godog/config"
 	"github.com/chuck1024/godog/dumpPanic"
+	_ "github.com/chuck1024/godog/log"
 	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/net/tcplib"
 	"runtime"
