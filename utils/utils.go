@@ -13,6 +13,9 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 )
 
@@ -107,4 +110,10 @@ func GetLocalIP() string {
 
 func CurrentMicroSeconds() int64 {
 	return time.Now().UnixNano() / 1e3
+}
+
+func FuncName(skip int) string {
+	pc, _, _, _ := runtime.Caller(skip)
+	funcName := filepath.Ext(runtime.FuncForPC(pc).Name())
+	return strings.TrimPrefix(funcName, ".")
 }
