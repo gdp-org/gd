@@ -195,7 +195,52 @@ func TestConfig(t *testing.T) {
 
 ```
 
-`error module` provides the relation usages of error that you can find it in godog.
+`error module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,
+and error msg.
+
+```
+type CodeError struct {
+    errCode int
+    errType string
+    errMsg  string
+}
+
+var (
+    TcpSuccess     = 0
+    Success        = 200
+    BadRequest     = 400
+    Unauthorized   = 401
+    Forbidden      = 403
+    NotFound       = 404
+    SystemError    = 500
+    ParameterError = 600
+    DBError        = 701
+    CacheError     = 702
+    UnknownError = "unknown error"
+
+    ErrMap = map[int]string{
+        TcpSuccess:     "ok",
+        Success:        "ok",
+        BadRequest:     "bad request",
+        Unauthorized:   "Unauthorized",
+        Forbidden:      "Forbidden",
+        NotFound:       "not found",
+        SystemError:    "system error",
+        ParameterError: "Parameter error",
+        DBError:        "db error",
+        CacheError:     "cache error",
+    }
+)
+
+// get error type. you can also add type to ErrMap.
+func GetErrorType(code int) string {
+    t, ok := ErrMap[code]
+    if !ok {
+        t = UnknownError
+    }
+    return t
+}
+```
 
 `dao module` provides the relation usages of db and redis.
 >* You can find it in "test/db_test.go" and "test/redis_test.go"
@@ -287,6 +332,7 @@ func TestRedis(t *testing.T) {
     godog.Debug("get value: %s",value)
 }
 ```
+
 ## License
 
 godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  

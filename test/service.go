@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/chuck1024/godog"
+	_ "github.com/chuck1024/godog/log"
 	"github.com/chuck1024/godog/net/tcplib"
 	"net/http"
 )

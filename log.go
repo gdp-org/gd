@@ -6,7 +6,6 @@
 package godog
 
 import (
-	_ "github.com/chuck1024/godog/log"
 	"github.com/xuyu/logging"
 )
 

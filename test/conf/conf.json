@@ -3,7 +3,7 @@
     "File":"log/godog.log",
     "Level": "DEBUG",
     "Daemon": false,
-    "Suffix": "060102-15"
+    "Suffix": "20060102-15"
   },
   "Prog": {
     "CPU": 0,
