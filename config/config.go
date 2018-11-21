@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	AppConfig = NewDogConfig()
+	AppConfig *DogAppConfig
 )
 
 type DogAppConfig struct {
@@ -40,6 +40,10 @@ type BaseConfigure struct {
 		HttpPort int
 		TcpPort  int
 	}
+}
+
+func init() {
+	AppConfig = NewDogConfig()
 }
 
 func NewDogConfig() *DogAppConfig {

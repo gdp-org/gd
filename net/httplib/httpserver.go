@@ -17,13 +17,17 @@ type InitHandlerFunc func() error
 type HandlerFunc func(http.ResponseWriter, *http.Request)
 
 var (
-	AppHttp    = NewHttpServer()
+	AppHttp    *HttpServer
 	NoHttpPort = errors.New("no http serve port")
 	NoPort     = 0
 )
 
 type Handler interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
+}
+
+func init(){
+	AppHttp = NewHttpServer()
 }
 
 type HttpServer struct {

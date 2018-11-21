@@ -18,7 +18,7 @@ import (
  */
 
 var (
-	AppTcp    = NewTcpServer()
+	AppTcp    *TcpServer
 	NoTcpPort = errors.New("no tcp serve port")
 )
 
@@ -28,6 +28,10 @@ type TcpServer struct {
 	addr string
 	m    map[uint32]Handler
 	ss   *Server
+}
+
+func init() {
+	AppTcp = NewTcpServer()
 }
 
 func NewTcpServer() *TcpServer {
