@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 )
 
 func loadFile(filename string) ([]byte, error) {
@@ -106,10 +105,6 @@ func GetLocalIP() string {
 		}
 	}
 	return ""
-}
-
-func CurrentMicroSeconds() int64 {
-	return time.Now().UnixNano() / 1e3
 }
 
 func FuncName(skip int) string {
