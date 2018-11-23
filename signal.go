@@ -3,11 +3,9 @@
  * Author: Chuck1024
  */
 
-package dumpPanic
+package godog
 
 import (
-	"github.com/chuck1024/godog/config"
-	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/net/tcplib"
 	"github.com/xuyu/logging"
 	"os"
@@ -33,7 +31,8 @@ func Signal(AppTcp *tcplib.TcpServer) {
 			select {
 			case <-Shutdown:
 				logging.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
-				if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
+				//if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
+				if AppTcp.GetAddr() != "" {
 					AppTcp.Stop()
 				}
 				Running <- false

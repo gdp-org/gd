@@ -16,8 +16,12 @@ import (
  */
 
 var (
-	AppDog    = NewDogTcpServer()
+	AppDog *TcpServer
 )
+
+func init() {
+	AppDog = NewDogTcpServer()
+}
 
 func NewDogTcpServer() *TcpServer {
 	s := &TcpServer{
@@ -26,10 +30,12 @@ func NewDogTcpServer() *TcpServer {
 
 	s.ss = &Server{
 		Handler: s.dogDispatchPacket,
-		Encoder: func (w io.Writer, bufferSize int) (encoder MessageEncoder, err error) {
-			return &DogPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil},
-		Decoder: func (r io.Reader, bufferSize int) (decoder MessageDecoder, err error) {
-			return &DogPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil},
+		Encoder: func(w io.Writer, bufferSize int) (encoder MessageEncoder, err error) {
+			return &DogPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
+		},
+		Decoder: func(r io.Reader, bufferSize int) (decoder MessageDecoder, err error) {
+			return &DogPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
+		},
 	}
 
 	return s

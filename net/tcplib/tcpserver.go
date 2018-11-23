@@ -8,8 +8,6 @@ package tcplib
 import (
 	"errors"
 	"fmt"
-	"github.com/chuck1024/godog/config"
-	"github.com/chuck1024/godog/net/httplib"
 	"github.com/xuyu/logging"
 )
 
@@ -21,6 +19,8 @@ var (
 	AppTcp    *TcpServer
 	NoTcpPort = errors.New("no tcp serve port")
 )
+
+const NoPort = 0
 
 type Handler func([]byte) (uint32, []byte)
 
@@ -55,9 +55,8 @@ func (s *TcpServer) Start() error {
 	return nil
 }
 
-func (s *TcpServer) Run() error {
-	port := config.AppConfig.BaseConfig.Server.TcpPort
-	if port == httplib.NoPort {
+func (s *TcpServer) Run(port int) error {
+	if port == NoPort {
 		logging.Info("[Run] no tcp serve port")
 		return NoTcpPort
 	}
@@ -84,6 +83,10 @@ func (s *TcpServer) Stop() {
 func (s *TcpServer) SetAddr(addr string) {
 	s.addr = addr
 	s.ss.Addr = addr
+}
+
+func (s *TcpServer) GetAddr() string {
+	return s.addr
 }
 
 func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {

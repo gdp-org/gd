@@ -7,10 +7,10 @@ package godog
 
 import (
 	"github.com/chuck1024/godog/config"
-	"github.com/chuck1024/godog/dumpPanic"
-	_ "github.com/chuck1024/godog/log"
+	"github.com/chuck1024/godog/log"
 	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/net/tcplib"
+	"github.com/chuck1024/godog/utils"
 	"runtime"
 	"time"
 )
@@ -40,10 +40,13 @@ func initCPU() error {
 func Run() error {
 	Info("[Run] start")
 	// register signal
-	dumpPanic.Signal(AppTcp)
+	Signal(AppTcp)
+
+	// init log
+	log.InitLog()
 
 	// dump when error occurs
-	file, err := dumpPanic.Dump(AppConfig.BaseConfig.Server.AppName)
+	file, err := utils.Dump(AppConfig.BaseConfig.Server.AppName)
 	if err != nil {
 		Error("[Run] Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
@@ -53,7 +56,7 @@ func Run() error {
 		Info("[Run] server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
 		Info("[Run] server stop...ok")
-		if err := dumpPanic.ReviewDumpPanic(file); err != nil {
+		if err := utils.ReviewDumpPanic(file); err != nil {
 			Error("[Run] Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
 	}()
@@ -69,7 +72,9 @@ func Run() error {
 	AppHttp.Register()
 
 	// http run
-	if err = AppHttp.Run(); err != nil {
+	healthPort := AppConfig.BaseConfig.Prog.HealthPort
+	httpPort := AppConfig.BaseConfig.Server.HttpPort
+	if err = AppHttp.Run(healthPort, httpPort); err != nil {
 		if err == httplib.NoHttpPort {
 			Info("[Run] Hasn't http server port")
 		} else {
@@ -79,7 +84,8 @@ func Run() error {
 	}
 
 	// tcp server
-	if err = AppTcp.Run(); err != nil {
+	tcpPort := AppConfig.BaseConfig.Server.TcpPort
+	if err = AppTcp.Run(tcpPort); err != nil {
 		if err == tcplib.NoTcpPort {
 			Info("[Run] Hasn't tcp server port")
 		} else {
@@ -88,6 +94,6 @@ func Run() error {
 		}
 	}
 
-	<-dumpPanic.Running
+	<-Running
 	return nil
 }

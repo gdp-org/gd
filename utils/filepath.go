@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package dumpPanic
+package utils
 
 import (
 	"io"
@@ -13,15 +13,13 @@ import (
 	"strings"
 )
 
-func Exists(p string) (bool, error) {
-	_, err := os.Stat(p)
-	if err != nil {
+func Exists(p string) (bool) {
+	if _, err := os.Stat(p); err != nil {
 		if os.IsNotExist(err) {
-			return false, nil
+			return false
 		}
-		return false, err
 	}
-	return true, err
+	return true
 }
 
 func IsLink(p string) (bool, error) {

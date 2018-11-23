@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 )
 
-func init() {
+func InitLog() {
 	initLogger(config.AppConfig.BaseConfig.Log.File, config.AppConfig.BaseConfig.Log.Level, config.AppConfig.BaseConfig.Server.AppName, config.AppConfig.BaseConfig.Log.Suffix, config.AppConfig.BaseConfig.Log.Daemon)
 }
 

@@ -8,13 +8,15 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"github.com/chuck1024/godog/utils"
 	"github.com/xuyu/logging"
+	"os"
+	"path/filepath"
 )
 
 var (
 	AppConfig *DogAppConfig
+	appConfigPath string
 )
 
 type DogAppConfig struct {
@@ -43,6 +45,21 @@ type BaseConfigure struct {
 }
 
 func init() {
+	workPath, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	var filename = "conf.json"
+	appConfigPath = filepath.Join(workPath, "conf", filename)
+	if !utils.Exists(appConfigPath) {
+		AppConfig = &DogAppConfig{
+			BaseConfig: new(BaseConfigure),
+			data:       make(map[string]interface{}),
+		}
+		return
+	}
+
 	AppConfig = NewDogConfig()
 }
 
@@ -78,15 +95,12 @@ func (a *DogAppConfig) initNewConfigure() {
 }
 
 func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
-	configFile := flag.String("c", "conf/conf.json", "config file pathname")
-	flag.Parse()
-
 	if appCfg == nil {
-		return utils.ParseJSON(*configFile, base)
+		return utils.ParseJSON(appConfigPath, base)
 	}
 
-	if err := utils.ParseJSON(*configFile, appCfg); err != nil {
-		logging.Error("[getConfig] Parse config %s. error: %s\n", *configFile, err.Error())
+	if err := utils.ParseJSON(appConfigPath, appCfg); err != nil {
+		logging.Error("[getConfig] Parse config %s. error: %s\n", appConfigPath, err.Error())
 		return err
 	}
 

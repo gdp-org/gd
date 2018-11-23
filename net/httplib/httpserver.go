@@ -8,7 +8,6 @@ package httplib
 import (
 	"errors"
 	"fmt"
-	"github.com/chuck1024/godog/config"
 	"github.com/xuyu/logging"
 	"net/http"
 )
@@ -19,14 +18,15 @@ type HandlerFunc func(http.ResponseWriter, *http.Request)
 var (
 	AppHttp    *HttpServer
 	NoHttpPort = errors.New("no http serve port")
-	NoPort     = 0
 )
+
+const NoPort = 0
 
 type Handler interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
-func init(){
+func init() {
 	AppHttp = NewHttpServer()
 }
 
@@ -109,18 +109,18 @@ func (h *HttpServer) Register() {
 	}
 }
 
-func (h *HttpServer) Run() error {
+func (h *HttpServer) Run(healthPort, port int) error {
 	// http health
-	if config.AppConfig.BaseConfig.Prog.HealthPort != NoPort && h.health != nil {
-		h.Health(config.AppConfig.BaseConfig.Prog.HealthPort, h.health)
+	if healthPort != NoPort && h.health != nil {
+		h.Health(healthPort, h.health)
 	}
 
 	// http service
-	if config.AppConfig.BaseConfig.Server.HttpPort == NoPort {
+	if port == NoPort {
 		logging.Info("[Run] No http Serve port for application ")
 		return NoHttpPort
 	} else {
-		h.Serve(config.AppConfig.BaseConfig.Server.HttpPort, h.handler)
+		h.Serve(port, h.handler)
 	}
 
 	return nil
