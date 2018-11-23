@@ -11,25 +11,6 @@ import (
 	"time"
 )
 
-func HumanSize(s uint64) string {
-	const (
-		b = 1
-		k = 1024 * b
-		m = 1024 * k
-		g = 1024 * m
-	)
-	switch {
-	case s/g > 0:
-		return fmt.Sprintf("%.1fGB", float64(s)/float64(g))
-	case s/m > 0:
-		return fmt.Sprintf("%.1fMB", float64(s)/float64(m))
-	case s/k > 0:
-		return fmt.Sprintf("%.1fKB", float64(s)/float64(k))
-	default:
-		return fmt.Sprintf("%dB", s)
-	}
-}
-
 func nsToMs(ns uint64) float64 {
 	return float64(ns) / float64(time.Millisecond/time.Nanosecond)
 }
@@ -64,18 +45,19 @@ func formatGCPause(m1, m2 *runtime.MemStats) string {
 	return fmt.Sprintf("%.2f+%.2fms", nsToMs(max), nsToMs(avg))
 }
 
-func formatMemStats(m1, m2 *runtime.MemStats) string {
+func FormatMemStats(m1, m2 *runtime.MemStats) string {
 	return fmt.Sprintf("Goroutines: %d, GCPause: %s, HeapObjects: %d, HeapAlloc: %s, Mallocs: %d",
 		runtime.NumGoroutine(), formatGCPause(m1, m2), m2.HeapObjects, HumanSize(m2.HeapAlloc), m2.Mallocs)
 }
 
+// get runtime stats,contained goroutine numbers,gc pause,heap objects,heap alloc and malloc
 func RuntimeStats(d time.Duration, f func(string)) {
 	var m1, m2 runtime.MemStats
 	runtime.ReadMemStats(&m1)
 	for {
 		time.Sleep(d)
 		runtime.ReadMemStats(&m2)
-		s := formatMemStats(&m1, &m2)
+		s := FormatMemStats(&m1, &m2)
 		if f == nil {
 			fmt.Println(s)
 		} else {

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -111,4 +112,23 @@ func FuncName(skip int) string {
 	pc, _, _, _ := runtime.Caller(skip)
 	funcName := filepath.Ext(runtime.FuncForPC(pc).Name())
 	return strings.TrimPrefix(funcName, ".")
+}
+
+func HumanSize(s uint64) string {
+	const (
+		b = 1
+		k = 1024 * b
+		m = 1024 * k
+		g = 1024 * m
+	)
+	switch {
+	case s/g > 0:
+		return fmt.Sprintf("%.1fGB", float64(s)/float64(g))
+	case s/m > 0:
+		return fmt.Sprintf("%.1fMB", float64(s)/float64(m))
+	case s/k > 0:
+		return fmt.Sprintf("%.1fKB", float64(s)/float64(k))
+	default:
+		return fmt.Sprintf("%dB", s)
+	}
 }
