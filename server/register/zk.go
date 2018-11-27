@@ -68,7 +68,6 @@ func (z *ZkRegister) SetHeartBeat(heartBeat time.Duration) {
 func (z *ZkRegister) isExistNode() (err error) {
 	node := fmt.Sprintf("%s/%s/%s", z.root, z.group, z.service)
 
-	logging.Debug("node:%s", node)
 	isExist, _, err := z.client.Exists(node)
 	if err != nil {
 		logging.Error("[isExistNode] client Exists occur error: %s", err)
@@ -80,7 +79,6 @@ func (z *ZkRegister) isExistNode() (err error) {
 		p2 := p1 + "/pool"
 		paths := []string{node, p1, p2}
 		for _, v := range paths {
-			logging.Debug("p:%s", v)
 			path, err := z.client.Create(v, []byte(""), 0, zk.WorldACL(zk.PermAll))
 			if err != nil {
 				logging.Error("[isExistNode] create path occur error: %s", err)
@@ -130,7 +128,7 @@ func (z *ZkRegister) Run(ip string, port int, weight uint64) (err error) {
 func (z *ZkRegister) run() (err error) {
 	p := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", z.root, z.group, z.service, z.environ,
 		z.nodeInfo.GetIp(), z.nodeInfo.GetPort())
-	logging.Debug("[run] p: %s", p)
+	logging.Info("[run] p: %s", p)
 
 	dataByte, _ := json.Marshal(&z.nodeInfo)
 	path, err := z.client.Create(p, dataByte, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
@@ -140,7 +138,7 @@ func (z *ZkRegister) run() (err error) {
 	}
 
 	if path == p {
-		logging.Debug("[run] create success! path:%s", path)
+		logging.Info("[run] create success! path:%s", path)
 	}
 
 	return

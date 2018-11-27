@@ -114,7 +114,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 	node := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
 
-	logging.Debug("[register] node:%s", node)
+	logging.Info("[register] node:%s", node)
 
 	dataByte, _ := json.Marshal(r.nodeInfo)
 	resp, err := r.client.Grant(context.TODO(), int64(r.heartBeat))
@@ -134,7 +134,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 		break
 	}
 
-	logging.Debug("[register] register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
+	logging.Info("[register] register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
 
 	return r.client.KeepAlive(context.TODO(), resp.ID)
