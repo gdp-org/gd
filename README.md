@@ -22,7 +22,7 @@ Start with cloning godog:
 
 GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-The framework contains `config module`,`error module`,`log module`,`net module` and `dao module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
+The framework contains `config module`,`error module`,`log module`,`net module`,`server module and `dao module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
 >* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis) and [redis-go-cluster](https://github.com/chasex/redis-go-cluster) are third-party library. 
 >* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd) and [**chasex**](https://github.com/chasex).Thanks for them here. 
@@ -70,12 +70,12 @@ PS: of course, you can add new TcpPacket according to yourself rule.
 
 ```
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-    godog.Debug("connected : %s", r.RemoteAddr)
+    t.Logf("connected : %s", r.RemoteAddr)
     w.Write([]byte("test success!!!"))
 }
 
 func HandlerTcpTest(req []byte) (uint16, []byte) {
-    godog.Debug("tcp server request: %s", string(req))
+    t.Logf("tcp server request: %s", string(req))
     code := uint16(200)
     resp := []byte("Are you ok?")
     return code, resp
@@ -91,9 +91,22 @@ func main() {
     // Tcp
     godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
 
+    // register params
+    etcdHost, _ := godog.AppConfig.Strings("etcdHost")
+    root, _ := godog.AppConfig.String("root")
+    environ, _ := godog.AppConfig.String("environ")
+    group, _ := godog.AppConfig.String("group")
+    weight, _ := godog.AppConfig.Int("weight")
+    
+    // register
+    var r register.DogRegister
+    r = &register.EtcdRegister{}
+    r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
+    r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
+
     err := godog.Run()
     if err != nil {
-        godog.Error("Error occurs, error = %s", err.Error())
+        t.Logf("Error occurs, error = %s", err.Error())
         return
     }
 }
@@ -108,22 +121,35 @@ func main() {
 func TestTcpClient(t *testing.T) {
     c := godog.NewTcpClient(500, 0)
     // remember alter addr
-    c.AddAddr("127.0.0.1:10241")
+    var r discovery.DogDiscovery
+    r = &discovery.EtcdDiscovery{}
+    r.NewDiscovery([]string{"localhost:2379"})
+    r.Watch("/root/github/godog/stagging/pool")
+    r.Run()
+    time.Sleep(100*time.Millisecond)
+   
+    hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
+    for _,v := range hosts {
+        t.Logf("%s:%d",v.GetIp(),v.GetPort())
+    }
+   
+    // you can choose one
+    c.AddAddr(hosts[0].GetIp()+":"+fmt.Sprintf("%d",hosts[0].GetPort()))
 
     body := []byte("How are you?")
 
     rsp, err := c.Invoke(1024, body)
     if err != nil {
-        godog.Error("Error when sending request to server: %s", err)
+        t.Logf("Error when sending request to server: %s", err)
     }
 
     // or use godog protocol
     //rsp, err = c.DogInvoke(1024, body)
     //if err != nil {
-        //godog.Error("Error when sending request to server: %s", err)
+        //t.Logf("Error when sending request to server: %s", err)
     //}
 
-    godog.Debug("resp=%s", string(rsp))
+    t.Logf("resp=%s", string(rsp))
 }
 
 ```
@@ -133,12 +159,15 @@ func TestTcpClient(t *testing.T) {
 
 ```
 func TestConfig(t *testing.T) {
+    // init log
+    log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Daemon)
+
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
 
     // AppConfig.BaseConfig.Log.File is the path of log file.
     file := godog.AppConfig.BaseConfig.Log.File
-    godog.Debug("log file:%s", file)
+    t.Logf("log file:%s", file)
 
     // AppConfig.BaseConfig.Log.Level is log level.
     // DEBUG   logLevel = 1
@@ -147,17 +176,17 @@ func TestConfig(t *testing.T) {
     // ERROR   logLevel = 4
     // DISABLE logLevel = 255
     level := godog.AppConfig.BaseConfig.Log.Level
-    godog.Debug("log level:%s", level)
+    t.Logf("log level:%s", level)
 
     // AppConfig.BaseConfig.Server.AppName is service name
     name := godog.AppConfig.BaseConfig.Server.AppName
-    godog.Debug("name:%s", name)
+    t.Logf("name:%s", name)
 
     // AppConfig.BaseConfig.Log.Suffix is suffix of log file.
     // suffix = "060102-15" . It indicates that the log is cut per hour
     // suffix = "060102" . It indicates that the log is cut per day
     suffix := godog.AppConfig.BaseConfig.Log.Suffix
-    godog.Debug("log suffix:%s", suffix)
+    t.Logf("log suffix:%s", suffix)
 
     // you can add configuration items directly in conf.json
     stringValue, err := godog.AppConfig.String("stringKey")
@@ -165,21 +194,28 @@ func TestConfig(t *testing.T) {
         godog.Error("get key occur error: %s", err)
         return
     }
-    godog.Debug("value:%s", stringValue)
+    t.Logf("value:%s", stringValue)
 
+    stringsValue, err := godog.AppConfig.Strings("stringsKey")
+    if err != nil {
+        godog.Error("get key occur error: %s", err)
+        return
+    }
+    t.Logf("value:%s", stringsValue)
+    
     intValue, err := godog.AppConfig.Int("intKey")
     if err != nil {
         godog.Error("get key occur error: %s", err)
         return
     }
-    godog.Debug("value:%d", intValue)
+    t.Logf("value:%d", intValue)
 
     BoolValue, err := godog.AppConfig.Bool("boolKey")
     if err != nil {
         godog.Error("get key occur error: %s", err)
         return
     }
-    godog.Debug("value:%t", BoolValue)
+    t.Logf("value:%t", BoolValue)
 
     // you can add config key-value if you need.
     godog.AppConfig.Set("yourKey", "yourValue")
@@ -190,7 +226,7 @@ func TestConfig(t *testing.T) {
         godog.Error("get key occur error: %s", err)
         return
     }
-    godog.Debug("yourValue:%s", yourValue)
+    t.Logf("yourValue:%s", yourValue)
 }
 
 ```
@@ -242,6 +278,102 @@ func GetErrorType(code int) string {
 }
 ```
 
+`server module` provides server register and discovery. Load balancing will be provided in the future.
+Service discovery registration based on etcd and zookeeper implementation.
+>* if you use etcd, you must download etcd module
+>* `go get github.com/coreos/etcd/clientv3`
+```
+register :
+    type DogRegister interface {
+        NewRegister(hosts []string, root, environ, group, service string)
+        SetRootNode(node string) error
+        GetRootNode() (root string)
+        SetHeartBeat(heartBeat time.Duration)
+        SetOffline(offline bool)
+        Run(ip string, port int, weight uint64) error
+        Close()
+    }
+    
+discovery :
+    type DogDiscovery interface {
+        NewDiscovery(dns []string)
+        Watch(node string) error
+        WatchMulti(nodes []string) error
+        AddNode(node string, info *server.NodeInfo)
+        DelNode(node string, key string)
+        GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
+        Run() error
+        Close() error
+    }
+    
+nodeInfo:
+    type NodeInfo interface {
+        GetIp() string
+        GetPort() int
+        GetOffline() bool
+        GetWeight() uint64
+    }
+    
+    type DefaultNodeInfo struct {
+        Ip      string `json:"ip"`
+        Port    int    `json:"port"`
+        Offline bool   `json:"offline"`
+        Weight  uint64 `json:"weight"`
+    }
+```
+>* you can find it usage on "server/register/register_test.go" and "server/discovery/discovery.go"
+
+```
+func TestEtcd(t *testing.T){
+    var r DogRegister
+    r = &EtcdRegister{}
+    r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging","godog", "test", )
+
+    r.Run("127.0.0.1", 10240,10)
+    time.Sleep(3 * time.Second)
+    r.Close()
+}
+
+func TestZk(t *testing.T){
+    var r DogRegister
+    r = &ZkRegister{}
+    r.NewRegister([]string{"localhost:2181"}, "/root/", "stagging","godog", "test", )
+    r.Run("127.0.0.1", 10240,10)
+    time.Sleep(10 * time.Second)
+    r.Close()
+}
+
+func TestDiscEtcd(t *testing.T){
+    var r DogDiscovery
+    r = &EtcdDiscovery{}
+    r.NewDiscovery([]string{"localhost:2379"})
+    r.Watch("/root/godog/test/stagging/pool")
+    r.Run()
+    time.Sleep(100*time.Millisecond)
+
+    n1 := r.GetNodeInfo("/root/godog/test/stagging/pool")
+    for _,v := range n1 {
+        t.Logf("%s:%d",v.GetIp(),v.GetPort())
+    }
+
+    time.Sleep(10*time.Second)
+}
+
+func TestDiscZk(t *testing.T){
+    var r DogDiscovery
+    r = &ZkDiscovery{}
+    r.NewDiscovery([]string{"localhost:2181"})
+    r.Watch("/root/godog/test/stagging/pool")
+    r.Run()
+    time.Sleep(100*time.Millisecond)
+    n1 := r.GetNodeInfo("/root/godog/test/stagging/pool")
+    for _,v := range n1 {
+        t.Logf("%s:%d",v.GetIp(),v.GetPort())
+    }
+    time.Sleep(10*time.Second)
+}
+```
+
 `dao module` provides the relation usages of db and redis.
 >* You can find it in "test/db_test.go" and "test/redis_test.go"
 
@@ -249,7 +381,7 @@ func GetErrorType(code int) string {
 func TestAdd(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
-        godog.Warning("[init] get config mysql url occur error: ", err)
+        t.Logf("[init] get config mysql url occur error: %s", err)
         return
     }
 
@@ -265,7 +397,7 @@ func TestAdd(t *testing.T) {
     }
 
     if err := td.Add(); err != nil {
-        godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
+        t.Logf("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
         return
     }
 }
@@ -273,7 +405,7 @@ func TestAdd(t *testing.T) {
 func TestUpdate(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
-        godog.Warning("[init] get config mysql url occur error: ", err)
+        t.Logf("[init] get config mysql url occur error:%s ", err)
         return
     }
 
@@ -284,7 +416,7 @@ func TestUpdate(t *testing.T) {
     }
 
     if err := td.Update(1025); err != nil {
-        godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
+        t.Logf("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
         return
     }
 }
@@ -292,7 +424,7 @@ func TestUpdate(t *testing.T) {
 func TestQuery(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
-        godog.Warning("[init] get config mysql url occur error: ", err)
+        t.Logf("[init] get config mysql url occur error: %s", err)
         return
     }
 
@@ -302,11 +434,11 @@ func TestQuery(t *testing.T) {
 
     tt, err := td.Query(1024)
     if err != nil {
-        godog.Error("query occur error:", err)
+        t.Logf("query occur error:%s", err)
         return
     }
 
-    godog.Debug("query: %v", *tt)
+    t.Logf("query: %v", *tt)
 }
 ```
 
@@ -318,21 +450,21 @@ func TestRedis(t *testing.T) {
     key := "key"
     err := cache.Set( key, "value")
     if err != nil {
-        godog.Error("redis set occur error:%s", err)
+        t.Logf("redis set occur error:%s", err)
         return
     }
 
-    godog.Debug("set success:%s",key)
+    t.Logf("set success:%s",key)
 
     value, err := cache.Get(key)
     if err != nil {
-        godog.Error("redis get occur error: %s", err)
+        t.Logf("redis get occur error: %s", err)
         return
     }
-    godog.Debug("get value: %s",value)
+    t.Logf("get value: %s",value)
 }
 ```
-
+More information can be obtained in the source code
 ## License
 
 godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  

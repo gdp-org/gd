@@ -7,6 +7,8 @@ package main
 
 import (
 	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/server/register"
+	"github.com/chuck1024/godog/utils"
 	"net/http"
 )
 
@@ -31,6 +33,19 @@ func main() {
 
 	// Tcp
 	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
+
+	// register params
+	etcdHost, _ := godog.AppConfig.Strings("etcdHost")
+	root, _ := godog.AppConfig.String("root")
+	environ, _ := godog.AppConfig.String("environ")
+	group, _ := godog.AppConfig.String("group")
+	weight, _ := godog.AppConfig.Int("weight")
+
+	// register
+	var r register.DogRegister
+	r = &register.EtcdRegister{}
+	r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
+	r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
 
 	err := godog.Run()
 	if err != nil {

@@ -22,6 +22,7 @@ var (
 	AppTcpClient *tcplib.TcpClient
 )
 
+// timeout Millisecond
 func NewTcpClient(timeout, retryNum uint32) *tcplib.TcpClient {
 	AppTcpClient = tcplib.NewClient(timeout, retryNum)
 	return AppTcpClient
@@ -43,7 +44,7 @@ func Run() error {
 	Signal(AppTcp)
 
 	// init log
-	log.InitLog()
+	log.InitLog(AppConfig.BaseConfig.Log.File, AppConfig.BaseConfig.Log.Level, AppConfig.BaseConfig.Server.AppName, AppConfig.BaseConfig.Log.Suffix, AppConfig.BaseConfig.Log.Daemon)
 
 	// dump when error occurs
 	file, err := utils.Dump(AppConfig.BaseConfig.Server.AppName)

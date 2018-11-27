@@ -135,7 +135,7 @@ func (t *TestDB) Query(cardId uint64) (*TestDB, error) {
 func TestAdd(t *testing.T) {
 	url, err := godog.AppConfig.String("mysql")
 	if err != nil {
-		godog.Warning("[init] get config mysql url occur error: ", err)
+		t.Logf("[init] get config mysql url occur error: %s", err)
 		return
 	}
 
@@ -150,7 +150,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	if err := td.Add(); err != nil {
-		godog.Error("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
+		t.Logf("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
@@ -158,7 +158,7 @@ func TestAdd(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	url, err := godog.AppConfig.String("mysql")
 	if err != nil {
-		godog.Warning("[init] get config mysql url occur error: ", err)
+		t.Logf("[init] get config mysql url occur error: %s", err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	if err := td.Update(1025); err != nil {
-		godog.Error("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
+		t.Logf("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
 		return
 	}
 }
@@ -176,7 +176,7 @@ func TestUpdate(t *testing.T) {
 func TestQuery(t *testing.T) {
 	url, err := godog.AppConfig.String("mysql")
 	if err != nil {
-		godog.Warning("[init] get config mysql url occur error: ", err)
+		t.Logf("[init] get config mysql url occur error:%s ", err)
 		return
 	}
 
@@ -186,9 +186,9 @@ func TestQuery(t *testing.T) {
 
 	tt, err := td.Query(1024)
 	if err != nil {
-		godog.Error("query occur error:", err)
+		t.Logf("query occur error:%s", err)
 		return
 	}
 
-	godog.Debug("query: %v", *tt)
+	t.Logf("query: %v", *tt)
 }

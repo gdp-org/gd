@@ -1,6 +1,6 @@
 {
   "Log": {
-    "File":"log/godog.log",
+    "File": "log/godog.log",
     "Level": "DEBUG",
     "Daemon": false,
     "Suffix": "20060102-15"
@@ -11,15 +11,20 @@
   },
   "Server": {
     "AppName": "godog",
-    "HttpPort":10240,
+    "HttpPort": 10240,
     "TcpPort": 10241
   },
-
-  "redis" : "tcp://127.0.0.1:6379/0?cluster=false&idleTimeout=60s&maxIdle=10&maxActive=10",
-  "mysql" : "mysql://root:password@tcp(127.0.0.1:3306)/test",
+  "root": "/root/",
+  "group":"github",
+  "environ": "stagging",
+  "weight":10,
+  "etcdHost":"localhost:2379",
+  "zkHost":"localhost:2182",
+  "redis": "tcp://127.0.0.1:6379/0?cluster=false&idleTimeout=60s&maxIdle=10&maxActive=10",
+  "mysql": "mysql://root:password@tcp(127.0.0.1:3306)/test",
   "mysqlMaxConn": 30,
-
-  "stringKey":"value",
-  "intKey":10,
-  "boolKey":true
+  "stringKey": "value",
+  "stringsKey":"a;b;c",
+  "intKey": 10,
+  "boolKey": true
 }

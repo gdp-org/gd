@@ -12,10 +12,11 @@ import (
 	"github.com/xuyu/logging"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
-	AppConfig *DogAppConfig
+	AppConfig     *DogAppConfig
 	appConfigPath string
 )
 
@@ -129,6 +130,20 @@ func (a *DogAppConfig) String(key string) (string, error) {
 	}
 
 	return "", errors.New("failed to get value of key. No key")
+}
+
+func (a *DogAppConfig) Strings(key string) ([]string, error) {
+	if v, ok := a.data[key]; ok {
+		switch v.(type) {
+		case string:
+			result := strings.Split(v.(string),";")
+			return result, nil
+		default:
+			return []string{}, errors.New("value type isn't string")
+		}
+	}
+
+	return []string{}, errors.New("failed to get value of key. No key")
 }
 
 func (a *DogAppConfig) Int(key string) (int, error) {

@@ -18,16 +18,16 @@ func TestRedis(t *testing.T) {
 
 	err := cache.Set(key, "value")
 	if err != nil {
-		godog.Error("redis set occur error:%s", err)
+		t.Logf("redis set occur error:%s", err)
 		return
 	}
 
-	godog.Debug("set success:%s", key)
+	t.Logf("set success:%s", key)
 
 	value, err := cache.Get(key)
 	if err != nil {
-		godog.Error("redis get occur error: %s", err)
+		t.Logf("redis get occur error: %s", err)
 		return
 	}
-	godog.Debug("get value: %s", value)
+	t.Logf("get value: %s", value)
 }
