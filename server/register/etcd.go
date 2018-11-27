@@ -118,14 +118,18 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 	logging.Info("[register] node:%s", node)
 
 	dataByte, _ := json.Marshal(r.nodeInfo)
-	resp, err := r.client.Grant(context.TODO(), int64(r.heartBeat))
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
+	resp, err := r.client.Grant(ctx, int64(r.heartBeat))
+	cancel()
 	if err != nil {
 		logging.Error("[register] client grant occur error:%s", err)
 		return nil, err
 	}
 
 	for i := 0; i < DefaultRetryTimes; i++ {
+		ctx, cancel = context.WithTimeout(context.TODO(), time.Second)
 		_, err := r.client.Put(context.TODO(), node, string(dataByte), clientv3.WithLease(resp.ID))
+		cancel()
 		if err != nil {
 			logging.Warning("ectd client set err:%v", err)
 			continue
@@ -137,12 +141,17 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 
 	logging.Info("[register] register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
-
-	return r.client.KeepAlive(context.TODO(), resp.ID)
+	
+	ctx, cancel = context.WithTimeout(context.TODO(), time.Second)
+	rsp, err := r.client.KeepAlive(ctx, resp.ID)
+	cancel()
+	return rsp, err
 }
 
 func (r *EtcdRegister) revoke() error {
-	_, err := r.client.Revoke(context.TODO(), r.leaseID)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
+	_, err := r.client.Revoke(ctx, r.leaseID)
+	cancel()
 	if err != nil {
 		logging.Error("[revoke] occur error:", err)
 	}
