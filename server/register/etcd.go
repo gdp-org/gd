@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// server path : /root/group/service/environ/pool/ip:port
 type EtcdRegister struct {
 	host      []string         // etcd server host
 	root      string           // root path
