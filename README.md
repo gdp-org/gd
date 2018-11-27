@@ -103,7 +103,7 @@ func main() {
     r = &register.EtcdRegister{}
     r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
     r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
-
+    
     err := godog.Run()
     if err != nil {
         t.Logf("Error occurs, error = %s", err.Error())

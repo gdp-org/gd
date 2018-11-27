@@ -44,7 +44,7 @@ func main() {
 	// register
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
-	r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
+	r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName)
 	r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
 
 	err := godog.Run()
