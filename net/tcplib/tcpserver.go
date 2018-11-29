@@ -69,7 +69,7 @@ func (s *TcpServer) Run(port int) error {
 
 	err := s.Start()
 	if err != nil {
-		logging.Error("%s", err.Error())
+		logging.Error("[Run] Start occur error:%s", err.Error())
 		return err
 	}
 
