@@ -131,8 +131,8 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			case <-s.serverStopChan:
 				return
 			case <-time.After(time.Second):
+				continue
 			}
-			continue
 		}
 
 		s.stopWg.Add(1)
