@@ -29,7 +29,8 @@ The framework contains `config module`,`error module`,`log module`,`net module`,
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ## Usage
-This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder.
+This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
+ in your computer. Of course, you can choose to comment out these lines of code.
 ```go
 package main
 
