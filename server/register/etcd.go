@@ -141,11 +141,8 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 
 	logging.Info("[register] register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
-	
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second)
-	rsp, err := r.client.KeepAlive(ctx, resp.ID)
-	cancel()
-	return rsp, err
+
+	return r.client.KeepAlive(context.TODO(), resp.ID)
 }
 
 func (r *EtcdRegister) revoke() error {
