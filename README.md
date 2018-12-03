@@ -103,7 +103,7 @@ import (
 
 func main() {
     c := godog.NewTcpClient(500, 0)
-    // remember alter addr
+    // discovery 
     var r discovery.DogDiscovery
     r = &discovery.EtcdDiscovery{}
     r.NewDiscovery([]string{"localhost:2379"})
@@ -116,7 +116,7 @@ func main() {
         godog.Debug("%s:%d",v.GetIp(),v.GetPort())
     }
    
-    // you can choose one
+    // you can choose one or use load balance algorithm to choose best one.
     c.AddAddr(hosts[0].GetIp() + ":" + fmt.Sprintf("%d",hosts[0].GetPort()))
 
     body := []byte("How are you?")
