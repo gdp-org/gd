@@ -137,7 +137,7 @@ func main() {
 `net module` provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
 
 Focus on the tcp server.
-```markdown
+```go
 default tcp packet:
 type TcpPacket struct {
     Seq       uint32
@@ -359,7 +359,7 @@ Service discovery registration based on etcd and zookeeper implementation.
 >* if you use etcd, you must download etcd module
 >* `go get github.com/coreos/etcd/clientv3`
 
-```markdown
+```go
 register :
     type DogRegister interface {
         NewRegister(hosts []string, root, environ, group, service string)
