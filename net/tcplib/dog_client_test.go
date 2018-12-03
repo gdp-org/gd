@@ -10,13 +10,14 @@ import (
 	"testing"
 )
 
-func TestTcpClient(t *testing.T) {
+func TestDogClient(t *testing.T) {
 	c := godog.NewTcpClient(500, 0)
 	c.AddAddr("127.0.0.1:10241")
 
 	body := []byte("How are you?")
 
-	rsp, err := c.Invoke(1024, body)
+	// use godog protocol
+	rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}

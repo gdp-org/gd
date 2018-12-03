@@ -20,7 +20,7 @@ func TestConfig(t *testing.T) {
 
 	// AppConfig.BaseConfig.Log.File is the path of log file.
 	file := godog.AppConfig.BaseConfig.Log.File
-	godog.Debug("log file:%s", file)
+	t.Logf("log file:%s", file)
 
 	// AppConfig.BaseConfig.Log.Level is log level.
 	// DEBUG   logLevel = 1

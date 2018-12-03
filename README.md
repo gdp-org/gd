@@ -29,11 +29,115 @@ The framework contains `config module`,`error module`,`log module`,`net module`,
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ## Usage
+This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder.
+```go
+package main
+
+import (
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/server/register"
+    "github.com/chuck1024/godog/utils"
+    "net/http"
+)
+
+func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
+    godog.Debug("connected : %s", r.RemoteAddr)
+    w.Write([]byte("test success!!!"))
+}
+
+func HandlerTcpTest(req []byte) (uint32, []byte) {
+    godog.Debug("tcp server request: %s", string(req))
+    code := uint32(200)
+    resp := []byte("Are you ok?")
+    return code, resp
+}
+
+func main() {
+    // Http
+    godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
+
+    // default tcp server, you can choose godog tcp server
+    //godog.AppTcp = tcplib.AppDog
+
+    // Tcp
+    godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
+
+    // register params
+    etcdHost, _ := godog.AppConfig.Strings("etcdHost")
+    root, _ := godog.AppConfig.String("root")
+    environ, _ := godog.AppConfig.String("environ")
+    group, _ := godog.AppConfig.String("group")
+    weight, _ := godog.AppConfig.Int("weight")
+    
+    // register
+    var r register.DogRegister
+    r = &register.EtcdRegister{}
+    r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
+    r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
+    
+    err := godog.Run()
+    if err != nil {
+        godog.Error("Error occurs, error = %s", err.Error())
+        return
+    }
+}
+// you can use command to test http service.
+// curl http://127.0.0.1:10240/test
+```
+>* You can find it in "example/service.go"
+>* use `control+c` to stop process
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/server/discovery"
+    "time"
+)
+
+func main() {
+    c := godog.NewTcpClient(500, 0)
+    // remember alter addr
+    var r discovery.DogDiscovery
+    r = &discovery.EtcdDiscovery{}
+    r.NewDiscovery([]string{"localhost:2379"})
+    r.Watch("/root/github/godog/stagging/pool")
+    r.Run()
+    time.Sleep(100*time.Millisecond)
+   
+    hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
+    for _,v := range hosts {
+        godog.Debug("%s:%d",v.GetIp(),v.GetPort())
+    }
+   
+    // you can choose one
+    c.AddAddr(hosts[0].GetIp() + ":" + fmt.Sprintf("%d",hosts[0].GetPort()))
+
+    body := []byte("How are you?")
+
+    rsp, err := c.Invoke(1024, body)
+    if err != nil {
+        godog.Error("Error when sending request to server: %s", err)
+    }
+
+    // or use godog protocol
+    //rsp, err = c.DogInvoke(1024, body)
+    //if err != nil {
+        //t.Logf("Error when sending request to server: %s", err)
+    //}
+
+    godog.Debug("resp=%s", string(rsp))
+}
+```
+>* It contained "example/tcp_client.go"
+
 
 `net module` provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
 
 Focus on the tcp server.
-```
+```markdown
 default tcp packet:
 type TcpPacket struct {
     Seq       uint32
@@ -65,76 +169,45 @@ PS: of course, you can add new TcpPacket according to yourself rule.
     DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol.
 ```
 
->* You can find it in "test/service.go"
->* use `control+c` to stop process
+`tcpserver` show how to start tcp server
+```go
+package tcplib_test
 
-```
-func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-    t.Logf("connected : %s", r.RemoteAddr)
-    w.Write([]byte("test success!!!"))
-}
+import (
+    "github.com/chuck1024/godog/net/tcplib"
+    "testing"
+)
 
-func HandlerTcpTest(req []byte) (uint16, []byte) {
-    t.Logf("tcp server request: %s", string(req))
-    code := uint16(200)
-    resp := []byte("Are you ok?")
-    return code, resp
-}
+func TestTcpServer(t *testing.T) {
+    // Tcp 
+    tcplib.AppTcp.AddTcpHandler(1024, func(req []byte) (uint32, []byte) {
+        t.Logf("tcp server request: %s", string(req))
+        code := uint32(0)
+        resp := []byte("Are you ok?")
+        return code, resp
+    })
 
-func main() {
-    // Http
-    godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
-
-    // default tcp server, you can choose godog tcp server
-    //godog.AppTcp = tcplib.AppDog
-
-    // Tcp
-    godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
-
-    // register params
-    etcdHost, _ := godog.AppConfig.Strings("etcdHost")
-    root, _ := godog.AppConfig.String("root")
-    environ, _ := godog.AppConfig.String("environ")
-    group, _ := godog.AppConfig.String("group")
-    weight, _ := godog.AppConfig.Int("weight")
-    
-    // register
-    var r register.DogRegister
-    r = &register.EtcdRegister{}
-    r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
-    r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
-    
-    err := godog.Run()
+    err := tcplib.AppTcp.Run(10241)
     if err != nil {
         t.Logf("Error occurs, error = %s", err.Error())
         return
     }
 }
-
-// you can use command to test service that it is in another file <serviceTest.txt>.
 ```
+>* You can find it in "net/tcplib/tcp_server_test.go"
 
-`tcpclient` show how to call tcp server
->* You can find it in "test/tcp_client_test.go"
+`tcp_client`show how to call tcp server
+```go
+package tcplib_test
 
-```
+import (
+    "github.com/chuck1024/godog"
+    "testing"
+)
+
 func TestTcpClient(t *testing.T) {
     c := godog.NewTcpClient(500, 0)
-    // remember alter addr
-    var r discovery.DogDiscovery
-    r = &discovery.EtcdDiscovery{}
-    r.NewDiscovery([]string{"localhost:2379"})
-    r.Watch("/root/github/godog/stagging/pool")
-    r.Run()
-    time.Sleep(100*time.Millisecond)
-   
-    hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
-    for _,v := range hosts {
-        t.Logf("%s:%d",v.GetIp(),v.GetPort())
-    }
-   
-    // you can choose one
-    c.AddAddr(hosts[0].GetIp()+":"+fmt.Sprintf("%d",hosts[0].GetPort()))
+    c.AddAddr("127.0.0.1:10241")
 
     body := []byte("How are you?")
 
@@ -143,21 +216,23 @@ func TestTcpClient(t *testing.T) {
         t.Logf("Error when sending request to server: %s", err)
     }
 
-    // or use godog protocol
-    //rsp, err = c.DogInvoke(1024, body)
-    //if err != nil {
-        //t.Logf("Error when sending request to server: %s", err)
-    //}
-
     t.Logf("resp=%s", string(rsp))
 }
-
 ```
+>* You can find it in "net/tcplib/tcp_client_test.go"
 
 `config module` provides the related configuration of the project.
->* You can find it in "test/config_test.go"
+>* You can find it in "example/config_test.go"
 
-```
+```go
+package main_test
+
+import (
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/log"
+    "testing"
+)
+
 func TestConfig(t *testing.T) {
     // init log
     log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Daemon)
@@ -228,13 +303,14 @@ func TestConfig(t *testing.T) {
     }
     t.Logf("yourValue:%s", yourValue)
 }
-
 ```
 
 `error module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,
 and error msg.
 
-```
+```go
+package error
+
 type CodeError struct {
     errCode int
     errType string
@@ -282,7 +358,8 @@ func GetErrorType(code int) string {
 Service discovery registration based on etcd and zookeeper implementation.
 >* if you use etcd, you must download etcd module
 >* `go get github.com/coreos/etcd/clientv3`
-```
+
+```markdown
 register :
     type DogRegister interface {
         NewRegister(hosts []string, root, environ, group, service string)
@@ -323,10 +400,18 @@ nodeInfo:
 ```
 >* you can find it usage on "server/register/register_test.go" and "server/discovery/discovery.go"
 
-```
+```go
+package register_test
+
+import (
+	"github.com/chuck1024/godog/server/register"
+	"testing"
+	"time"
+)
+
 func TestEtcd(t *testing.T){
-    var r DogRegister
-    r = &EtcdRegister{}
+    var r register.DogRegister
+    r = &register.EtcdRegister{}
     r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging","godog", "test", )
 
     r.Run("127.0.0.1", 10240,10)
@@ -335,17 +420,26 @@ func TestEtcd(t *testing.T){
 }
 
 func TestZk(t *testing.T){
-    var r DogRegister
-    r = &ZkRegister{}
+    var r register.DogRegister
+    r = &register.ZkRegister{}
     r.NewRegister([]string{"localhost:2181"}, "/root/", "stagging","godog", "test", )
     r.Run("127.0.0.1", 10240,10)
     time.Sleep(10 * time.Second)
     r.Close()
 }
+```
+```go
+package discovery_test
+
+import (
+    "github.com/chuck1024/godog/server/discovery"
+    "testing"
+    "time"
+)
 
 func TestDiscEtcd(t *testing.T){
-    var r DogDiscovery
-    r = &EtcdDiscovery{}
+    var r discovery.DogDiscovery
+    r = &discovery.EtcdDiscovery{}
     r.NewDiscovery([]string{"localhost:2379"})
     r.Watch("/root/godog/test/stagging/pool")
     r.Run()
@@ -360,8 +454,8 @@ func TestDiscEtcd(t *testing.T){
 }
 
 func TestDiscZk(t *testing.T){
-    var r DogDiscovery
-    r = &ZkDiscovery{}
+    var r discovery.DogDiscovery
+    r = &discovery.ZkDiscovery{}
     r.NewDiscovery([]string{"localhost:2181"})
     r.Watch("/root/godog/test/stagging/pool")
     r.Run()
@@ -375,9 +469,9 @@ func TestDiscZk(t *testing.T){
 ```
 
 `dao module` provides the relation usages of db and redis.
->* You can find it in "test/db_test.go" and "test/redis_test.go"
+>* You can find it in "dao/db/db_test.go" and "dao/cache/redis_test.go"
 
-```
+```go
 func TestAdd(t *testing.T) {
     url, err := godog.AppConfig.String("mysql")
     if err != nil {
@@ -428,7 +522,7 @@ func TestQuery(t *testing.T) {
         return
     }
 
-    MysqlHandle = db.Init(url)
+   MysqlHandle = db.Init(url)
     
     td := &TestDB{}
 
@@ -442,7 +536,15 @@ func TestQuery(t *testing.T) {
 }
 ```
 
-```
+```go
+package cache_test
+
+import (
+    "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/dao/cache"
+    "testing"
+)
+
 func TestRedis(t *testing.T) {
     URL,_ := godog.AppConfig.String("redis")
     cache.Init(URL)
@@ -464,6 +566,7 @@ func TestRedis(t *testing.T) {
     t.Logf("get value: %s",value)
 }
 ```
+
 More information can be obtained in the source code
 ## License
 

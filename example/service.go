@@ -54,4 +54,5 @@ func main() {
 	}
 }
 
-// you can use command to test service that it is in another file <service.txt>.
+// you can use command to test http service.
+// curl http://127.0.0.1:10240/test

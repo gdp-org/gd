@@ -3,16 +3,17 @@
  * Author: Chuck1024
  */
 
-package discovery
+package discovery_test
 
 import (
+	"github.com/chuck1024/godog/server/discovery"
 	"testing"
 	"time"
 )
 
 func TestDiscEtcd(t *testing.T){
-	var r DogDiscovery
-	r = &EtcdDiscovery{}
+	var r discovery.DogDiscovery
+	r = &discovery.EtcdDiscovery{}
 	r.NewDiscovery([]string{"localhost:2379"})
 	r.Watch("/root/github/godog/stagging/pool")
 	r.Run()
@@ -27,8 +28,8 @@ func TestDiscEtcd(t *testing.T){
 }
 
 func TestDiscZk(t *testing.T){
-	var r DogDiscovery
-	r = &ZkDiscovery{}
+	var r discovery.DogDiscovery
+	r = &discovery.ZkDiscovery{}
 	r.NewDiscovery([]string{"localhost:2181"})
 	r.Watch("/root/godog/test/stagging/pool")
 	r.Run()
