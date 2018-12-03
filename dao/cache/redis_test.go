@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package main_test
+package cache_test
 
 import (
 	"github.com/chuck1024/godog"

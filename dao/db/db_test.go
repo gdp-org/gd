@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package main_test
+package db_test
 
 import (
 	"database/sql"
