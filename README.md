@@ -31,6 +31,8 @@ The framework contains `config module`,`error module`,`log module`,`net module`,
 ## Usage
 This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
  in your computer. Of course, you can choose to comment out these lines of code.
+
+service:
 ```go
 package main
 
@@ -88,6 +90,7 @@ func main() {
 >* You can find it in "example/service.go"
 >* use `control+c` to stop process
 
+tcp client:
 ```go
 package main
 
@@ -170,7 +173,7 @@ PS: of course, you can add new TcpPacket according to yourself rule.
     DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol.
 ```
 
-`tcpserver` show how to start tcp server
+`tcp_server` show how to start tcp server
 ```go
 package tcplib_test
 
