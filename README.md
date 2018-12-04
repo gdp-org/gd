@@ -113,8 +113,7 @@ type Header struct {
 }
 ```
 The Packet is a interface in tcp server and client. So, you can make your protocol that suits yourself by implementing packet's methods, if you need.
-You add new TcpPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket, 
-because it has been used many times. 
+You add new TcpPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket. 
 
 ---
 **[server]**
