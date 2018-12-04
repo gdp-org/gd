@@ -636,6 +636,8 @@ func TestRedis(t *testing.T) {
 ```
 
 More information can be obtained in the source code
+
+---
 ## License
 
 godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  
