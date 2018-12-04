@@ -31,8 +31,7 @@ The framework contains `config module`,`error module`,`log module`,`net module`,
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ---
-**[config]**
-
+**[config]**  
 So far, it only supports configuration with json in godog. Of course, it supports more and more format configuration in future.
 What's more, your configuration file must have the necessary parameters, like this:
 ```json
@@ -74,8 +73,7 @@ What's more, your configuration file must have the necessary parameters, like th
 Those items mentioned above are the base need of a server application. And they are defined in config file: example/conf/conf.json.
 
 ---
-**[net]**
-
+**[net]**  
 provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
 I will import introduce tcp server. Focus on the tcp server.
 
@@ -116,8 +114,7 @@ The Packet is a interface in tcp server and client. So, you can make your protoc
 You add new TcpPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket. 
 
 ---
-**[server]**
-
+**[server]**  
 provides server register and discovery. Load balancing will be provided in the future.
 Service discovery registration based on etcd and zookeeper implementation.
 
