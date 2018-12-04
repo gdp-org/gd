@@ -56,6 +56,7 @@ What's more, your configuration file must have the necessary parameters, like th
 ```
 **Log.File**: the logging file.
 
+
 **Log.Level**: the logging level, it must be the one of "ERROR/WARNING/INFO/DEBUG".
 
 **Log.Stdout**: print log.
