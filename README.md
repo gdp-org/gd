@@ -24,8 +24,8 @@ GoDog is a basic framework implemented by golang, which is aiming at helping dev
 
 The framework contains `config module`,`error module`,`log module`,`net module`,`server module` and `dao module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis) and [redis-go-cluster](https://github.com/chasex/redis-go-cluster) are third-party library. 
->* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd) and [**chasex**](https://github.com/chasex).Thanks for them here. 
+>* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis),[redis-go-cluster](https://github.com/chasex/redis-go-cluster),[etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
+>* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd),[**chasex**](https://github.com/chasex),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ## Usage
