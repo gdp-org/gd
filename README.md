@@ -54,12 +54,10 @@ What's more, your configuration file must have the necessary parameters, like th
   }
 }
 ```
-**Log.File**: the logging file.
-
-**Log.Level**: the logging level, it must be the one of "ERROR/WARNING/INFO/DEBUG".
-
-**Log.Stdout**: print log.
-
+**Log.File**: the logging file  
+**Log.Level**: the logging level, it must be the one of **"ERROR/WARNING/INFO/DEBUG"**  
+**Log.Suffix**: is the suffix of log file  
+**Log.Stdout**: print log.  
 **Suffix**: it is the suffix of log file,
 > **"20060102-15"** means the name of logging file output is ending with **20180721-15.log**.  
 **2018** is short of year **2018**;  
@@ -67,14 +65,10 @@ What's more, your configuration file must have the necessary parameters, like th
 **21** is the day of month;  
 **15** is the hour of the day.
 
-**Prog.CPU**: a limit of CPU usage. 0 is default, means to use all cores.
-
+**Prog.CPU**: a limit of CPU usage. 0 is default, means to use all cores.  
 **Prog.HealthPort**: the port for monitor. If it is 0, monitor server will not run. 
-
-**Server.AppName**: server name.
-
-**Server.HttpPort**: http port. If it is 0, http server will not run. 
-
+**Server.AppName**: server name.  
+**Server.HttpPort**: http port. If it is 0, http server will not run.   
 **Server.TcpPort**: tcp port. If it is 0, tcp server will not run. 
 
 Those items mentioned above are the base need of a server application. And they are defined in config file: example/conf/conf.json.
