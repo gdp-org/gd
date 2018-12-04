@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-func InitLog(logFile, logLevel, name, suffix string, daemon bool) error {
+func InitLog(logFile, logLevel, name, suffix string, Stdout bool) error {
 	logFile, _ = filepath.Abs(logFile)
 	if err := os.MkdirAll(filepath.Dir(logFile), os.ModeDir|os.ModePerm); err != nil {
 		return err
@@ -29,7 +29,7 @@ func InitLog(logFile, logLevel, name, suffix string, daemon bool) error {
 	logging.AddHandler(name, handler)
 	logging.ResetLogLevel(logLevel)
 
-	if daemon {
+	if !Stdout {
 		logging.DisableStdout()
 	}
 

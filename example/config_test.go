@@ -13,7 +13,7 @@ import (
 
 func TestConfig(t *testing.T) {
 	// init log
-	log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Daemon)
+	log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Stdout)
 
 	// Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
 	// The location of config.json is "conf/conf.json". Of course, you change it if you want.

@@ -29,7 +29,7 @@ type BaseConfigure struct {
 	Log struct {
 		File   string
 		Level  string
-		Daemon bool
+		Stdout bool
 		Suffix string
 	}
 

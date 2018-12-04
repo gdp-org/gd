@@ -44,7 +44,7 @@ func Run() error {
 	Signal(AppTcp)
 
 	// init log
-	log.InitLog(AppConfig.BaseConfig.Log.File, AppConfig.BaseConfig.Log.Level, AppConfig.BaseConfig.Server.AppName, AppConfig.BaseConfig.Log.Suffix, AppConfig.BaseConfig.Log.Daemon)
+	log.InitLog(AppConfig.BaseConfig.Log.File, AppConfig.BaseConfig.Log.Level, AppConfig.BaseConfig.Server.AppName, AppConfig.BaseConfig.Log.Suffix, AppConfig.BaseConfig.Log.Stdout)
 
 	// dump when error occurs
 	file, err := utils.Dump(AppConfig.BaseConfig.Server.AppName)

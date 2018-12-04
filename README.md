@@ -2,7 +2,7 @@
 
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗" in Chinese, which is very cute.
 
-
+---
 ## Author
 
 ```
@@ -10,6 +10,7 @@ author: Chuck1024
 email : chuck.ch1024@outlook.com
 ```
 
+---
 ## Installation
 
 Start with cloning godog:
@@ -18,6 +19,7 @@ Start with cloning godog:
 > go get github.com/chuck1024/godog
 ```
 
+---
 ## Introduction
 
 GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
@@ -28,6 +30,138 @@ The framework contains `config module`,`error module`,`log module`,`net module`,
 >* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd),[**chasex**](https://github.com/chasex),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
+---
+**[config]**
+So far, it only supports configuration with json in godog. Of course, it supports more and more format configuration in future.
+What's more, your configuration file must have the necessary parameters, like this:
+```json
+{
+  "Log": {
+    "File": "log/godog.log",
+    "Level": "DEBUG",
+    "Stdout": true,
+    "Suffix": "20060102-15"
+  },
+  "Prog": {
+    "CPU": 0,
+    "HealthPort": 0
+  },
+  "Server": {
+    "AppName": "godog",
+    "HttpPort": 10240,
+    "TcpPort": 10241
+  }
+}
+```
+**Log.File**: the logging file.
+**Log.Level**: the logging level, it must be the one of "ERROR/WARNING/INFO/DEBUG".
+**Log.Stdout**: print log.
+**Suffix**: it is the suffix of log file,
+> **"20060102-15"** means the name of logging file output is ending with **20180721-15.log**.  
+**2018** is short of year **2018**;  
+**07** is the month **July**;  
+**21** is the day of month;  
+**15** is the hour of the day.
+
+**Prog.CPU**: a limit of CPU usage. 0 is default, means to use all cores.
+**Prog.HealthPort**: the port for monitor. If it is 0, monitor server will not run. 
+
+**Server.AppName**: server name.
+**Server.HttpPort**: http port. If it is 0, http server will not run. 
+**Server.TcpPort**: tcp port. If it is 0, tcp server will not run. 
+
+Those items mentioned above are the base need of a server application. And they are defined in config file: example/conf/conf.json.
+
+---
+**[net]**
+provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
+I will import introduce tcp server. Focus on the tcp server.
+
+```markdown
+type Packet interface {
+    ID() uint32
+    SetErrCode(code uint32)
+}
+
+default tcp packet:
+type TcpPacket struct {
+    Seq       uint32
+    ErrCode   uint32
+    Cmd       uint32 // also be a string, for dispatch.
+    PacketLen uint32
+    Body      []byte
+}
+
+godog tcp packet:
+type DogPacket struct {
+    Header
+    Body []byte
+}
+
+type Header struct {
+    PacketLen uint32
+    Seq       uint32
+    Cmd       uint32
+    CheckSum  uint32
+    ErrCode   uint32
+    Version   uint8
+    Padding   uint8
+    SOH       uint8
+    EOH       uint8
+}
+```
+The Packet is a interface in tcp server and client. So, you can make your protocol that suits yourself by implementing packet's methods, if you need.
+You add new TcpPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket, 
+because it has been used many times. 
+
+---
+**[server]**
+provides server register and discovery. Load balancing will be provided in the future.
+Service discovery registration based on etcd and zookeeper implementation.
+
+```markdown
+register :
+    type DogRegister interface {
+        NewRegister(hosts []string, root, environ, group, service string)
+        SetRootNode(node string) error
+        GetRootNode() (root string)
+        SetHeartBeat(heartBeat time.Duration)
+        SetOffline(offline bool)
+        Run(ip string, port int, weight uint64) error
+        Close()
+    }
+    
+discovery :
+    type DogDiscovery interface {
+        NewDiscovery(dns []string)
+        Watch(node string) error
+        WatchMulti(nodes []string) error
+        AddNode(node string, info *server.NodeInfo)
+        DelNode(node string, key string)
+        GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
+        Run() error
+        Close() error
+    }
+    
+nodeInfo:
+    type NodeInfo interface {
+        GetIp() string
+        GetPort() int
+        GetOffline() bool
+        GetWeight() uint64
+    }
+    
+    type DefaultNodeInfo struct {
+        Ip      string `json:"ip"`
+        Port    int    `json:"port"`
+        Offline bool   `json:"offline"`
+        Weight  uint64 `json:"weight"`
+    }
+```
+The DogRegister and DogDiscovery are interface, godog supports zookeeper and etcd, so you can use others.
+The NodeInfo is info of node.
+
+---
 ## Usage
 This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
  in your computer. Of course, you can choose to comment out these lines of code.
@@ -137,41 +271,8 @@ func main() {
 ```
 >* It contained "example/tcp_client.go"
 
-
-`net module` provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
-
-Focus on the tcp server.
-```go
-default tcp packet:
-type TcpPacket struct {
-    Seq       uint32
-    ErrCode   uint32
-    Cmd       uint32 // also be a string, for dispatch.
-    PacketLen uint32
-    Body      []byte
-}
-
-godog tcp packet:
-type DogPacket struct {
-    Header
-    Body []byte
-}
-
-type Header struct {
-    PacketLen uint32
-    Seq       uint32
-    Cmd       uint32
-    CheckSum  uint32
-    ErrCode   uint32
-    Version   uint8
-    Padding   uint8
-    SOH       uint8
-    EOH       uint8
-}
-
-PS: of course, you can add new TcpPacket according to yourself rule.
-    DogPacket is a simple. You can consult god_server.go and dog_client.go and make your own protocol.
-```
+---
+`net module` you also use it to do something if you want to use `net module` only. Here's how it's used.
 
 `tcp_server` show how to start tcp server
 ```go
@@ -225,6 +326,7 @@ func TestTcpClient(t *testing.T) {
 ```
 >* You can find it in "net/tcplib/tcp_client_test.go"
 
+---
 `config module` provides the related configuration of the project.
 >* You can find it in "example/config_test.go"
 
@@ -239,7 +341,7 @@ import (
 
 func TestConfig(t *testing.T) {
     // init log
-    log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Daemon)
+    log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Stdout)
 
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
@@ -309,6 +411,7 @@ func TestConfig(t *testing.T) {
 }
 ```
 
+---
 `error module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,
 and error msg.
 
@@ -358,50 +461,10 @@ func GetErrorType(code int) string {
 }
 ```
 
-`server module` provides server register and discovery. Load balancing will be provided in the future.
-Service discovery registration based on etcd and zookeeper implementation.
+---
+`server module` 
 >* if you use etcd, you must download etcd module
 >* `go get github.com/coreos/etcd/clientv3`
-
-```go
-register :
-    type DogRegister interface {
-        NewRegister(hosts []string, root, environ, group, service string)
-        SetRootNode(node string) error
-        GetRootNode() (root string)
-        SetHeartBeat(heartBeat time.Duration)
-        SetOffline(offline bool)
-        Run(ip string, port int, weight uint64) error
-        Close()
-    }
-    
-discovery :
-    type DogDiscovery interface {
-        NewDiscovery(dns []string)
-        Watch(node string) error
-        WatchMulti(nodes []string) error
-        AddNode(node string, info *server.NodeInfo)
-        DelNode(node string, key string)
-        GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
-        Run() error
-        Close() error
-    }
-    
-nodeInfo:
-    type NodeInfo interface {
-        GetIp() string
-        GetPort() int
-        GetOffline() bool
-        GetWeight() uint64
-    }
-    
-    type DefaultNodeInfo struct {
-        Ip      string `json:"ip"`
-        Port    int    `json:"port"`
-        Offline bool   `json:"offline"`
-        Weight  uint64 `json:"weight"`
-    }
-```
 >* you can find it usage on "server/register/register_test.go" and "server/discovery/discovery.go"
 
 ```go
@@ -472,6 +535,7 @@ func TestDiscZk(t *testing.T){
 }
 ```
 
+---
 `dao module` provides the relation usages of db and redis.
 >* You can find it in "dao/db/db_test.go" and "dao/cache/redis_test.go"
 
