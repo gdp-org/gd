@@ -62,8 +62,8 @@ func (c *TcpClient) Stop() {
 	logging.Info("[Stop] stop all done.")
 }
 
-// Invoke rpc call
-func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *dogError.CodeError) {
+// connect
+func (c *TcpClient) Connect() (*Client, error) {
 	addr := &net.TCPAddr{}
 
 	if len(c.addrs) > 0 {
@@ -86,7 +86,7 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *dogError.Co
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			logging.Warning("[Invoke] Addr %s already created.", addr)
+			logging.Warning("[Connect] Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -94,9 +94,24 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte) (rsp []byte, err *dogError.Co
 		}
 	}
 
+	return cc, nil
+}
+
+// Invoke rpc call
+func (c *TcpClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+	if len(client) == 0 {
+		cc, err := c.Connect()
+		if err != nil {
+			logging.Error("[Invoke] connect occur error:%s", err)
+			return nil, InternalServerError
+		}
+
+		client[0] = cc
+	}
+
 	var reqPkt, rspPkt Packet
 	reqPkt = NewTcpPacket(cmd, req)
-	if rspPkt, err = cc.CallRetry(reqPkt, c.RetryNum); err != nil {
+	if rspPkt, err = client[0].CallRetry(reqPkt, c.RetryNum); err != nil {
 		logging.Error("[Invoke] CallRetry occur error:%v ", err)
 		return nil, err
 	}
