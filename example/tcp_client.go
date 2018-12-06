@@ -28,7 +28,12 @@ func main() {
 	}
 
 	// you can choose one or use load balance algorithm to choose best one.
-	c.AddAddr(hosts[0].GetIp() + ":" + fmt.Sprintf("%d", hosts[0].GetPort()))
+	// or put all to c.Addr
+	for _, v := range hosts {
+		if !v.GetOffline() {
+			c.AddAddr(fmt.Sprintf("%s:%d", v.GetIp(), v.GetPort()))
+		}
+	}
 
 	body := []byte("How are you?")
 
