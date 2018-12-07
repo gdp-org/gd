@@ -99,19 +99,21 @@ func (c *TcpClient) Connect() (*Client, error) {
 
 // Invoke rpc call
 func (c *TcpClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.Connect()
 		if err != nil {
 			logging.Error("[Invoke] connect occur error:%s", err)
 			return nil, InternalServerError
 		}
-
-		client[0] = cc
+		ct = cc
+	} else {
+		ct = client[0]
 	}
 
 	var reqPkt, rspPkt Packet
 	reqPkt = NewTcpPacket(cmd, req)
-	if rspPkt, err = client[0].CallRetry(reqPkt, c.RetryNum); err != nil {
+	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
 		logging.Error("[Invoke] CallRetry occur error:%v ", err)
 		return nil, err
 	}

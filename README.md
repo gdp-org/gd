@@ -311,12 +311,13 @@ package tcplib_test
 
 import (
     "github.com/chuck1024/godog"
+    "github.com/chuck1024/godog/utils"
     "testing"
 )
 
 func TestTcpClient(t *testing.T) {
     c := godog.NewTcpClient(500, 0)
-    c.AddAddr("127.0.0.1:10241")
+    c.AddAddr(utils.GetLocalIP() + ":10241")
 
     body := []byte("How are you?")
 
