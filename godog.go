@@ -65,7 +65,7 @@ func Run() error {
 	// init cpu
 	err = initCPU()
 	if err != nil {
-		Error("[Run] Cannot init Cpu module, error = %s", err.Error())
+		Error("[Run] Cannot init CPU module, error = %s", err.Error())
 		return err
 	}
 
