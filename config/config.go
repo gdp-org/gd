@@ -165,7 +165,7 @@ func (a *DogAppConfig) Bool(key string) (bool, error) {
 		case bool:
 			return v.(bool), nil
 		default:
-			return false, errors.New("value type isn't int")
+			return false, errors.New("value type isn't bool")
 		}
 	}
 
