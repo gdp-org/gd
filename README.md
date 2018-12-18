@@ -70,7 +70,7 @@ What's more, your configuration file must have the necessary parameters, like th
 **Server.HttpPort**: http port. If it is 0, http server will not run.   
 **Server.TcpPort**: tcp port. If it is 0, tcp server will not run. 
 
-Those items mentioned above are the base need of a server application. And they are defined in config file: example/conf/conf.json.
+Those items mentioned above are the base need of a server application. And they are defined in config file: sample/conf/conf.json.
 
 ---
 **[net]**  
@@ -220,7 +220,7 @@ func main() {
 // you can use command to test http service.
 // curl http://127.0.0.1:10240/test
 ```
->* You can find it in "example/service.go"
+>* You can find it in "sample/service.go"
 >* use `control+c` to stop process
 
 tcp client:
@@ -273,7 +273,7 @@ func main() {
     godog.Debug("resp=%s", string(rsp))
 }
 ```
->* It contained "example/tcp_client.go"
+>* It contained "sample/tcp_client.go"
 
 ---
 `net module` you also use it to do something if you want to use `net module` only. Here's how it's used.
@@ -333,7 +333,7 @@ func TestTcpClient(t *testing.T) {
 
 ---
 `config module` provides the related configuration of the project.
->* You can find it in "example/config_test.go"
+>* You can find it in "sample/config_test.go"
 
 ```go
 package main_test

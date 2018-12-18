@@ -9,9 +9,6 @@
 *.test
 .idea/*
 utils/stat.go
-example/log/*
-example/dumpPanic.-dump-*
-example/test.go
 sample/log/*
 sample/dumpPanic.-dump-*
 sample/test.go

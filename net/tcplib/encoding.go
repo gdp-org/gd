@@ -42,7 +42,7 @@ func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder,
 
 // Default TcpPacket
 // of course, you can add new TcpPacket according to yourself rule.
-// for example, DogPacket.
+// for sample, DogPacket.
 var (
 	globalSeq uint32
 )
