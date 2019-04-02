@@ -1,10 +1,5 @@
 {
-  "Log": {
-    "File": "log/godog.log",
-    "Level": "DEBUG",
-    "Stdout": true,
-    "Suffix": "20060102-15"
-  },
+  "Log": "log.xml",
   "Prog": {
     "CPU": 0,
     "HealthPort": 0

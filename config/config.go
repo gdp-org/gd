@@ -26,12 +26,7 @@ type DogAppConfig struct {
 }
 
 type BaseConfigure struct {
-	Log struct {
-		File   string
-		Level  string
-		Stdout bool
-		Suffix string
-	}
+	Log string
 
 	Prog struct {
 		CPU        int

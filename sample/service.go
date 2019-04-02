@@ -6,6 +6,7 @@
 package main
 
 import (
+	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
@@ -13,12 +14,12 @@ import (
 )
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	godog.Debug("connected : %s", r.RemoteAddr)
+	doglog.Debug("connected : %s", r.RemoteAddr)
 	w.Write([]byte("test success!!!"))
 }
 
 func HandlerTcpTest(req []byte) (uint32, []byte) {
-	godog.Debug("tcp server request: %s", string(req))
+	doglog.Debug("tcp server request: %s", string(req))
 	code := uint32(200)
 	resp := []byte("Are you ok?")
 	return code, resp
@@ -49,7 +50,7 @@ func main() {
 
 	err := godog.Run()
 	if err != nil {
-		godog.Error("Error occurs, error = %s", err.Error())
+		doglog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
