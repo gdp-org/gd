@@ -8,7 +8,7 @@ package tcplib
 import (
 	"bufio"
 	dogError "github.com/chuck1024/godog/error"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 	"io"
 	"math/rand"
 	"net"
@@ -49,7 +49,7 @@ func (c *TcpClient) DogConnect() (*Client, error) {
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			logging.Warning("[Connect] Addr %s already created.", addr)
+			doglog.Warn("[Connect] Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -66,7 +66,7 @@ func (c *TcpClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []
 	if len(client) == 0 {
 		cc, err := c.DogConnect()
 		if err != nil {
-			logging.Error("[DogInvoke] connect occur error:%s", err)
+			doglog.Error("[DogInvoke] connect occur error:%s", err)
 			return nil, InternalServerError
 		}
 		ct = cc
@@ -77,7 +77,7 @@ func (c *TcpClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []
 	var reqPkt, rspPkt Packet
 	reqPkt = NewDogPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
-		logging.Error("[Invoke] CallRetry occur error:%v ", err)
+		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
 		return nil, err
 	}
 

@@ -7,8 +7,8 @@ package tcplib
 
 import (
 	"fmt"
+	"github.com/chuck1024/doglog"
 	dogError "github.com/chuck1024/godog/error"
-	"github.com/xuyu/logging"
 	"io"
 	"runtime"
 	"sync"
@@ -110,7 +110,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 		go func() {
 			if conn, clientAddr, err = s.Listener.Accept(); err != nil {
 				if stopping.Load() == nil {
-					logging.Error("[serverHandler] [%s] cannot accept new connection: [%s]", s.Addr, err)
+					doglog.Error("[serverHandler] [%s] cannot accept new connection: [%s]", s.Addr, err)
 				}
 			}
 			close(acceptChan)
@@ -123,7 +123,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			<-acceptChan
 			return
 		case <-acceptChan:
-			logging.Info("[serverHandler] [%s] connected.", clientAddr)
+			doglog.Info("[serverHandler] [%s] connected.", clientAddr)
 		}
 
 		if err != nil {
@@ -169,13 +169,13 @@ func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr strin
 	}
 
 	responsesChan = nil
-	logging.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
+	doglog.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
 }
 
 func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			logging.Error("[serverReader] [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
+			doglog.Error("[serverReader] [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
 		}
 		close(done)
 	}()
@@ -191,7 +191,7 @@ func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 	for {
 		if req, err = dec.Decode(); err != nil {
 			if !isClientDisconnect(err) && !isServerStop(stopChan) {
-				logging.Error("[serverReader] [%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
+				doglog.Error("[serverReader] [%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
 			}
 			return
 		}
@@ -240,7 +240,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 			stackTrace := make([]byte, 1<<20)
 			n := runtime.Stack(stackTrace, false)
 			errStr := fmt.Sprintf("Panic occured: %v\n Stack trace: %s", x, stackTrace[:n])
-			logging.Error("[callHandlerWithRecover] [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
+			doglog.Error("[callHandlerWithRecover] [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
 		}
 	}()
 	rsp = handler(req)
@@ -294,7 +294,7 @@ func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 		serverMessagePool.Put(m)
 
 		if err := enc.Encode(rsp); err != nil {
-			logging.Error("[serverWriter] [%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
+			doglog.Error("[serverWriter] [%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
 			return
 		}
 	}

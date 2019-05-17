@@ -8,7 +8,7 @@ package tcplib
 import (
 	dogError "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/utils"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 	"math/rand"
 	"net"
 	"sync"
@@ -46,7 +46,7 @@ func NewClient(timeout, retryNum uint32) *TcpClient {
 // add server address
 func (c *TcpClient) AddAddr(addr string) {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
-		logging.Error("[AddAddr] parse addr failed, %s", err.Error())
+		doglog.Error("[AddAddr] parse addr failed, %s", err.Error())
 	} else {
 		c.addrs = append(c.addrs, addr2)
 	}
@@ -56,10 +56,10 @@ func (c *TcpClient) AddAddr(addr string) {
 func (c *TcpClient) Stop() {
 	for addr, cc := range c.Cm {
 		cc.Stop()
-		logging.Error("[Stop] stop client %s", addr)
+		doglog.Error("[Stop] stop client %s", addr)
 	}
 
-	logging.Info("[Stop] stop all done.")
+	doglog.Info("[Stop] stop all done.")
 }
 
 // connect
@@ -86,7 +86,7 @@ func (c *TcpClient) Connect() (*Client, error) {
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			logging.Warning("[Connect] Addr %s already created.", addr)
+			doglog.Warn("[Connect] Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -103,7 +103,7 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byt
 	if len(client) == 0 {
 		cc, err := c.Connect()
 		if err != nil {
-			logging.Error("[Invoke] connect occur error:%s", err)
+			doglog.Error("[Invoke] connect occur error:%s", err)
 			return nil, InternalServerError
 		}
 		ct = cc
@@ -114,7 +114,7 @@ func (c *TcpClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byt
 	var reqPkt, rspPkt Packet
 	reqPkt = NewTcpPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
-		logging.Error("[Invoke] CallRetry occur error:%v ", err)
+		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
 		return nil, err
 	}
 

@@ -7,7 +7,7 @@ package tcplib
 
 import (
 	"bufio"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 	"io"
 )
 
@@ -47,7 +47,7 @@ func (s *TcpServer) dogDispatchPacket(req Packet) (rsp Packet) {
 
 	f, ok := s.m[headCmd]
 	if !ok {
-		logging.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
+		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
 		return NewDogPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 

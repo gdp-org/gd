@@ -8,7 +8,7 @@ package tcplib
 import (
 	"fmt"
 	dogError "github.com/chuck1024/godog/error"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 	"io"
 	"runtime"
 	"sync"
@@ -37,11 +37,11 @@ type Client struct {
 }
 
 func (c *Client) Start() {
-	logging.Info("start %s", c.Addr)
+	doglog.Info("start %s", c.Addr)
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		logging.Warning("[Start]: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		doglog.Warn("[Start]: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -92,7 +92,7 @@ func (c *Client) Stop() {
 	defer c.stopLock.Unlock()
 	c.stopLock.Lock()
 	if c.clientStopChan == nil {
-		logging.Error("[Stop]: the client must be started before stopping it")
+		doglog.Error("[Stop]: the client must be started before stopping it")
 	}
 	close(c.clientStopChan)
 	c.stopWg.Wait()
@@ -116,7 +116,7 @@ func clientHandler(c *Client) {
 		go func() {
 			if conn, err = c.Dial(c.Addr); err != nil {
 				if stopping.Load() == nil {
-					logging.Error("[clientHandler]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
+					doglog.Error("[clientHandler]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
 				}
 			}
 			close(dialChan)
@@ -189,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		logging.Error("[clientHandleConnection] occur error: ", c.Addr+", "+err.Error())
+		doglog.Error("[clientHandleConnection] occur error: ", c.Addr+", "+err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -262,7 +262,7 @@ func clientWriter(c *Client, conn io.Writer, pendingRequests map[uint32]*AsyncRe
 
 			if n > 3*c.PendingRequests {
 				// timeout Clear connect
-				logging.Info("pending requests(%d), clean canceled req...", n)
+				doglog.Info("pending requests(%d), clean canceled req...", n)
 				pendingRequestLock.Lock()
 				for _, m := range pendingRequests {
 					atomic.AddUint32(&c.pendingRequestsCount, ^uint32(0))
@@ -481,7 +481,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		logging.Error("[acquireTimer] BUG: Active timer trapped into acquireTimer()")
+		doglog.Error("[acquireTimer] BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }

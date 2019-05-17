@@ -8,8 +8,8 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/utils"
-	"github.com/xuyu/logging"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,7 +73,7 @@ func (a *DogAppConfig) initNewConfigure() {
 	total := map[string]interface{}{}
 	err := a.getConfig(a.BaseConfig, &total)
 	if err != nil {
-		logging.Error("[initNewConfigure] Cannot parse config file, error = %s", err.Error())
+		doglog.Error("[initNewConfigure] Cannot parse config file, error = %s", err.Error())
 		panic(err)
 	}
 
@@ -96,7 +96,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 	}
 
 	if err := utils.ParseJSON(appConfigPath, appCfg); err != nil {
-		logging.Error("[getConfig] Parse config %s. error: %s\n", appConfigPath, err.Error())
+		doglog.Error("[getConfig] Parse config %s. error: %s\n", appConfigPath, err.Error())
 		return err
 	}
 
@@ -108,7 +108,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 
 func (a *DogAppConfig) Set(key string, value interface{}) {
 	if v, ok := a.data[key]; ok {
-		logging.Warning("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
+		doglog.Warning("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
 	}
 
 	a.data[key] = value
@@ -131,7 +131,7 @@ func (a *DogAppConfig) Strings(key string) ([]string, error) {
 	if v, ok := a.data[key]; ok {
 		switch v.(type) {
 		case string:
-			result := strings.Split(v.(string),";")
+			result := strings.Split(v.(string), ";")
 			return result, nil
 		default:
 			return []string{}, errors.New("value type isn't string")

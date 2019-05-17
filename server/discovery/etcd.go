@@ -9,9 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/server"
 	"github.com/coreos/etcd/clientv3"
-	"github.com/xuyu/logging"
 	"sync"
 	"time"
 )
@@ -54,7 +54,7 @@ func (e *EtcdDiscovery) Watch(node string) error {
 		DialTimeout: time.Second,
 	})
 	if err != nil {
-		logging.Error("[Watch] new client occur error:%s", err)
+		doglog.Error("[Watch] new client occur error:%s", err)
 		return err
 	}
 
@@ -108,7 +108,7 @@ func (e *EtcdDiscovery) unMsgNodeInfo(data []byte) *server.NodeInfo {
 	info = &server.DefaultNodeInfo{}
 	err := json.Unmarshal([]byte(data), info)
 	if err != nil {
-		logging.Error("[GetNodeInfo] json unmarshal occur error:%s", err)
+		doglog.Error("[GetNodeInfo] json unmarshal occur error:%s", err)
 		return nil
 	}
 
@@ -122,7 +122,7 @@ func (e *EtcdDiscovery) GetNodeInfo(node string) []server.NodeInfo {
 func (e *EtcdDiscovery) watchNode(node EtcdNode) {
 	resp, err := e.nodes[node.node].client.Get(context.TODO(), node.node, clientv3.WithPrefix())
 	if err != nil {
-		logging.Error("[Run] get node[%s] children", node.node)
+		doglog.Error("[Run] get node[%s] children", node.node)
 		return
 	}
 

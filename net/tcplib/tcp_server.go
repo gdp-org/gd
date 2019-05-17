@@ -8,7 +8,7 @@ package tcplib
 import (
 	"errors"
 	"fmt"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 )
 
 /*
@@ -49,7 +49,7 @@ func NewTcpServer() *TcpServer {
 func (s *TcpServer) Start() error {
 	err := s.ss.Serve()
 	if err != nil {
-		logging.Error("%s", err.Error())
+		doglog.Error("%s", err.Error())
 		return err
 	}
 	return nil
@@ -57,19 +57,19 @@ func (s *TcpServer) Start() error {
 
 func (s *TcpServer) Run(port int) error {
 	if port == NoPort {
-		logging.Info("[Run] no tcp serve port")
+		doglog.Info("[Run] no tcp serve port")
 		return NoTcpPort
 	}
 
 	addr := fmt.Sprintf(":%d", port)
-	logging.Info("[Run] Tcp try to listen port: %d", port)
+	doglog.Info("[Run] Tcp try to listen port: %d", port)
 
 	s.addr = addr
 	s.ss.Addr = addr
 
 	err := s.Start()
 	if err != nil {
-		logging.Error("[Run] Start occur error:%s", err.Error())
+		doglog.Error("[Run] Start occur error:%s", err.Error())
 		return err
 	}
 
@@ -91,12 +91,12 @@ func (s *TcpServer) GetAddr() string {
 
 func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {
 	if _, ok := s.m[headCmd]; ok {
-		logging.Warning("[AddTcpHandler] head cmd [%d] already registered.", headCmd)
+		doglog.Warn("[AddTcpHandler] head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.m[headCmd] = f
-	logging.Info("[AddTcpHandler] register head cmd [%d] success.", headCmd)
+	doglog.Info("[AddTcpHandler] register head cmd [%d] success.", headCmd)
 }
 
 func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
@@ -105,7 +105,7 @@ func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 
 	f, ok := s.m[headCmd]
 	if !ok {
-		logging.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
+		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
 		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
