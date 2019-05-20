@@ -27,7 +27,7 @@ GoDog is a basic framework implemented by golang, which is aiming at helping dev
 The framework contains `config module`,`error module`,`net module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
 >* [etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
->* Authors are [**garyburd**](https://github.com/garyburd),[**chasex**](https://github.com/chasex),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
+>* Authors are [**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ---
