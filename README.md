@@ -24,10 +24,10 @@ Start with cloning godog:
 
 GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-The framework contains `config module`,`error module`,`log module`,`net module`,`server module` and `dao module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
+The framework contains `config module`,`error module`,`net module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [logging](https://github.com/xuyu/logging),[redigo](https://github.com/garyburd/redigo/redis),[redis-go-cluster](https://github.com/chasex/redis-go-cluster),[etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
->* Authors are [**xuyu**](https://github.com/xuyu),[**garyburd**](https://github.com/garyburd),[**chasex**](https://github.com/chasex),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
+>* [etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
+>* Authors are [**garyburd**](https://github.com/garyburd),[**chasex**](https://github.com/chasex),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 >* I modified the `logging module`, adding the printing of file name, row number and time.
 
 ---
@@ -36,12 +36,7 @@ So far, it only supports configuration with json in godog. Of course, it support
 What's more, your configuration file must have the necessary parameters, like this:
 ```json
 {
-  "Log": {
-    "File": "log/godog.log",
-    "Level": "DEBUG",
-    "Stdout": true,
-    "Suffix": "20060102-15"
-  },
+  "Log": "conf/log.xml",
   "Prog": {
     "CPU": 0,
     "HealthPort": 0
@@ -53,16 +48,6 @@ What's more, your configuration file must have the necessary parameters, like th
   }
 }
 ```
-**Log.File**: the logging file  
-**Log.Level**: the logging level, it must be the one of **"ERROR/WARNING/INFO/DEBUG"**  
-**Log.Suffix**: is the suffix of log file  
-**Log.Stdout**: print log.  
-**Suffix**: it is the suffix of log file,
-> **"20060102-15"** means the name of logging file output is ending with **20180721-15.log**.  
-**2018** is short of year **2018**;  
-**07** is the month **July**;  
-**21** is the day of month;  
-**15** is the hour of the day.
 
 **Prog.CPU**: a limit of CPU usage. 0 is default, means to use all cores.  
 **Prog.HealthPort**: the port for monitor. If it is 0, monitor server will not run. 
@@ -170,6 +155,7 @@ service:
 package main
 
 import (
+	"github.com/chuck1024/doglog"
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/server/register"
     "github.com/chuck1024/godog/utils"
@@ -177,12 +163,12 @@ import (
 )
 
 func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-    godog.Debug("connected : %s", r.RemoteAddr)
+    doglog.Debug("connected : %s", r.RemoteAddr)
     w.Write([]byte("test success!!!"))
 }
 
 func HandlerTcpTest(req []byte) (uint32, []byte) {
-    godog.Debug("tcp server request: %s", string(req))
+    doglog.Debug("tcp server request: %s", string(req))
     code := uint32(200)
     resp := []byte("Are you ok?")
     return code, resp
@@ -213,7 +199,7 @@ func main() {
     
     err := godog.Run()
     if err != nil {
-        godog.Error("Error occurs, error = %s", err.Error())
+        doglog.Error("Error occurs, error = %s", err.Error())
         return
     }
 }
@@ -229,6 +215,7 @@ package main
 
 import (
     "fmt"
+    "github.com/chuck1024/doglog"
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/server/discovery"
     "time"
@@ -246,7 +233,7 @@ func main() {
    
     hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
     for _,v := range hosts {
-        godog.Debug("%s:%d",v.GetIp(),v.GetPort())
+        doglog.Debug("%s:%d",v.GetIp(),v.GetPort())
     }
    
     // you can choose one or use load balance algorithm to choose best one.
@@ -261,7 +248,7 @@ func main() {
 
     rsp, err := c.Invoke(1024, body)
     if err != nil {
-        godog.Error("Error when sending request to server: %s", err)
+        doglog.Error("Error when sending request to server: %s", err)
     }
 
     // or use godog protocol
@@ -270,7 +257,7 @@ func main() {
         //t.Logf("Error when sending request to server: %s", err)
     //}
 
-    godog.Debug("resp=%s", string(rsp))
+    doglog.Debug("resp=%s", string(rsp))
 }
 ```
 >* It contained "sample/tcp_client.go"
@@ -339,66 +326,44 @@ func TestTcpClient(t *testing.T) {
 package main_test
 
 import (
+	"github.com/chuck1024/doglog"
     "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/log"
     "testing"
 )
 
 func TestConfig(t *testing.T) {
-    // init log
-    log.InitLog(godog.AppConfig.BaseConfig.Log.File, godog.AppConfig.BaseConfig.Log.Level, godog.AppConfig.BaseConfig.Server.AppName, godog.AppConfig.BaseConfig.Log.Suffix, godog.AppConfig.BaseConfig.Log.Stdout)
-
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
-
-    // AppConfig.BaseConfig.Log.File is the path of log file.
-    file := godog.AppConfig.BaseConfig.Log.File
-    t.Logf("log file:%s", file)
-
-    // AppConfig.BaseConfig.Log.Level is log level.
-    // DEBUG   logLevel = 1
-    // INFO    logLevel = 2
-    // WARNING logLevel = 3
-    // ERROR   logLevel = 4
-    // DISABLE logLevel = 255
-    level := godog.AppConfig.BaseConfig.Log.Level
-    t.Logf("log level:%s", level)
 
     // AppConfig.BaseConfig.Server.AppName is service name
     name := godog.AppConfig.BaseConfig.Server.AppName
     t.Logf("name:%s", name)
 
-    // AppConfig.BaseConfig.Log.Suffix is suffix of log file.
-    // suffix = "060102-15" . It indicates that the log is cut per hour
-    // suffix = "060102" . It indicates that the log is cut per day
-    suffix := godog.AppConfig.BaseConfig.Log.Suffix
-    t.Logf("log suffix:%s", suffix)
-
     // you can add configuration items directly in conf.json
     stringValue, err := godog.AppConfig.String("stringKey")
     if err != nil {
-        godog.Error("get key occur error: %s", err)
+        doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%s", stringValue)
 
     stringsValue, err := godog.AppConfig.Strings("stringsKey")
     if err != nil {
-        godog.Error("get key occur error: %s", err)
+        doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%s", stringsValue)
     
     intValue, err := godog.AppConfig.Int("intKey")
     if err != nil {
-        godog.Error("get key occur error: %s", err)
+        doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%d", intValue)
 
     BoolValue, err := godog.AppConfig.Bool("boolKey")
     if err != nil {
-        godog.Error("get key occur error: %s", err)
+        doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%t", BoolValue)
@@ -409,7 +374,7 @@ func TestConfig(t *testing.T) {
     // get config key
     yourValue, err := godog.AppConfig.String("yourKey")
     if err != nil {
-        godog.Error("get key occur error: %s", err)
+        doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("yourValue:%s", yourValue)
@@ -537,106 +502,6 @@ func TestDiscZk(t *testing.T){
         t.Logf("%s:%d",v.GetIp(),v.GetPort())
     }
     time.Sleep(10*time.Second)
-}
-```
-
----
-`dao module` provides the relation usages of db and redis.
->* You can find it in "dao/db/db_test.go" and "dao/cache/redis_test.go"
-
-```go
-func TestAdd(t *testing.T) {
-    url, err := godog.AppConfig.String("mysql")
-    if err != nil {
-        t.Logf("[init] get config mysql url occur error: %s", err)
-        return
-    }
-
-    MysqlHandle = db.Init(url)
-    
-    td := &TestDB{
-        Name:     "chuck",
-        CardId:   1025,
-        Sex:      "male",
-        Birthday: 1024,
-        Status:   1,
-        CreateTs: uint64(time.Now().Unix()),
-    }
-
-    if err := td.Add(); err != nil {
-        t.Logf("[testAdd] errors occur while res.RowsAffected(): %s", err.Error())
-        return
-    }
-}
-
-func TestUpdate(t *testing.T) {
-    url, err := godog.AppConfig.String("mysql")
-    if err != nil {
-        t.Logf("[init] get config mysql url occur error:%s ", err)
-        return
-    }
-
-    MysqlHandle = db.Init(url)
-    
-    td := &TestDB{
-        CardId: 1024,
-    }
-
-    if err := td.Update(1025); err != nil {
-        t.Logf("[testUpdate] errors occur while res.RowsAffected(): %s", err.Error())
-        return
-    }
-}
-
-func TestQuery(t *testing.T) {
-    url, err := godog.AppConfig.String("mysql")
-    if err != nil {
-        t.Logf("[init] get config mysql url occur error: %s", err)
-        return
-    }
-
-   MysqlHandle = db.Init(url)
-    
-    td := &TestDB{}
-
-    tt, err := td.Query(1024)
-    if err != nil {
-        t.Logf("query occur error:%s", err)
-        return
-    }
-
-    t.Logf("query: %v", *tt)
-}
-```
-
-```go
-package cache_test
-
-import (
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/dao/cache"
-    "testing"
-)
-
-func TestRedis(t *testing.T) {
-    URL,_ := godog.AppConfig.String("redis")
-    cache.Init(URL)
-    
-    key := "key"
-    err := cache.Set( key, "value")
-    if err != nil {
-        t.Logf("redis set occur error:%s", err)
-        return
-    }
-
-    t.Logf("set success:%s",key)
-
-    value, err := cache.Get(key)
-    if err != nil {
-        t.Logf("redis get occur error: %s", err)
-        return
-    }
-    t.Logf("get value: %s",value)
 }
 ```
 
