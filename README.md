@@ -20,6 +20,10 @@ Start with cloning godog:
 ```
 
 ---
+## godog 2.0
+welcome to [godog 2.0](https://github.com/chuck1024/godog/tree/godog_2.0)
+
+---
 ## Introduction
 
 GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
