@@ -1,5 +1,5 @@
 {
-  "Log": "log.xml",
+  "Log": "conf/log.xml",
   "Prog": {
     "CPU": 0,
     "HealthPort": 0

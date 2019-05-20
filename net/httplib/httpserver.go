@@ -8,7 +8,7 @@ package httplib
 import (
 	"errors"
 	"fmt"
-	"github.com/xuyu/logging"
+	"github.com/chuck1024/doglog"
 	"net/http"
 )
 
@@ -67,11 +67,11 @@ func (h *HttpServer) JudgeInitHandler() bool {
 
 func (h *HttpServer) Serve(httpPort int, handler http.Handler) {
 	srvPort := fmt.Sprintf(":%d", httpPort)
-	logging.Info("[Serve] Http try to listen port: %d", httpPort)
+	doglog.Info("[Serve] Http try to listen port: %d", httpPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
-			logging.Error("[Serve] Listen failed, error = %s", err.Error())
+			doglog.Error("[Serve] Listen failed, error = %s", err.Error())
 			return
 		}
 	}()
@@ -79,11 +79,11 @@ func (h *HttpServer) Serve(httpPort int, handler http.Handler) {
 
 func (h *HttpServer) Health(healthPort int, handler http.Handler) {
 	srvPort := fmt.Sprintf("%d", healthPort)
-	logging.Info("[Health] Try to monitor health condition on port: %s", srvPort)
+	doglog.Info("[Health] Try to monitor health condition on port: %s", srvPort)
 	go func() {
 		err := http.ListenAndServe(srvPort, handler)
 		if err != nil {
-			logging.Error("[Health] monitor failed, error = %s", err.Error())
+			doglog.Error("[Health] monitor failed, error = %s", err.Error())
 			return
 		}
 	}()
@@ -96,11 +96,11 @@ func (h *HttpServer) HandleFunc(addr string, handler HandlerFunc) {
 func (h *HttpServer) AddHttpHandler(addr string, handler HandlerFunc) {
 	_, ok := h.handlerMap[addr]
 	if ok {
-		logging.Warning("[AddHandlerFunc] Try to replace handler to addr = %s", addr)
+		doglog.Warn("[AddHandlerFunc] Try to replace handler to addr = %s", addr)
 	}
 
 	h.handlerMap[addr] = handler
-	logging.Info("[AddHandlerFunc] Add/Replace [addr: %s] ok", addr)
+	doglog.Info("[AddHandlerFunc] Add/Replace [addr: %s] ok", addr)
 }
 
 func (h *HttpServer) Register() {
@@ -117,7 +117,7 @@ func (h *HttpServer) Run(healthPort, port int) error {
 
 	// http service
 	if port == NoPort {
-		logging.Info("[Run] No http Serve port for application ")
+		doglog.Info("[Run] No http Serve port for application ")
 		return NoHttpPort
 	} else {
 		h.Serve(port, h.handler)

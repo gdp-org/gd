@@ -8,8 +8,8 @@ package httplib
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/chuck1024/doglog"
 	de "github.com/chuck1024/godog/error"
-	"github.com/xuyu/logging"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -65,7 +65,7 @@ func newRequest(method, url string, body string) (*Request, error) {
 
 	request, err := http.NewRequest(req.Method, req.URL, strings.NewReader(req.Body))
 	if err != nil {
-		logging.Error("[newRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
+		doglog.Error("[newRequest] Fatal error when create request, error = %s, url = %s", err.Error(), url)
 		return nil, err
 	}
 
@@ -79,14 +79,14 @@ func (req *Request) addHeader(key string, value string) {
 }
 
 func (req *Request) doRequest() (*Response, error) {
-	logging.Debug("[doRequest] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
+	doglog.Debug("[doRequest] start connection[to: %s, method: %s, content: %s]", req.URL, req.Method, req.Body)
 
 	client := &http.Client{}
 	client.Timeout = time.Duration(10 * time.Second)
 
 	response, err := client.Do(req.Req)
 	if err != nil {
-		logging.Error("[doRequest] Failed to talk with remote server, error = %s ", err.Error())
+		doglog.Error("[doRequest] Failed to talk with remote server, error = %s ", err.Error())
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (req *Request) doRequest() (*Response, error) {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		logging.Error("[doRequest] Read Response Body, error = %s", err.Error())
+		doglog.Error("[doRequest] Read Response Body, error = %s", err.Error())
 		return nil, err
 	}
 
@@ -109,16 +109,6 @@ func (req *Request) doRequest() (*Response, error) {
 		ContentLength:    response.ContentLength,
 		TransferEncoding: response.TransferEncoding,
 	}, nil
-}
-
-func JsonSerialize(source map[string]interface{}) (string, error) {
-	text, err := json.Marshal(&source)
-	if err != nil {
-		logging.Error("[Serialize] Failed to convert map to json byte, error: %s", err.Error())
-		return "", err
-	}
-
-	return string(text), err
 }
 
 func Call(method, url string, body string, headers, params map[string][]string) (string, error) {
@@ -141,7 +131,7 @@ func Call(method, url string, body string, headers, params map[string][]string) 
 
 	req, err := newRequest(method, url, body)
 	if err != nil {
-		logging.Error("[Call] Failed to create Request")
+		doglog.Error("[Call] Failed to create Request")
 		return "", err
 	}
 
@@ -158,7 +148,7 @@ func Call(method, url string, body string, headers, params map[string][]string) 
 
 	resp, err := req.doRequest()
 	if err != nil {
-		logging.Error("[Call] Failed to do Request, error = %s", err.Error())
+		doglog.Error("[Call] Failed to do Request, error = %s", err.Error())
 		return "", err
 	}
 
@@ -191,11 +181,11 @@ func SendToServer(method, url string, headers, params map[string][]string, req, 
 		headers["Content-Type"] = []string{CONTENT_JSON}
 	}
 
-	logging.Debug("[SendToServer] send to server req:%#v", req)
+	doglog.Debug("[SendToServer] send to server req:%#v", req)
 
 	response, err := Call(method, url, string(body), headers, params)
 	if err != nil {
-		logging.Error("[SendToServer] occur error:%s", err.Error())
+		doglog.Error("[SendToServer] occur error:%s", err.Error())
 		return err
 	}
 
@@ -235,7 +225,7 @@ func getResponseInfo(err *de.CodeError, data interface{}) []byte {
 
 	ret, ee := json.Marshal(response)
 	if ee != nil {
-		logging.Error("[getResponseInfo] Failed, %s, data = %v", err.ToString(), data)
+		doglog.Error("[getResponseInfo] Failed, %s, data = %v", err.ToString(), data)
 		panic("[getResponseInfo] Failed, " + ee.Error())
 	}
 
@@ -260,7 +250,7 @@ func LogGetResponseInfo(req *http.Request, err *de.CodeError, data interface{}) 
 		Body: body,
 	}
 
-	logging.Debug("[LogGetResponseInfo] HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
+	doglog.Debug("[LogGetResponseInfo] HANDLE_LOG:request=%+v,response=%s", logReq, string(ret))
 
 	return ret
 }
@@ -269,7 +259,7 @@ func GetRequestBody(req *http.Request, v interface{}) error {
 	buff := bytes.NewBufferString("")
 	_, err := io.Copy(buff, req.Body)
 	if err != nil {
-		logging.Error("[GetRequestBody] copy req body error, error=%s", err.Error())
+		doglog.Error("[GetRequestBody] copy req body error, error=%s", err.Error())
 		return err
 	}
 	text := buff.String()
@@ -277,7 +267,7 @@ func GetRequestBody(req *http.Request, v interface{}) error {
 
 	err = json.Unmarshal(buff.Bytes(), v)
 	if err != nil {
-		logging.Error("[GetRequestBody] decode json body error, text=%s, error=%s", text, err.Error())
+		doglog.Error("[GetRequestBody] decode json body error, text=%s, error=%s", text, err.Error())
 		return err
 	}
 

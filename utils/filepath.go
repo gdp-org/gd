@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func Exists(p string) (bool) {
+func Exists(p string) bool {
 	if _, err := os.Stat(p); err != nil {
 		if os.IsNotExist(err) {
 			return false

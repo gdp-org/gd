@@ -108,7 +108,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 
 func (a *DogAppConfig) Set(key string, value interface{}) {
 	if v, ok := a.data[key]; ok {
-		doglog.Warning("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
+		doglog.Warn("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
 	}
 
 	a.data[key] = value
