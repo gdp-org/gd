@@ -24,9 +24,11 @@ type Engine struct {
 
 func Default() *Engine {
 	return &Engine{
-		Config:     config.NewDogConfig(),
-		HttpServer: &httplib.HttpServer{},
-		TcpServer:  tcplib.NewTcpServer(),
+		Config: config.NewDogConfig(),
+		HttpServer: &httplib.HttpServer{
+			NoGinLog: true,
+		},
+		TcpServer: tcplib.NewTcpServer(),
 	}
 }
 
@@ -38,11 +40,11 @@ func (e *Engine) NewTcpClient(timeout time.Duration, retryNum uint32) *tcplib.Tc
 
 func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *httplib.HttpClient {
 	client := &httplib.HttpClient{
-		Timeout:Timeout,
-		Domain:Domain,
+		Timeout: Timeout,
+		Domain:  Domain,
 	}
 	if err := client.Start(); err != nil {
-		doglog.Error("[NewHttpClient] http client start occur error:%s",err.Error())
+		doglog.Error("[NewHttpClient] http client start occur error:%s", err.Error())
 		return nil
 	}
 	return client
