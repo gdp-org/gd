@@ -17,6 +17,7 @@ import (
 	"time"
 )
 
+// example: group filter
 func GroupFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()

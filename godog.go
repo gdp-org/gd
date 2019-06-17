@@ -51,7 +51,7 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *httplib.Ht
 }
 
 func (e *Engine) NewHttpServer(initer httplib.HttpServerIniter) {
-	e.HttpServer.HttpServerIniter = initer
+	e.HttpServer.SetInit(initer)
 }
 
 func (e *Engine) initCPU() error {
