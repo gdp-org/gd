@@ -60,7 +60,6 @@ func (c *HttpClient) MethodTimeout(method string, path string, header map[string
 	var err error
 	el := len(errs)
 	if el > 0 {
-
 		if el == 1 {
 			err = errs[0]
 		} else {
