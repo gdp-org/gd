@@ -19,28 +19,22 @@ import (
  * default tcp client
  */
 
-var (
-	AppTcpClient *TcpClient
-)
-
 type TcpClient struct {
 	Cm       map[string]*Client
 	cmMutex  sync.Mutex
 	addrs    []*net.TCPAddr
-	Timeout  uint32
+	Timeout  time.Duration
 	RetryNum uint32
 	localIp  string
 }
 
-func NewClient(timeout, retryNum uint32) *TcpClient {
-	AppTcpClient = &TcpClient{
+func NewClient(timeout time.Duration, retryNum uint32) *TcpClient {
+	return &TcpClient{
 		Cm:       make(map[string]*Client),
 		Timeout:  timeout,
 		RetryNum: retryNum,
 		localIp:  utils.GetLocalIP(),
 	}
-
-	return AppTcpClient
 }
 
 // add server address
@@ -81,7 +75,7 @@ func (c *TcpClient) Connect() (*Client, error) {
 		if cc, ok = c.Cm[addr.String()]; !ok {
 			cc = &Client{
 				Addr:           addr.String(),
-				RequestTimeout: time.Millisecond * time.Duration(c.Timeout),
+				RequestTimeout: c.Timeout,
 			}
 			cc.Start()
 			c.Cm[addr.String()] = cc

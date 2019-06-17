@@ -93,7 +93,7 @@ func (r *EtcdRegister) Run(ip string, port int, weight uint64) (err error) {
 					return
 				}
 			case <-r.client.Ctx().Done():
-				doglog.Warning("[Run] server closed.")
+				doglog.Warn("[Run] server closed.")
 				return
 			case <-r.exitChan:
 				doglog.Debug("[Run] register stop")
@@ -131,7 +131,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 		_, err := r.client.Put(context.TODO(), node, string(dataByte), clientv3.WithLease(resp.ID))
 		cancel()
 		if err != nil {
-			doglog.Warning("ectd client set err:%v", err)
+			doglog.Warn("ectd client set err:%v", err)
 			continue
 		}
 

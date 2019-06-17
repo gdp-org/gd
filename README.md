@@ -13,7 +13,7 @@ email : chuck.ch1024@outlook.com
 ---
 ## Installation
 
-Start with cloning godog:
+Start with cloning godog[2.0]:
 
 ```
 > go get github.com/chuck1024/godog
@@ -26,9 +26,8 @@ GoDog is a basic framework implemented by golang, which is aiming at helping dev
 
 The framework contains `config module`,`error module`,`net module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
->* Authors are [**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
->* I modified the `logging module`, adding the printing of file name, row number and time.
+>* [gin](https://github.com/gin-gonic/gin) [etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
+>* Authors are [**Gin-Gonic**](https://gin-gonic.com/),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 
 ---
 **[config]**  
@@ -156,55 +155,88 @@ package main
 
 import (
 	"github.com/chuck1024/doglog"
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/server/register"
-    "github.com/chuck1024/godog/utils"
-    "net/http"
+	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/httplib"
+	"github.com/chuck1024/godog/server/register"
+	"github.com/chuck1024/godog/utils"
+	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
-func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-    doglog.Debug("connected : %s", r.RemoteAddr)
-    w.Write([]byte("test success!!!"))
+type TestReq struct {
+	Data string
+}
+
+type TestResp struct {
+	Ret string
+}
+
+func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
+	doglog.Debug("httpServerTest req:%v", req)
+
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
+
+	return http.StatusOK, "ok", nil, ret
 }
 
 func HandlerTcpTest(req []byte) (uint32, []byte) {
-    doglog.Debug("tcp server request: %s", string(req))
-    code := uint32(200)
-    resp := []byte("Are you ok?")
-    return code, resp
+	doglog.Debug("tcp server request: %s", string(req))
+	code := uint32(200)
+	resp := []byte("Are you ok?")
+	return code, resp
 }
 
 func main() {
-    // Http
-    godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
+	d := godog.Default()
+	// Http
+	var h httplib.HttpServerIniter
+	h = func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			httplib.Logger(),
+		)
 
-    // default tcp server, you can choose godog tcp server
-    //godog.AppTcp = tcplib.AppDog
+		f, err := httplib.Wrap(HandlerHttpTest)
+		if err != nil {
+			return err
+		}
 
-    // Tcp
-    godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
+		r.POST("test", f)
+		return nil
+	}
+	d.NewHttpServer(h)
 
-    // register params
-    etcdHost, _ := godog.AppConfig.Strings("etcdHost")
-    root, _ := godog.AppConfig.String("root")
-    environ, _ := godog.AppConfig.String("environ")
-    group, _ := godog.AppConfig.String("group")
-    weight, _ := godog.AppConfig.Int("weight")
-    
-    // register
-    var r register.DogRegister
-    r = &register.EtcdRegister{}
-    r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName, )
-    r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
-    
-    err := godog.Run()
-    if err != nil {
-        doglog.Error("Error occurs, error = %s", err.Error())
-        return
-    }
+	// default tcp server, you can choose godog tcp server
+	//d.TcpServer = tcplib.NewDogTcpServer()
+
+	// Tcp
+	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)
+
+	// register params
+	etcdHost, _ := d.Config.Strings("etcdHost")
+	root, _ := d.Config.String("root")
+	environ, _ := d.Config.String("environ")
+	group, _ := d.Config.String("group")
+	weight, _ := d.Config.Int("weight")
+
+	// register
+	var r register.DogRegister
+	r = &register.EtcdRegister{}
+	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
+	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.TcpPort, uint64(weight))
+
+	err := d.Run()
+	if err != nil {
+		doglog.Error("Error occurs, error = %s", err.Error())
+		return
+	}
 }
+
 // you can use command to test http service.
 // curl http://127.0.0.1:10240/test
+
 ```
 >* You can find it in "sample/service.go"
 >* use `control+c` to stop process
@@ -222,7 +254,8 @@ import (
 )
 
 func main() {
-    c := godog.NewTcpClient(500, 0)
+    d := godog.Default()
+    c := d.NewTcpClient(500, 0)
     // discovery 
     var r discovery.DogDiscovery
     r = &discovery.EtcdDiscovery{}
@@ -270,25 +303,27 @@ func main() {
 package tcplib_test
 
 import (
-    "github.com/chuck1024/godog/net/tcplib"
-    "testing"
+	"github.com/chuck1024/godog"
+	"testing"
 )
 
 func TestTcpServer(t *testing.T) {
-    // Tcp 
-    tcplib.AppTcp.AddTcpHandler(1024, func(req []byte) (uint32, []byte) {
-        t.Logf("tcp server request: %s", string(req))
-        code := uint32(0)
-        resp := []byte("Are you ok?")
-        return code, resp
-    })
+	d := godog.Default()
+	// Tcp
+	d.TcpServer.AddTcpHandler(1024, func(req []byte) (uint32, []byte) {
+		t.Logf("tcp server request: %s", string(req))
+		code := uint32(0)
+		resp := []byte("Are you ok?")
+		return code, resp
+	})
 
-    err := tcplib.AppTcp.Run(10241)
-    if err != nil {
-        t.Logf("Error occurs, error = %s", err.Error())
-        return
-    }
+	err := d.TcpServer.Run(10241)
+	if err != nil {
+		t.Logf("Error occurs, error = %s", err.Error())
+		return
+	}
 }
+
 ```
 >* You can find it in "net/tcplib/tcp_server_test.go"
 
@@ -303,7 +338,8 @@ import (
 )
 
 func TestTcpClient(t *testing.T) {
-    c := godog.NewTcpClient(500, 0)
+    d := godog.Default()
+    c := d.NewTcpClient(500, 0)
     c.AddAddr(utils.GetLocalIP() + ":10241")
 
     body := []byte("How are you?")
@@ -332,36 +368,40 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+	// init log
+	doglog.LoadConfiguration("conf/log.xml")
+
     // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
 
+    d := godog.Default()
     // AppConfig.BaseConfig.Server.AppName is service name
-    name := godog.AppConfig.BaseConfig.Server.AppName
+    name := d.Config.BaseConfig.Server.AppName
     t.Logf("name:%s", name)
 
     // you can add configuration items directly in conf.json
-    stringValue, err := godog.AppConfig.String("stringKey")
+    stringValue, err := d.Config.String("stringKey")
     if err != nil {
         doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%s", stringValue)
 
-    stringsValue, err := godog.AppConfig.Strings("stringsKey")
+    stringsValue, err := d.Config.Strings("stringsKey")
     if err != nil {
         doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%s", stringsValue)
     
-    intValue, err := godog.AppConfig.Int("intKey")
+    intValue, err := d.Config.Int("intKey")
     if err != nil {
         doglog.Error("get key occur error: %s", err)
         return
     }
     t.Logf("value:%d", intValue)
 
-    BoolValue, err := godog.AppConfig.Bool("boolKey")
+    BoolValue, err := d.Config.Bool("boolKey")
     if err != nil {
         doglog.Error("get key occur error: %s", err)
         return
@@ -369,10 +409,10 @@ func TestConfig(t *testing.T) {
     t.Logf("value:%t", BoolValue)
 
     // you can add config key-value if you need.
-    godog.AppConfig.Set("yourKey", "yourValue")
+    d.Config.Set("yourKey", "yourValue")
 
     // get config key
-    yourValue, err := godog.AppConfig.String("yourKey")
+    yourValue, err := d.Config.String("yourKey")
     if err != nil {
         doglog.Error("get key occur error: %s", err)
         return

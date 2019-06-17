@@ -7,7 +7,6 @@ package godog
 
 import (
 	"github.com/chuck1024/doglog"
-	"github.com/chuck1024/godog/net/tcplib"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,15 +24,15 @@ func init() {
 	signal.Notify(Hup, syscall.SIGHUP)
 }
 
-func Signal(AppTcp *tcplib.TcpServer) {
+func (e *Engine) Signal() {
 	go func() {
 		for {
 			select {
 			case <-Shutdown:
 				doglog.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
 				//if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
-				if AppTcp.GetAddr() != "" {
-					AppTcp.Stop()
+				if e.TcpServer.GetAddr() != "" {
+					e.TcpServer.Stop()
 				}
 				Running <- false
 			case <-Hup:

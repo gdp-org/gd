@@ -16,7 +16,6 @@ import (
  */
 
 var (
-	AppTcp    *TcpServer
 	NoTcpPort = errors.New("no tcp serve port")
 )
 
@@ -28,10 +27,6 @@ type TcpServer struct {
 	addr string
 	m    map[uint32]Handler
 	ss   *Server
-}
-
-func init() {
-	AppTcp = NewTcpServer()
 }
 
 func NewTcpServer() *TcpServer {
@@ -46,15 +41,6 @@ func NewTcpServer() *TcpServer {
 	return s
 }
 
-func (s *TcpServer) Start() error {
-	err := s.ss.Serve()
-	if err != nil {
-		doglog.Error("%s", err.Error())
-		return err
-	}
-	return nil
-}
-
 func (s *TcpServer) Run(port int) error {
 	if port == NoPort {
 		doglog.Info("[Run] no tcp serve port")
@@ -67,7 +53,7 @@ func (s *TcpServer) Run(port int) error {
 	s.addr = addr
 	s.ss.Addr = addr
 
-	err := s.Start()
+	err := s.ss.Serve()
 	if err != nil {
 		doglog.Error("[Run] Start occur error:%s", err.Error())
 		return err

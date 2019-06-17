@@ -8,14 +8,29 @@ package main
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func HandlerHttpTest(w http.ResponseWriter, r *http.Request) {
-	doglog.Debug("connected : %s", r.RemoteAddr)
-	w.Write([]byte("test success!!!"))
+type TestReq struct {
+	Data string
+}
+
+type TestResp struct {
+	Ret string
+}
+
+func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
+	doglog.Debug("httpServerTest req:%v", req)
+
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
+
+	return http.StatusOK, "ok", nil, ret
 }
 
 func HandlerTcpTest(req []byte) (uint32, []byte) {
@@ -26,29 +41,45 @@ func HandlerTcpTest(req []byte) (uint32, []byte) {
 }
 
 func main() {
+	d := godog.Default()
 	// Http
-	godog.AppHttp.AddHttpHandler("/test", HandlerHttpTest)
+	var h httplib.HttpServerIniter
+	h = func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			httplib.Logger(),
+		)
+
+		f, err := httplib.Wrap(HandlerHttpTest)
+		if err != nil {
+			return err
+		}
+
+		r.POST("test", f)
+		return nil
+	}
+	d.NewHttpServer(h)
 
 	// default tcp server, you can choose godog tcp server
-	//godog.AppTcp = tcplib.AppDog
+	//d.TcpServer = tcplib.NewDogTcpServer()
 
 	// Tcp
-	godog.AppTcp.AddTcpHandler(1024, HandlerTcpTest)
+	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)
 
 	// register params
-	etcdHost, _ := godog.AppConfig.Strings("etcdHost")
-	root, _ := godog.AppConfig.String("root")
-	environ, _ := godog.AppConfig.String("environ")
-	group, _ := godog.AppConfig.String("group")
-	weight, _ := godog.AppConfig.Int("weight")
+	etcdHost, _ := d.Config.Strings("etcdHost")
+	root, _ := d.Config.String("root")
+	environ, _ := d.Config.String("environ")
+	group, _ := d.Config.String("group")
+	weight, _ := d.Config.Int("weight")
 
 	// register
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
-	r.NewRegister(etcdHost, root, environ, group, godog.AppConfig.BaseConfig.Server.AppName)
-	r.Run(utils.GetLocalIP(), godog.AppConfig.BaseConfig.Server.TcpPort, uint64(weight))
+	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
+	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.TcpPort, uint64(weight))
 
-	err := godog.Run()
+	err := d.Run()
 	if err != nil {
 		doglog.Error("Error occurs, error = %s", err.Error())
 		return

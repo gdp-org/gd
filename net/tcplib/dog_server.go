@@ -15,14 +15,6 @@ import (
  * dog server
  */
 
-var (
-	AppDog *TcpServer
-)
-
-func init() {
-	AppDog = NewDogTcpServer()
-}
-
 func NewDogTcpServer() *TcpServer {
 	s := &TcpServer{
 		m: make(map[uint32]Handler),

@@ -16,7 +16,6 @@ import (
 )
 
 var (
-	AppConfig     *DogAppConfig
 	appConfigPath string
 )
 
@@ -48,15 +47,6 @@ func init() {
 
 	var filename = "conf.json"
 	appConfigPath = filepath.Join(workPath, "conf", filename)
-	if !utils.Exists(appConfigPath) {
-		AppConfig = &DogAppConfig{
-			BaseConfig: new(BaseConfigure),
-			data:       make(map[string]interface{}),
-		}
-		return
-	}
-
-	AppConfig = NewDogConfig()
 }
 
 func NewDogConfig() *DogAppConfig {

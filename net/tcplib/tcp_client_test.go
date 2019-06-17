@@ -12,7 +12,8 @@ import (
 )
 
 func TestTcpClient(t *testing.T) {
-	c := godog.NewTcpClient(500, 0)
+	d := godog.Default()
+	c := d.NewTcpClient(500, 0)
 	c.AddAddr(utils.GetLocalIP() + ":10241")
 
 	body := []byte("How are you?")
