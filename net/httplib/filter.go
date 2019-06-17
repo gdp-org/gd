@@ -95,8 +95,6 @@ func Logger() gin.HandlerFunc {
 			message["ip"] = IP
 		}
 
-		message["url"] = path
-
 		dataByte, err := json.Marshal(data)
 		if err != nil {
 			doglog.Error("[Logger] data cant transfer to json ?! data is %v", data)
@@ -120,9 +118,9 @@ func Logger() gin.HandlerFunc {
 		}
 
 		if cost > 500 {
-			doglog.Warn(fmt.Sprintf("[SESSION] %s", string(mj)))
+			doglog.Warn(fmt.Sprintf("%s [SESSION] %s", path, string(mj)))
 			return
 		}
-		doglog.Info(fmt.Sprintf("[SESSION] %s", string(mj)))
+		doglog.Info(fmt.Sprintf("%s [SESSION] %s", path, string(mj)))
 	}
 }
