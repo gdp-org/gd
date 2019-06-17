@@ -50,7 +50,7 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *httplib.Ht
 	return client
 }
 
-func (e *Engine) NewHttpServer(initer httplib.HttpServerIniter) {
+func (e *Engine) SetHttpServer(initer httplib.HttpServerIniter) {
 	e.HttpServer.SetInit(initer)
 }
 
