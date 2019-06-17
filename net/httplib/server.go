@@ -30,6 +30,9 @@ type HttpServer struct {
 	HttpServerWriteTimeout    int64
 	HttpServerRunHost         string
 	HttpServerIniter          HttpServerIniter
+
+	// default
+	defaultHandlerMap map[string]interface{}
 }
 
 func (h *HttpServer) Run() error {
@@ -88,6 +91,34 @@ func (h *HttpServer) Stop() {
 		doglog.Error("[httpServer] http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunHost, h.HttpServerShutdownTimeout, err)
 	} else {
 		doglog.Info("http server shutdown %s", h.HttpServerRunHost)
+	}
+}
+
+func (h *HttpServer) SetInit(i HttpServerIniter) {
+	h.HttpServerIniter = i
+}
+
+func (h *HttpServer) DefaultAddHandler(url string, handle interface{}) {
+	h.defaultHandlerMap[url] = handle
+}
+
+func (h *HttpServer) DefaultRegister() {
+	h.HttpServerIniter = func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			Logger(),
+		)
+
+		for k, v := range h.defaultHandlerMap {
+			f, err := Wrap(v)
+			if err != nil {
+				return err
+			}
+			r.GET(k, f)
+			r.POST(k, f)
+		}
+
+		return nil
 	}
 }
 

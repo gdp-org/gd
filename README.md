@@ -191,22 +191,8 @@ func HandlerTcpTest(req []byte) (uint32, []byte) {
 func main() {
 	d := godog.Default()
 	// Http
-	var h httplib.HttpServerIniter
-	h = func(g *gin.Engine) error {
-		r := g.Group("")
-		r.Use(
-			httplib.Logger(),
-		)
-
-		f, err := httplib.Wrap(HandlerHttpTest)
-		if err != nil {
-			return err
-		}
-
-		r.POST("test", f)
-		return nil
-	}
-	d.NewHttpServer(h)
+	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
+	d.HttpServer.DefaultRegister()
 
 	// default tcp server, you can choose godog tcp server
 	//d.TcpServer = tcplib.NewDogTcpServer()
