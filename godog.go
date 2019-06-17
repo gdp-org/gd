@@ -66,7 +66,9 @@ func (e *Engine) initCPU() error {
 
 func (e *Engine) Run() error {
 	// init log
-	doglog.LoadConfiguration(e.Config.BaseConfig.Log)
+	if e.Config.BaseConfig.Log != "" {
+		doglog.LoadConfiguration(e.Config.BaseConfig.Log)
+	}
 
 	doglog.Info("[Run] start")
 	// register signal
