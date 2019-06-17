@@ -32,7 +32,7 @@ type HttpServer struct {
 	HttpServerIniter          HttpServerIniter
 
 	// default
-	defaultHandlerMap map[string]interface{}
+	DefaultHandlerMap map[string]interface{}
 }
 
 func (h *HttpServer) Run() error {
@@ -99,10 +99,10 @@ func (h *HttpServer) SetInit(i HttpServerIniter) {
 }
 
 func (h *HttpServer) DefaultAddHandler(url string, handle interface{}) {
-	if h.defaultHandlerMap == nil {
-		h.defaultHandlerMap = make(map[string]interface{})
+	if h.DefaultHandlerMap == nil {
+		h.DefaultHandlerMap = make(map[string]interface{})
 	}
-	h.defaultHandlerMap[url] = handle
+	h.DefaultHandlerMap[url] = handle
 }
 
 func (h *HttpServer) DefaultRegister() {
@@ -113,7 +113,7 @@ func (h *HttpServer) DefaultRegister() {
 			Logger(),
 		)
 
-		for k, v := range h.defaultHandlerMap {
+		for k, v := range h.DefaultHandlerMap {
 			f, err := Wrap(v)
 			if err != nil {
 				return err
