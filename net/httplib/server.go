@@ -99,6 +99,9 @@ func (h *HttpServer) SetInit(i HttpServerIniter) {
 }
 
 func (h *HttpServer) DefaultAddHandler(url string, handle interface{}) {
+	if h.defaultHandlerMap == nil {
+		h.defaultHandlerMap = make(map[string]interface{})
+	}
 	h.defaultHandlerMap[url] = handle
 }
 

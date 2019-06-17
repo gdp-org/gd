@@ -39,7 +39,12 @@ type BaseConfigure struct {
 	}
 }
 
-func init() {
+func NewDogConfig() *DogAppConfig {
+	c := &DogAppConfig{
+		BaseConfig: new(BaseConfigure),
+		data:       make(map[string]interface{}),
+	}
+
 	workPath, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -47,12 +52,12 @@ func init() {
 
 	var filename = "conf.json"
 	appConfigPath = filepath.Join(workPath, "conf", filename)
-}
-
-func NewDogConfig() *DogAppConfig {
-	c := &DogAppConfig{
-		BaseConfig: new(BaseConfigure),
-		data:       make(map[string]interface{}),
+	if !utils.Exists(appConfigPath) {
+		doglog.Debug("conf.json not exist")
+		return &DogAppConfig{
+			BaseConfig: new(BaseConfigure),
+			data:       make(map[string]interface{}),
+		}
 	}
 
 	c.initNewConfigure()
