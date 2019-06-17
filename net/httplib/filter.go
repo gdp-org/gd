@@ -17,6 +17,16 @@ import (
 	"time"
 )
 
+func GroupFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		ret, _ := ParseRet(c)
+		httpStatusInterface, _ := c.Get(CODE)
+		httpStatus := httpStatusInterface.(int)
+		c.JSON(httpStatus, ret)
+	}
+}
+
 // example: log middle handle
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {

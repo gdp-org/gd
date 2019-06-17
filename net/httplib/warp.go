@@ -6,6 +6,7 @@
 package httplib
 
 import (
+	"errors"
 	"encoding/json"
 	"fmt"
 	"github.com/chuck1024/doglog"
@@ -166,3 +167,40 @@ func Return(c *gin.Context, code int, message string, err error, result interfac
 		c.Set(ERR, err)
 	}
 }
+
+func ParseRet(c *gin.Context) (ret interface{}, origErr interface{}) {
+	origErr, _ = c.Get(ERR)
+	retObj, ok := c.Get(RET)
+	if !ok {
+		if origErr == nil {
+			err := errors.New("no ret found")
+			c.Set(ERR, err)
+		}
+		ret = gin.H{
+			"code":    http.StatusInternalServerError,
+			"result":  nil,
+			"message": "no result",
+		}
+	} else {
+		if retObj == nil {
+			if origErr != nil {
+				err := fmt.Errorf("ret empty?,origRet=%v,origErr=%v", retObj, origErr)
+				c.Set(ERR, err)
+			} else {
+				err := fmt.Errorf("ret empty?,origRet=%v", retObj)
+				c.Set(ERR, err)
+			}
+
+			ret = gin.H{
+				"code":    http.StatusInternalServerError,
+				"result":  nil,
+				"message": "empty result",
+			}
+		} else {
+			ret = retObj
+			return
+		}
+	}
+	return
+}
+

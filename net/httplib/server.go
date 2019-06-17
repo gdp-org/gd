@@ -109,6 +109,7 @@ func (h *HttpServer) DefaultRegister() {
 	h.HttpServerIniter = func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
+			GroupFilter(),
 			Logger(),
 		)
 

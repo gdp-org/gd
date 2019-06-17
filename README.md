@@ -30,6 +30,40 @@ The framework contains `config module`,`error module`,`net module` and `server m
 >* Authors are [**Gin-Gonic**](https://gin-gonic.com/),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 
 ---
+## Quick start
+```go
+package main
+
+import (
+    "github.com/bitly/go-simplejson"
+    "github.com/chuck1024/doglog"
+    "github.com/chuck1024/godog"
+    "github.com/gin-gonic/gin"
+    "net/http"
+)
+
+func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message string, err error, ret string) {
+    doglog.Debug("httpServerTest req:%v", req)
+    
+    ret = "ok!!!"
+    return http.StatusOK, "ok", nil, ret
+}
+
+func main() {
+    d := godog.Default()
+    d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
+    d.HttpServer.DefaultRegister()
+    
+    d.Config.BaseConfig.Server.HttpPort = 10240
+    err := d.Run()
+    if err != nil {
+        doglog.Error("Error occurs, error = %s", err.Error())
+        return
+    }
+}
+```
+
+---
 **[config]**  
 So far, it only supports configuration with json in godog. Of course, it supports more and more format configuration in future.
 What's more, your configuration file must have the necessary parameters, like this:
