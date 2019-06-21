@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/tcplib"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,7 @@ func main() {
 
 	// Tcp
 	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)
+	tcplib.InitFilters([]tcplib.Filter{&tcplib.LogFilter{}})
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")

@@ -15,7 +15,7 @@ import (
 
 func main() {
 	d := godog.Default()
-	c := d.NewTcpClient(500, 0)
+	c := d.NewTcpClient(time.Duration(500*time.Millisecond), 0)
 	// discovery
 	var r discovery.DogDiscovery
 	r = &discovery.EtcdDiscovery{}

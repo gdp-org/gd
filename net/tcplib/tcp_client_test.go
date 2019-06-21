@@ -9,11 +9,12 @@ import (
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/utils"
 	"testing"
+	"time"
 )
 
 func TestTcpClient(t *testing.T) {
 	d := godog.Default()
-	c := d.NewTcpClient(500, 0)
+	c := d.NewTcpClient(time.Duration(500*time.Millisecond), 0)
 	c.AddAddr(utils.GetLocalIP() + ":10241")
 
 	body := []byte("How are you?")
