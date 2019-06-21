@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"strconv"
 )
 
 func loadFile(filename string) ([]byte, error) {
@@ -175,6 +176,34 @@ func HumanSize(s uint64) string {
 	default:
 		return fmt.Sprintf("%dB", s)
 	}
+}
+
+// k, m, g
+func ParseMemorySize(size string) (uint64, error) {
+	sizeSuffix := size[len(size)-1:]
+	sizeNum, err := strconv.ParseInt(size[:len(size)-1], 10, 0)
+	if err != nil {
+		return uint64(0), nil
+	}
+
+	switch sizeSuffix {
+	case "k":
+		sizeNum = sizeNum * 1024
+	case "K":
+		sizeNum = sizeNum * 1024
+	case "m":
+		sizeNum = sizeNum * 1024 * 1024
+	case "M":
+		sizeNum = sizeNum * 1024 * 1024
+	case "g":
+		sizeNum = sizeNum * 1024 * 1024 * 1024
+	case "G":
+		sizeNum = sizeNum * 1024 * 1024 * 1024
+	default:
+		return uint64(0), fmt.Errorf("unsupport suffix:%s", sizeSuffix)
+	}
+
+	return uint64(sizeNum), nil
 }
 
 //no escape html

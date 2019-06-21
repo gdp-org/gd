@@ -1,7 +1,8 @@
 {
   "Log": "conf/log.xml",
   "Prog": {
-    "CPU": 0,
+    "MaxCPU": 2,
+    "MaxMemory": "2g",
     "HealthPort": 0
   },
   "Server": {

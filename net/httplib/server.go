@@ -144,6 +144,7 @@ func (h *HttpServer) makeHttpServer() error {
 
 func (h *HttpServer) initGin() error {
 	var g *gin.Engine
+	gin.SetMode(gin.ReleaseMode)
 	if h.NoGinLog {
 		g = gin.New()
 		g.Use(gin.Recovery())

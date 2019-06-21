@@ -13,6 +13,7 @@ import (
 	"github.com/chuck1024/godog/net/tcplib"
 	"github.com/chuck1024/godog/utils"
 	"runtime"
+	"syscall"
 	"time"
 )
 
@@ -54,22 +55,52 @@ func (e *Engine) SetHttpServer(initer httplib.HttpServerIniter) {
 	e.HttpServer.SetInit(initer)
 }
 
-func (e *Engine) initCPU() error {
-	if e.Config.BaseConfig.Prog.CPU == 0 {
-		runtime.GOMAXPROCS(runtime.NumCPU())
-	} else {
-		runtime.GOMAXPROCS(e.Config.BaseConfig.Prog.CPU)
+func (e *Engine) initCPUAndMemory() error {
+	maxCPU := e.Config.BaseConfig.Prog.MaxCPU
+	numCpus := runtime.NumCPU()
+	if maxCPU <= 0 {
+		if numCpus > 3 {
+			maxCPU = numCpus / 2
+		} else {
+			maxCPU = 1
+		}
+	} else if maxCPU > numCpus {
+		maxCPU = numCpus
+	}
+	runtime.GOMAXPROCS(maxCPU)
+
+	if e.Config.BaseConfig.Prog.MaxMemory != "" {
+		maxMemory, err := utils.ParseMemorySize(e.Config.BaseConfig.Prog.MaxMemory)
+		if err != nil {
+			doglog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config.BaseConfig.Prog.MaxMemory, err.Error()))
+		}
+
+		var rlimit syscall.Rlimit
+		syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
+		doglog.Info("old rlimit mem:%v", rlimit)
+		rlimit.Cur = uint64(maxMemory)
+		rlimit.Max = uint64(maxMemory)
+		err = syscall.Setrlimit(syscall.RLIMIT_AS, &rlimit)
+		if err != nil {
+			doglog.Crash(fmt.Sprintf("syscall Setrlimit fail, rlimit:%v, error:%s", rlimit, err.Error()))
+		} else {
+			syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
+			doglog.Info("new rlimit mem:%v", rlimit)
+		}
 	}
 
 	return nil
 }
 
-func (e *Engine) Run() error {
+func (e *Engine) InitLog() {
 	// init log
 	if e.Config.BaseConfig.Log != "" {
 		doglog.LoadConfiguration(e.Config.BaseConfig.Log)
+		doglog.Info("config:%v", e.Config)
 	}
+}
 
+func (e *Engine) Run() error {
 	doglog.Info("[Run] start")
 	// register signal
 	e.Signal()
@@ -90,10 +121,10 @@ func (e *Engine) Run() error {
 		}
 	}()
 
-	// init cpu
-	err = e.initCPU()
+	// init cpu and memory
+	err = e.initCPUAndMemory()
 	if err != nil {
-		doglog.Error("[Run] Cannot init CPU module, error = %s", err.Error())
+		doglog.Error("[Run] Cannot init CPU and memory module, error = %s", err.Error())
 		return err
 	}
 

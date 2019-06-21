@@ -41,6 +41,7 @@ func HandlerTcpTest(req []byte) (uint32, []byte) {
 
 func main() {
 	d := godog.Default()
+	d.InitLog()
 	// Http
 	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	d.HttpServer.DefaultRegister()

@@ -28,7 +28,8 @@ type BaseConfigure struct {
 	Log string
 
 	Prog struct {
-		CPU        int
+		MaxCPU     int
+		MaxMemory  string
 		HealthPort int
 	}
 
