@@ -16,5 +16,5 @@ const (
 	DATA              = "data"
 	DATA_RAW          = "data_raw"
 	REDIRECT_URL      = "redirect_url"
-	LogId             = "log_id"
+	TraceID           = "trace_id"
 )

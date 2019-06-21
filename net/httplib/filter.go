@@ -32,8 +32,8 @@ func GroupFilter() gin.HandlerFunc {
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
-		logId := strconv.FormatInt(st.UnixNano(), 10)
-		c.Set(LogId, logId)
+		traceId := strconv.FormatInt(st.UnixNano(), 10)
+		c.Set(TraceID, traceId)
 		realIp, _ := utils.GetRealIP(c.Request)
 		c.Set(REMOTE_IP, realIp)
 
@@ -84,10 +84,10 @@ func Logger() gin.HandlerFunc {
 			"err":        errStr,
 		}
 
-		logIdObj, ok := c.Get(LogId)
+		traceIdObj, ok := c.Get(TraceID)
 		if ok {
-			logIdStr, _ := logIdObj.(string)
-			message["logId"] = logIdStr
+			traceIdStr, _ := traceIdObj.(string)
+			message["traceId"] = traceIdStr
 		}
 
 		ip, ok := c.Get(REMOTE_IP)
