@@ -83,7 +83,10 @@ func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
-	code, body := f(req.(*TcpPacket).Body)
+	code, body := GF.Handle(&Context{
+		Handler: f,
+		Req:     req.(*TcpPacket).Body,
+	})
 
 	return NewTcpPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
 }
