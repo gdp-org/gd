@@ -141,10 +141,10 @@ func (e *Engine) Run() error {
 
 	// tcp server
 	tcpPort := e.Config.BaseConfig.Server.TcpPort
-	if err = e.TcpServer.Run(tcpPort); err != nil {
-		if err == tcplib.NoTcpPort {
-			doglog.Info("[Run] Hasn't tcp server port")
-		} else {
+	if tcpPort == 0 {
+		doglog.Info("[Run] Hasn't tcp server port")
+	} else {
+		if err = e.TcpServer.Run(tcpPort); err != nil {
 			doglog.Error("[Run] Tcp server occur error in running application, error = %s", err.Error())
 			return err
 		}

@@ -6,7 +6,6 @@
 package tcplib
 
 import (
-	"errors"
 	"fmt"
 	"github.com/chuck1024/doglog"
 )
@@ -14,12 +13,6 @@ import (
 /*
  * default tcp server
  */
-
-var (
-	NoTcpPort = errors.New("no tcp serve port")
-)
-
-const NoPort = 0
 
 type Handler func([]byte) (uint32, []byte)
 
@@ -42,11 +35,6 @@ func NewTcpServer() *TcpServer {
 }
 
 func (s *TcpServer) Run(port int) error {
-	if port == NoPort {
-		doglog.Info("[Run] no tcp serve port")
-		return NoTcpPort
-	}
-
 	addr := fmt.Sprintf(":%d", port)
 	doglog.Info("[Run] Tcp try to listen port: %d", port)
 
