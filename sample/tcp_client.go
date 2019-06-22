@@ -39,7 +39,7 @@ func main() {
 
 	body := []byte("How are you?")
 
-	rsp, err := c.Invoke(1024, body)
+	rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
 		doglog.Error("Error when sending request to server: %s", err)
 	}

@@ -6,8 +6,9 @@
 package tcplib
 
 type Context struct {
+	Seq          uint32
 	//Service      string
-	//Method       string
+	Method       string
 	//Args         map[string]interface{}
 	Handler      Handler
 	Req          []byte

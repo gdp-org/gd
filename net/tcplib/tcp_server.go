@@ -8,6 +8,7 @@ package tcplib
 import (
 	"fmt"
 	"github.com/chuck1024/doglog"
+	"strconv"
 )
 
 /*
@@ -84,6 +85,8 @@ func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
 	}
 
 	code, body := GF.Handle(&Context{
+		Seq:     packet.Seq,
+		Method:  strconv.Itoa(int(headCmd)),
 		Handler: f,
 		Req:     req.(*TcpPacket).Body,
 	})

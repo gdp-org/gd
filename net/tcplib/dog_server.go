@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"github.com/chuck1024/doglog"
 	"io"
+	"strconv"
 )
 
 /*
@@ -43,7 +44,12 @@ func (s *TcpServer) dogDispatchPacket(req Packet) (rsp Packet) {
 		return NewDogPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
-	code, body := f(req.(*DogPacket).Body)
+	code, body := GF.Handle(&Context{
+		Seq:     packet.Seq,
+		Method:  strconv.Itoa(int(headCmd)),
+		Handler: f,
+		Req:     req.(*DogPacket).Body,
+	})
 
 	return NewDogPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
 }

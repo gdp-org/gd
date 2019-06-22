@@ -29,7 +29,7 @@ func Default() *Engine {
 		HttpServer: &httplib.HttpServer{
 			NoGinLog: true,
 		},
-		TcpServer: tcplib.NewTcpServer(),
+		TcpServer: tcplib.NewDogTcpServer(),
 	}
 }
 

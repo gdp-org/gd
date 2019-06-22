@@ -47,8 +47,8 @@ func main() {
 	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	d.HttpServer.DefaultRegister()
 
-	// default tcp server, you can choose godog tcp server
-	//d.TcpServer = tcplib.NewDogTcpServer()
+	// default dog tcp server, you can choose tcp server
+	//d.TcpServer = tcplib.NewTcpServer()
 
 	// Tcp
 	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)

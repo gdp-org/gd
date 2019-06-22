@@ -39,6 +39,9 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	logData["code"] = code
 	logData["ret"] = string(rsp)
 	logData["cost"] = cost / time.Millisecond
+	logData["req"] = string(ctx.Req)
+	logData["seq"] = ctx.Seq
+	logData["method"] = ctx.Method
 
 	logDataStr, jsonErr := json.Marshal(logData)
 	if jsonErr != nil {
