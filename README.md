@@ -13,7 +13,7 @@ email : chuck.ch1024@outlook.com
 ---
 ## Installation
 
-Start with cloning godog[2.0]:
+Start with cloning godog:
 
 ```
 > go get github.com/chuck1024/godog
@@ -84,11 +84,13 @@ What's more, your configuration file must have the necessary parameters, like th
 }
 ```
 
-**Prog.CPU**: a limit of CPU usage. 0 is default, means to use all cores.  
+**Log**: config of log.
+**Prog.MaxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  
+**Prog.MaxMemory**: a limit of memory usage.
 **Prog.HealthPort**: the port for monitor. If it is 0, monitor server will not run. 
 **Server.AppName**: server name.  
 **Server.HttpPort**: http port. If it is 0, http server will not run.   
-**Server.TcpPort**: tcp port. If it is 0, tcp server will not run. 
+**Server.RpcPort**: rpc port. If it is 0, rpc server will not run. 
 
 Those items mentioned above are the base need of a server application. And they are defined in config file: sample/conf/conf.json.
 
@@ -219,7 +221,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req []byte) (uint32, []byte) {
-	doglog.Debug("tcp server request: %s", string(req))
+	doglog.Debug("rpc server request: %s", string(req))
 	code := uint32(200)
 	resp := []byte("Are you ok?")
 	return code, resp
@@ -317,7 +319,7 @@ func main() {
     doglog.Debug("resp=%s", string(rsp))
 }
 ```
->* It contained "sample/tcp_client.go"
+>* It contained "sample/rpc_client.go"
 
 ---
 `net module` you also use it to do something if you want to use `net module` only. Here's how it's used.
@@ -333,7 +335,7 @@ import (
 
 func TestRpcServer(t *testing.T) {
 	d := dogrpc.NewRpcServer()
-	// Tcp
+	// Rpc
 	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
 		t.Logf("rpc server request: %s", string(req))
 		code := uint32(0)
@@ -349,7 +351,7 @@ func TestRpcServer(t *testing.T) {
 }
 
 ```
->* You can find it in "net/tcplib/tcp_server_test.go"
+>* You can find it in "net/dogrpc/rpc_server_test.go"
 
 `rpc_client`show how to call rpc server
 ```go
@@ -377,7 +379,7 @@ func TestRpcClient(t *testing.T) {
     t.Logf("resp=%s", string(rsp))
 }
 ```
->* You can find it in "net/tcplib/tcp_client_test.go"
+>* You can find it in "net/dogrpc/rpc_client_test.go"
 
 ---
 `config module` provides the related configuration of the project.
@@ -460,7 +462,7 @@ type CodeError struct {
 }
 
 var (
-    TcpSuccess     = 0
+    RpcSuccess     = 0
     Success        = 200
     BadRequest     = 400
     Unauthorized   = 401
@@ -473,7 +475,7 @@ var (
     UnknownError = "unknown error"
 
     ErrMap = map[int]string{
-        TcpSuccess:     "ok",
+        RpcSuccess:     "ok",
         Success:        "ok",
         BadRequest:     "bad request",
         Unauthorized:   "Unauthorized",

@@ -49,7 +49,7 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 		return uint32(de.SystemError), rsp
 	}
 
-	if code != uint32(de.TcpSuccess) {
+	if code != uint32(de.RpcSuccess) {
 		doglog.Warn("SESSION %s", logDataStr)
 	} else {
 		doglog.Info("SESSION %s", logDataStr)

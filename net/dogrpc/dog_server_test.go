@@ -13,7 +13,7 @@ import (
 
 func TestDogServer(t *testing.T) {
 	d := godog.Default()
-	// Tcp
+	// Rpc
 	d.RpcServer = dogrpc.NewDogRpcServer()
 	d.RpcServer.AddHandler(1024, func(req []byte) (uint32, []byte) {
 		t.Logf("rpc server request: %s", string(req))

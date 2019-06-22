@@ -40,8 +40,8 @@ func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder,
 	return &RpcPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
 }
 
-// Default TcpPacket
-// of course, you can add new TcpPacket according to yourself rule.
+// Default RpcPacket
+// of course, you can add new RpcPacket according to yourself rule.
 // for sample, DogPacket.
 var (
 	globalSeq uint32

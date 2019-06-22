@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	TcpSuccess     = 0
+	RpcSuccess     = 0
 	Success        = 200
 	BadRequest     = 400
 	Unauthorized   = 401
@@ -25,7 +25,7 @@ var (
 	UnknownError = "unknown error"
 
 	ErrMap = map[int]string{
-		TcpSuccess:     "ok",
+		RpcSuccess:     "ok",
 		Success:        "ok",
 		BadRequest:     "bad request",
 		Unauthorized:   "Unauthorized",
@@ -65,7 +65,7 @@ func (err *CodeError) Error() string {
 }
 
 func (err *CodeError) Detail() string {
-	if err.errCode == Success || err.errCode == TcpSuccess {
+	if err.errCode == Success || err.errCode == RpcSuccess {
 		return err.Error()
 	} else {
 		return fmt.Sprintf("Type: %s, Error: %s", err.Type(), err.Error())
@@ -73,7 +73,7 @@ func (err *CodeError) Detail() string {
 }
 
 func (err *CodeError) String() string {
-	if err.errCode == Success || err.errCode == TcpSuccess {
+	if err.errCode == Success || err.errCode == RpcSuccess {
 		return fmt.Sprintf("Code: %d, Type: %s, Info: %s", err.Code(), err.Type(), err.Error())
 	} else {
 		return fmt.Sprintf("Code: %d, Type: %s, Error: %s", err.Code(), err.Type(), err.Error())

@@ -34,7 +34,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req []byte) (uint32, []byte) {
-	doglog.Debug("tcp server request: %s", string(req))
+	doglog.Debug("rpc server request: %s", string(req))
 	code := uint32(200)
 	resp := []byte("Are you ok?")
 	return code, resp

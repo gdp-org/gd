@@ -12,7 +12,7 @@ import (
 )
 
 /*
- * default tcp server
+ * default rpc server
  */
 
 type Handler func([]byte) (uint32, []byte)
