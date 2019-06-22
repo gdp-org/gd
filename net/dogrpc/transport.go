@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultDialNetWork = "tcp"
+)
+
 var (
 	dialer = &net.Dialer{
 		Timeout:   10 * time.Second,
@@ -28,7 +32,7 @@ type Listener interface {
 }
 
 func defaultDial(addr string) (conn io.ReadWriteCloser, err error) {
-	return dialer.Dial("tcp", addr)
+	return dialer.Dial(DefaultDialNetWork, addr)
 }
 
 type defaultListener struct {
@@ -36,7 +40,7 @@ type defaultListener struct {
 }
 
 func (ln *defaultListener) Init(addr string) (err error) {
-	ln.L, err = net.Listen("tcp", addr)
+	ln.L, err = net.Listen(DefaultDialNetWork, addr)
 	return
 }
 
