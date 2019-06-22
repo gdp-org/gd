@@ -31,8 +31,8 @@ func (e *Engine) Signal() {
 			case <-Shutdown:
 				doglog.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
 				//if config.AppConfig.BaseConfig.Server.TcpPort != httplib.NoPort {
-				if e.TcpServer.GetAddr() != "" {
-					e.TcpServer.Stop()
+				if e.RpcServer.GetAddr() != "" {
+					e.RpcServer.Stop()
 				}
 				Running <- false
 			case <-Hup:

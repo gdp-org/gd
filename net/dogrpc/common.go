@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"github.com/chuck1024/godog/error"

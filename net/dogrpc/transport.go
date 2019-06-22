@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"io"

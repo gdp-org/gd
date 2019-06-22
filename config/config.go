@@ -36,7 +36,7 @@ type BaseConfigure struct {
 	Server struct {
 		AppName  string
 		HttpPort int
-		TcpPort  int
+		RpcPort  int
 	}
 }
 

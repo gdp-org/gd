@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"bufio"
@@ -20,7 +20,7 @@ import (
  */
 
 // dog packet establish connection
-func (c *TcpClient) DogConnect() (*Client, error) {
+func (c *RpcClient) DogConnect() (*Client, error) {
 	addr := &net.TCPAddr{}
 
 	if len(c.addrs) > 0 {
@@ -61,7 +61,7 @@ func (c *TcpClient) DogConnect() (*Client, error) {
 }
 
 // dog packet. Invoke rpc call
-func (c *TcpClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
 	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.DogConnect()

@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"github.com/chuck1024/doglog"
@@ -19,7 +19,7 @@ import (
  * default tcp client
  */
 
-type TcpClient struct {
+type RpcClient struct {
 	Cm       map[string]*Client
 	cmMutex  sync.Mutex
 	addrs    []*net.TCPAddr
@@ -28,8 +28,8 @@ type TcpClient struct {
 	localIp  string
 }
 
-func NewClient(timeout time.Duration, retryNum uint32) *TcpClient {
-	return &TcpClient{
+func NewClient(timeout time.Duration, retryNum uint32) *RpcClient {
+	return &RpcClient{
 		Cm:       make(map[string]*Client),
 		Timeout:  timeout,
 		RetryNum: retryNum,
@@ -38,7 +38,7 @@ func NewClient(timeout time.Duration, retryNum uint32) *TcpClient {
 }
 
 // add server address
-func (c *TcpClient) AddAddr(addr string) {
+func (c *RpcClient) AddAddr(addr string) {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
 		doglog.Error("[AddAddr] parse addr failed, %s", err.Error())
 	} else {
@@ -47,7 +47,7 @@ func (c *TcpClient) AddAddr(addr string) {
 }
 
 // Stop stop client
-func (c *TcpClient) Stop() {
+func (c *RpcClient) Stop() {
 	for addr, cc := range c.Cm {
 		cc.Stop()
 		doglog.Error("[Stop] stop client %s", addr)
@@ -57,7 +57,7 @@ func (c *TcpClient) Stop() {
 }
 
 // connect
-func (c *TcpClient) Connect() (*Client, error) {
+func (c *RpcClient) Connect() (*Client, error) {
 	addr := &net.TCPAddr{}
 
 	if len(c.addrs) > 0 {
@@ -92,7 +92,7 @@ func (c *TcpClient) Connect() (*Client, error) {
 }
 
 // Invoke rpc call
-func (c *TcpClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
 	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.Connect()

@@ -8,7 +8,7 @@ package main
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/net/tcplib"
+	"github.com/chuck1024/godog/net/dogrpc"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 	return http.StatusOK, "ok", nil, ret
 }
 
-func HandlerTcpTest(req []byte) (uint32, []byte) {
+func HandlerRpcTest(req []byte) (uint32, []byte) {
 	doglog.Debug("tcp server request: %s", string(req))
 	code := uint32(200)
 	resp := []byte("Are you ok?")
@@ -47,12 +47,12 @@ func main() {
 	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	d.HttpServer.DefaultRegister()
 
-	// default dog tcp server, you can choose tcp server
-	//d.TcpServer = tcplib.NewTcpServer()
+	// default dog rpc server, you can choose rpc server
+	//d.RpcServer = dogrpc.NewRpcServer()
 
-	// Tcp
-	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)
-	tcplib.InitFilters([]tcplib.Filter{&tcplib.LogFilter{}})
+	// Rpc
+	d.RpcServer.AddHandler(1024, HandlerRpcTest)
+	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.LogFilter{}})
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")

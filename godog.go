@@ -10,7 +10,7 @@ import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/config"
 	"github.com/chuck1024/godog/net/httplib"
-	"github.com/chuck1024/godog/net/tcplib"
+	"github.com/chuck1024/godog/net/dogrpc"
 	"github.com/chuck1024/godog/utils"
 	"runtime"
 	"syscall"
@@ -20,7 +20,7 @@ import (
 type Engine struct {
 	Config     *config.DogAppConfig
 	HttpServer *httplib.HttpServer
-	TcpServer  *tcplib.TcpServer
+	RpcServer  *dogrpc.RpcServer
 }
 
 func Default() *Engine {
@@ -29,13 +29,13 @@ func Default() *Engine {
 		HttpServer: &httplib.HttpServer{
 			NoGinLog: true,
 		},
-		TcpServer: tcplib.NewDogTcpServer(),
+		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 }
 
 // timeout Millisecond
-func (e *Engine) NewTcpClient(timeout time.Duration, retryNum uint32) *tcplib.TcpClient {
-	client := tcplib.NewClient(timeout, retryNum)
+func (e *Engine) NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
+	client := dogrpc.NewClient(timeout, retryNum)
 	return client
 }
 
@@ -139,13 +139,13 @@ func (e *Engine) Run() error {
 		}
 	}
 
-	// tcp server
-	tcpPort := e.Config.BaseConfig.Server.TcpPort
-	if tcpPort == 0 {
-		doglog.Info("[Run] Hasn't tcp server port")
+	// rpc server
+	rpcPort := e.Config.BaseConfig.Server.RpcPort
+	if rpcPort == 0 {
+		doglog.Info("[Run] Hasn't rpc server port")
 	} else {
-		if err = e.TcpServer.Run(tcpPort); err != nil {
-			doglog.Error("[Run] Tcp server occur error in running application, error = %s", err.Error())
+		if err = e.RpcServer.Run(rpcPort); err != nil {
+			doglog.Error("[Run] rpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
 	}

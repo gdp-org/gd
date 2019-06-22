@@ -3,24 +3,24 @@
  * Author: Chuck1024
  */
 
-package tcplib_test
+package dogrpc_test
 
 import (
-	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/dogrpc"
 	"testing"
 )
 
-func TestTcpServer(t *testing.T) {
-	d := godog.Default()
+func TestRpcServer(t *testing.T) {
+	d := dogrpc.NewRpcServer()
 	// Tcp
-	d.TcpServer.AddTcpHandler(1024, func(req []byte) (uint32, []byte) {
+	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
 		t.Logf("tcp server request: %s", string(req))
 		code := uint32(0)
 		resp := []byte("Are you ok?")
 		return code, resp
 	})
 
-	err := d.TcpServer.Run(10241)
+	err := d.Run(10241)
 	if err != nil {
 		t.Logf("Error occurs, error = %s", err.Error())
 		return

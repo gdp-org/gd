@@ -229,7 +229,7 @@ func main() {
 	d.HttpServer.DefaultRegister()
 
 	// default tcp server, you can choose godog tcp server
-	//d.TcpServer = tcplib.NewDogTcpServer()
+	dogrpc
 
 	// Tcp
 	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)

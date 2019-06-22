@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"bufio"
@@ -16,8 +16,8 @@ import (
  * dog server
  */
 
-func NewDogTcpServer() *TcpServer {
-	s := &TcpServer{
+func NewDogRpcServer() *RpcServer {
+	s := &RpcServer{
 		m: make(map[uint32]Handler),
 	}
 
@@ -34,7 +34,7 @@ func NewDogTcpServer() *TcpServer {
 	return s
 }
 
-func (s *TcpServer) dogDispatchPacket(req Packet) (rsp Packet) {
+func (s *RpcServer) dogDispatchPacket(req Packet) (rsp Packet) {
 	packet := req.(*DogPacket)
 	headCmd := packet.Cmd
 

@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib
+package dogrpc
 
 import (
 	"fmt"
@@ -17,14 +17,14 @@ import (
 
 type Handler func([]byte) (uint32, []byte)
 
-type TcpServer struct {
+type RpcServer struct {
 	addr string
 	m    map[uint32]Handler
 	ss   *Server
 }
 
-func NewTcpServer() *TcpServer {
-	s := &TcpServer{
+func NewRpcServer() *RpcServer {
+	s := &RpcServer{
 		m: make(map[uint32]Handler),
 	}
 
@@ -35,9 +35,9 @@ func NewTcpServer() *TcpServer {
 	return s
 }
 
-func (s *TcpServer) Run(port int) error {
+func (s *RpcServer) Run(port int) error {
 	addr := fmt.Sprintf(":%d", port)
-	doglog.Info("[Run] Tcp try to listen port: %d", port)
+	doglog.Info("[Run] rpc try to listen port: %d", port)
 
 	s.addr = addr
 	s.ss.Addr = addr
@@ -51,30 +51,30 @@ func (s *TcpServer) Run(port int) error {
 	return nil
 }
 
-func (s *TcpServer) Stop() {
+func (s *RpcServer) Stop() {
 	s.ss.Stop()
 }
 
-func (s *TcpServer) SetAddr(addr string) {
+func (s *RpcServer) SetAddr(addr string) {
 	s.addr = addr
 	s.ss.Addr = addr
 }
 
-func (s *TcpServer) GetAddr() string {
+func (s *RpcServer) GetAddr() string {
 	return s.addr
 }
 
-func (s *TcpServer) AddTcpHandler(headCmd uint32, f Handler) {
+func (s *RpcServer) AddHandler(headCmd uint32, f Handler) {
 	if _, ok := s.m[headCmd]; ok {
-		doglog.Warn("[AddTcpHandler] head cmd [%d] already registered.", headCmd)
+		doglog.Warn("[AddHandler] head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.m[headCmd] = f
-	doglog.Info("[AddTcpHandler] register head cmd [%d] success.", headCmd)
+	doglog.Info("[AddHandler] register head cmd [%d] success.", headCmd)
 }
 
-func (s *TcpServer) dispatchPacket(req Packet) (rsp Packet) {
+func (s *RpcServer) dispatchPacket(req Packet) (rsp Packet) {
 	packet := req.(*TcpPacket)
 	headCmd := packet.Cmd
 

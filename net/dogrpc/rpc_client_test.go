@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package tcplib_test
+package dogrpc_test
 
 import (
 	"github.com/chuck1024/godog"
@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-func TestTcpClient(t *testing.T) {
+func TestRpcClient(t *testing.T) {
 	d := godog.Default()
-	c := d.NewTcpClient(time.Duration(500*time.Millisecond), 0)
+	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	c.AddAddr(utils.GetLocalIP() + ":10241")
 
 	body := []byte("How are you?")
