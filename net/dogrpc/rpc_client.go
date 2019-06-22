@@ -16,7 +16,7 @@ import (
 )
 
 /*
- * default tcp client
+ * default rpc client
  */
 
 type RpcClient struct {
