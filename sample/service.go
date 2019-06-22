@@ -65,7 +65,7 @@ func main() {
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
 	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
-	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.TcpPort, uint64(weight))
+	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.RpcPort, uint64(weight))
 
 	err := d.Run()
 	if err != nil {

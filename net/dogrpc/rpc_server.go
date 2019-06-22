@@ -75,21 +75,21 @@ func (s *RpcServer) AddHandler(headCmd uint32, f Handler) {
 }
 
 func (s *RpcServer) dispatchPacket(req Packet) (rsp Packet) {
-	packet := req.(*TcpPacket)
+	packet := req.(*RpcPacket)
 	headCmd := packet.Cmd
 
 	f, ok := s.m[headCmd]
 	if !ok {
 		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
-		return NewTcpPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
+		return NewRpcPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
 	code, body := GF.Handle(&Context{
 		Seq:     packet.Seq,
 		Method:  strconv.Itoa(int(headCmd)),
 		Handler: f,
-		Req:     req.(*TcpPacket).Body,
+		Req:     req.(*RpcPacket).Body,
 	})
 
-	return NewTcpPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
+	return NewRpcPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
 }

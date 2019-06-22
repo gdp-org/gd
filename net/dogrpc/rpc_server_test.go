@@ -14,7 +14,7 @@ func TestRpcServer(t *testing.T) {
 	d := dogrpc.NewRpcServer()
 	// Tcp
 	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
-		t.Logf("tcp server request: %s", string(req))
+		t.Logf("rpc server request: %s", string(req))
 		code := uint32(0)
 		resp := []byte("Are you ok?")
 		return code, resp

@@ -33,11 +33,11 @@ type MessageEncoderFunc func(w io.Writer, bufferSize int) (encoder MessageEncode
 type MessageDecoderFunc func(r io.Reader, bufferSize int) (decoder MessageDecoder, err error)
 
 func defaultMessageEncoder(w io.Writer, bufferSize int) (encoder MessageEncoder, err error) {
-	return &TcpPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
+	return &RpcPacketEncoder{bw: bufio.NewWriterSize(w, bufferSize)}, nil
 }
 
 func defaultMessageDecoder(r io.Reader, bufferSize int) (decoder MessageDecoder, err error) {
-	return &TcpPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
+	return &RpcPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
 }
 
 // Default TcpPacket
@@ -55,7 +55,7 @@ const (
 	defaultPacketLen = 16
 )
 
-type TcpPacket struct {
+type RpcPacket struct {
 	Seq       uint32
 	ErrCode   uint32
 	Cmd       uint32 // also be a string, for dispatch.
@@ -63,25 +63,25 @@ type TcpPacket struct {
 	Body      []byte
 }
 
-func (p *TcpPacket) ID() uint32 {
+func (p *RpcPacket) ID() uint32 {
 	return p.Seq
 }
 
-func (p *TcpPacket) SetErrCode(code uint32) {
+func (p *RpcPacket) SetErrCode(code uint32) {
 	p.ErrCode = code
 }
 
-func NewTcpPacket(cmd uint32, body []byte) *TcpPacket {
+func NewRpcPacket(cmd uint32, body []byte) *RpcPacket {
 	seq := nextSeq()
-	return NewTcpPacketWithSeq(cmd, body, seq)
+	return NewRpcPacketWithSeq(cmd, body, seq)
 }
 
-func NewTcpPacketWithSeq(cmd uint32, body []byte, seq uint32) *TcpPacket {
-	return NewTcpPacketWithRet(cmd, body, seq, 0)
+func NewRpcPacketWithSeq(cmd uint32, body []byte, seq uint32) *RpcPacket {
+	return NewRpcPacketWithRet(cmd, body, seq, 0)
 }
 
-func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint32) *TcpPacket {
-	return &TcpPacket{
+func NewRpcPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint32) *RpcPacket {
+	return &RpcPacket{
 		Seq:       seq,
 		ErrCode:   ret,
 		Cmd:       cmd,
@@ -90,16 +90,16 @@ func NewTcpPacketWithRet(cmd uint32, body []byte, seq uint32, ret uint32) *TcpPa
 	}
 }
 
-type TcpPacketEncoder struct {
+type RpcPacketEncoder struct {
 	bw *bufio.Writer
 }
 
-type TcpPacketDecoder struct {
+type RpcPacketDecoder struct {
 	br *bufio.Reader
 }
 
-func (e *TcpPacketEncoder) Encode(p Packet) error {
-	if packet, ok := p.(*TcpPacket); ok {
+func (e *RpcPacketEncoder) Encode(p Packet) error {
+	if packet, ok := p.(*RpcPacket); ok {
 		if err := binary.Write(e.bw, binary.BigEndian, packet.Seq); err != nil {
 			return err
 		}
@@ -118,11 +118,11 @@ func (e *TcpPacketEncoder) Encode(p Packet) error {
 
 		return nil
 	}
-	return errors.New("TcpPacketEncoder Encode occur error")
+	return errors.New("RpcPacketEncoder Encode occur error")
 }
 
-func (d *TcpPacketDecoder) Decode() (Packet, error) {
-	packet := &TcpPacket{}
+func (d *RpcPacketDecoder) Decode() (Packet, error) {
+	packet := &RpcPacket{}
 
 	if err := binary.Read(d.br, binary.BigEndian, &packet.Seq); err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (d *TcpPacketDecoder) Decode() (Packet, error) {
 	return packet, nil
 }
 
-func (e *TcpPacketEncoder) Flush() error {
+func (e *RpcPacketEncoder) Flush() error {
 	if e.bw != nil {
 		if err := e.bw.Flush(); err != nil {
 			return err
@@ -202,10 +202,10 @@ func (p *DogPacket) SetErrCode(code uint32) {
 
 func NewDogPacket(cmd uint32, body []byte) *DogPacket {
 	seq := nextDogSeq()
-	return NewDogTcpPacketWithSeq(cmd, body, seq)
+	return NewDogPacketWithSeq(cmd, body, seq)
 }
 
-func NewDogTcpPacketWithSeq(cmd uint32, body []byte, seq uint32) *DogPacket {
+func NewDogPacketWithSeq(cmd uint32, body []byte, seq uint32) *DogPacket {
 	return NewDogPacketWithRet(cmd, body, seq, 0)
 }
 
@@ -251,7 +251,7 @@ func (e *DogPacketEncoder) Encode(p Packet) error {
 
 		return nil
 	}
-	return errors.New("TcpPacketEncoder Encode occur error")
+	return errors.New("DogPacketEncoder Encode occur error")
 }
 
 func (d *DogPacketDecoder) Decode() (Packet, error) {

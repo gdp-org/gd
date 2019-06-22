@@ -106,13 +106,13 @@ func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byt
 	}
 
 	var reqPkt, rspPkt Packet
-	reqPkt = NewTcpPacket(cmd, req)
+	reqPkt = NewRpcPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
 		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
 		return nil, err
 	}
 
-	rsp = rspPkt.(*TcpPacket).Body
+	rsp = rspPkt.(*RpcPacket).Body
 
 	return rsp, nil
 }

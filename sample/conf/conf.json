@@ -8,7 +8,7 @@
   "Server": {
     "AppName": "godog",
     "HttpPort": 10240,
-    "TcpPort": 10241
+    "RpcPort": 10241
   },
   "root": "/root/",
   "group": "github",
