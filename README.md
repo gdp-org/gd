@@ -51,6 +51,7 @@ func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message st
 
 func main() {
     d := godog.Default()
+    d.InitLog()
     d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
     d.HttpServer.DefaultRegister()
     
@@ -71,13 +72,14 @@ What's more, your configuration file must have the necessary parameters, like th
 {
   "Log": "conf/log.xml",
   "Prog": {
-    "CPU": 0,
+    "MaxCPU": 2,
+    "MaxMemory": "2g",
     "HealthPort": 0
   },
   "Server": {
     "AppName": "godog",
     "HttpPort": 10240,
-    "TcpPort": 10241
+    "RpcPort": 10241
   }
 }
 ```
@@ -92,8 +94,8 @@ Those items mentioned above are the base need of a server application. And they 
 
 ---
 **[net]**  
-provides golang network server, it is contain http server and tcp server. It is a simple demo that you can develop it on the basis of it.
-I will import introduce tcp server. Focus on the tcp server.
+provides golang network server, it is contain http server and rpc server. It is a simple demo that you can develop it on the basis of it.
+I will import introduce rpc server. Focus on the rpc server.
 
 ```go
 type Packet interface {
@@ -101,8 +103,8 @@ type Packet interface {
     SetErrCode(code uint32)
 }
 
-default tcp packet:
-type TcpPacket struct {
+default rpc packet:
+type RpcPacket struct {
     Seq       uint32
     ErrCode   uint32
     Cmd       uint32 // also be a string, for dispatch.
@@ -110,7 +112,7 @@ type TcpPacket struct {
     Body      []byte
 }
 
-godog tcp packet:
+godog rpc packet:
 type DogPacket struct {
     Header
     Body []byte
@@ -128,8 +130,8 @@ type Header struct {
     EOH       uint8
 }
 ```
-The Packet is a interface in tcp server and client. So, you can make your protocol that suits yourself by implementing packet's methods, if you need.
-You add new TcpPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket. 
+The Packet is a interface in rpc server and client. So, you can make your protocol that suits yourself by implementing packet's methods, if you need.
+You add new RpcPacket according to yourself rule. DogPacket is a protocol that is used by author. Of course, the author encourages the use of DogPacket. 
 
 ---
 **[server]**  
@@ -190,6 +192,7 @@ package main
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/dogrpc"
 	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
@@ -215,7 +218,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 	return http.StatusOK, "ok", nil, ret
 }
 
-func HandlerTcpTest(req []byte) (uint32, []byte) {
+func HandlerRpcTest(req []byte) (uint32, []byte) {
 	doglog.Debug("tcp server request: %s", string(req))
 	code := uint32(200)
 	resp := []byte("Are you ok?")
@@ -224,15 +227,16 @@ func HandlerTcpTest(req []byte) (uint32, []byte) {
 
 func main() {
 	d := godog.Default()
+	d.InitLog()
 	// Http
 	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
-	d.HttpServer.DefaultRegister()
-
-	// default tcp server, you can choose godog tcp server
-	dogrpc
-
-	// Tcp
-	d.TcpServer.AddTcpHandler(1024, HandlerTcpTest)
+	d.HttpServer.DefaultRegister() 
+	// default dog rpc server, you can choose rpc server 
+	// d.RpcServer = dogrpc.NewRpcServer() 
+	
+	// Rpc
+	d.RpcServer.AddHandler(1024, HandlerRpcTest)
+	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.LogFilter{}})
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")
@@ -245,7 +249,7 @@ func main() {
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
 	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
-	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.TcpPort, uint64(weight))
+	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.RpcPort, uint64(weight))
 
 	err := d.Run()
 	if err != nil {
@@ -261,7 +265,7 @@ func main() {
 >* You can find it in "sample/service.go"
 >* use `control+c` to stop process
 
-tcp client:
+rpc client:
 ```go
 package main
 
@@ -275,7 +279,7 @@ import (
 
 func main() {
     d := godog.Default()
-    c := d.NewTcpClient(500, 0)
+    c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
     // discovery 
     var r discovery.DogDiscovery
     r = &discovery.EtcdDiscovery{}
@@ -299,13 +303,13 @@ func main() {
     
     body := []byte("How are you?")
 
-    rsp, err := c.Invoke(1024, body)
+    rsp, err := c.DogInvoke(1024, body)
     if err != nil {
         doglog.Error("Error when sending request to server: %s", err)
     }
 
-    // or use godog protocol
-    //rsp, err = c.DogInvoke(1024, body)
+    // or use rpc protocol
+    //rsp, err = c.Invoke(1024, body)
     //if err != nil {
         //t.Logf("Error when sending request to server: %s", err)
     //}
@@ -318,26 +322,26 @@ func main() {
 ---
 `net module` you also use it to do something if you want to use `net module` only. Here's how it's used.
 
-`tcp_server` show how to start tcp server
+`rpc_server` show how to start rpc server
 ```go
-package tcplib_test
+package dogrpc_test
 
 import (
-	"github.com/chuck1024/godog"
+	"github.com/chuck1024/godog/net/dogrpc"
 	"testing"
 )
 
-func TestTcpServer(t *testing.T) {
-	d := godog.Default()
+func TestRpcServer(t *testing.T) {
+	d := dogrpc.NewRpcServer()
 	// Tcp
-	d.TcpServer.AddTcpHandler(1024, func(req []byte) (uint32, []byte) {
-		t.Logf("tcp server request: %s", string(req))
+	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
+		t.Logf("rpc server request: %s", string(req))
 		code := uint32(0)
 		resp := []byte("Are you ok?")
 		return code, resp
 	})
 
-	err := d.TcpServer.Run(10241)
+	err := d.Run(10241)
 	if err != nil {
 		t.Logf("Error occurs, error = %s", err.Error())
 		return
@@ -347,19 +351,20 @@ func TestTcpServer(t *testing.T) {
 ```
 >* You can find it in "net/tcplib/tcp_server_test.go"
 
-`tcp_client`show how to call tcp server
+`rpc_client`show how to call rpc server
 ```go
-package tcplib_test
+package dogrpc_test
 
 import (
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/utils"
     "testing"
+    "time"
 )
 
-func TestTcpClient(t *testing.T) {
+func TestRpcClient(t *testing.T) {
     d := godog.Default()
-    c := d.NewTcpClient(500, 0)
+    c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
     c.AddAddr(utils.GetLocalIP() + ":10241")
 
     body := []byte("How are you?")
