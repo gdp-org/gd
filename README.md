@@ -238,7 +238,6 @@ func main() {
 	
 	// Rpc
 	d.RpcServer.AddHandler(1024, HandlerRpcTest)
-	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.LogFilter{}})
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")
@@ -305,7 +304,7 @@ func main() {
     
     body := []byte("How are you?")
 
-    rsp, err := c.DogInvoke(1024, body)
+    code, rsp, err := c.DogInvoke(1024, body)
     if err != nil {
         doglog.Error("Error when sending request to server: %s", err)
     }
@@ -316,7 +315,7 @@ func main() {
         //t.Logf("Error when sending request to server: %s", err)
     //}
 
-    doglog.Debug("resp=%s", string(rsp))
+    doglog.Debug("code=%d,resp=%s", code, string(rsp))
 }
 ```
 >* It contained "sample/rpc_client.go"
@@ -371,12 +370,12 @@ func TestRpcClient(t *testing.T) {
 
     body := []byte("How are you?")
 
-    rsp, err := c.Invoke(1024, body)
+    code, rsp, err := c.Invoke(1024, body)
     if err != nil {
         t.Logf("Error when sending request to server: %s", err)
     }
 
-    t.Logf("resp=%s", string(rsp))
+    t.Logf("code=%d,resp=%s", code, string(rsp))
 }
 ```
 >* You can find it in "net/dogrpc/rpc_client_test.go"
@@ -402,6 +401,7 @@ func TestConfig(t *testing.T) {
     // The location of config.json is "conf/conf.json". Of course, you change it if you want.
 
     d := godog.Default()
+    d.InitLog()
     // AppConfig.BaseConfig.Server.AppName is service name
     name := d.Config.BaseConfig.Server.AppName
     t.Logf("name:%s", name)
@@ -472,6 +472,10 @@ var (
     ParameterError = 600
     DBError        = 701
     CacheError     = 702
+    RpcTimeout             = 10001
+    RpcOverflow            = 10002
+    RpcInternalServerError = 10003
+    RpcInvalidParam        = 10004
     UnknownError = "unknown error"
 
     ErrMap = map[int]string{
@@ -485,6 +489,10 @@ var (
         ParameterError: "Parameter error",
         DBError:        "db error",
         CacheError:     "cache error",
+        RpcTimeout:             "timeout error",
+        RpcOverflow:            "overflow error",
+        RpcInternalServerError: "interval server error",
+        RpcInvalidParam:        "invalid param",
     }
 )
 
