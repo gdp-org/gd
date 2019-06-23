@@ -18,7 +18,7 @@ import (
 
 func NewDogRpcServer() *RpcServer {
 	s := &RpcServer{
-		m: make(map[uint32]Handler),
+		defaultHandler: make(map[uint32]RpcHandlerFunc),
 	}
 
 	s.ss = &Server{
@@ -34,21 +34,48 @@ func NewDogRpcServer() *RpcServer {
 	return s
 }
 
-func (s *RpcServer) dogDispatchPacket(req Packet) (rsp Packet) {
+func (s *RpcServer) AddDogHandler(headCmd uint32, f interface{}) {
+	if s.wrapHandler == nil {
+		s.wrapHandler = make( map[uint32]interface{})
+	}
+
+	if _, ok := s.wrapHandler[headCmd]; ok {
+		doglog.Warn("[AddDogHandler] wrapHandler head cmd [%d] already registered.", headCmd)
+		return
+	}
+
+	s.wrapHandler[headCmd] = f
+	doglog.Info("[AddDogHandler] wrapHandler register head cmd [%d] success.", headCmd)
+}
+
+func (s *RpcServer) DogRpcRegister() error {
+	for k, v := range s.wrapHandler {
+		wf, err := wrap(v)
+		if err != nil {
+			doglog.Error("[DogRpcRegister] wrap occur error:%s", err)
+			return err
+		}
+		s.AddHandler(k, wf)
+	}
+	return nil
+}
+
+func (s *RpcServer) dogDispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 	packet := req.(*DogPacket)
 	headCmd := packet.Cmd
 
-	f, ok := s.m[headCmd]
+	f, ok := s.defaultHandler[headCmd]
 	if !ok {
 		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
 		return NewDogPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
 	code, body := GF.Handle(&Context{
-		Seq:     packet.Seq,
-		Method:  strconv.Itoa(int(headCmd)),
-		Handler: f,
-		Req:     req.(*DogPacket).Body,
+		ClientAddr: clientAddr,
+		Seq:        packet.Seq,
+		Method:     strconv.Itoa(int(headCmd)),
+		Handler:    f,
+		Req:        req.(*DogPacket).Body,
 	})
 
 	return NewDogPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))

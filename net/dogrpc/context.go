@@ -6,10 +6,9 @@
 package dogrpc
 
 type Context struct {
-	Seq          uint32
-	//Service      string
-	Method       string
-	//Args         map[string]interface{}
-	Handler      Handler
-	Req          []byte
+	ClientAddr string
+	Seq        uint32
+	Method     string
+	Handler    RpcHandlerFunc
+	Req        []byte
 }

@@ -189,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		doglog.Error("[clientHandleConnection] occur error: ", c.Addr+", "+err.Error())
+		doglog.Error("[clientHandleConnection] occur error: %s", c.Addr+", %s"+err.Error())
 	}
 
 	for _, m := range pendingRequests {

@@ -61,13 +61,13 @@ func (c *RpcClient) DogConnect() (*Client, error) {
 }
 
 // dog packet. Invoke rpc call
-func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code uint32, rsp []byte, err *dogError.CodeError) {
 	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.DogConnect()
 		if err != nil {
 			doglog.Error("[DogInvoke] connect occur error:%s", err)
-			return nil, InternalServerError
+			return code, nil, InternalServerError
 		}
 		ct = cc
 	} else {
@@ -78,10 +78,11 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (rsp []
 	reqPkt = NewDogPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
 		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
-		return nil, err
+		return code, nil, err
 	}
 
 	rsp = rspPkt.(*DogPacket).Body
+	code = rspPkt.(*DogPacket).ErrCode
 
-	return rsp, nil
+	return code, rsp, nil
 }

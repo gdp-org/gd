@@ -19,10 +19,10 @@ func TestRpcClient(t *testing.T) {
 
 	body := []byte("How are you?")
 
-	rsp, err := c.Invoke(1024, body)
+	code, rsp, err := c.Invoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}
 
-	t.Logf("resp=%s", string(rsp))
+	t.Logf("code=%d, resp=%s", code, string(rsp))
 }

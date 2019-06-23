@@ -11,30 +11,38 @@ import (
 )
 
 var (
-	RpcSuccess     = 0
-	Success        = 200
-	BadRequest     = 400
-	Unauthorized   = 401
-	Forbidden      = 403
-	NotFound       = 404
-	SystemError    = 500
-	ParameterError = 600
-	DBError        = 701
-	CacheError     = 702
+	RpcSuccess             = 0
+	Success                = 200
+	BadRequest             = 400
+	Unauthorized           = 401
+	Forbidden              = 403
+	NotFound               = 404
+	SystemError            = 500
+	ParameterError         = 600
+	DBError                = 701
+	CacheError             = 702
+	RpcTimeout             = 10001
+	RpcOverflow            = 10002
+	RpcInternalServerError = 10003
+	RpcInvalidParam        = 10004
 
 	UnknownError = "unknown error"
 
 	ErrMap = map[int]string{
-		RpcSuccess:     "ok",
-		Success:        "ok",
-		BadRequest:     "bad request",
-		Unauthorized:   "Unauthorized",
-		Forbidden:      "Forbidden",
-		NotFound:       "not found",
-		SystemError:    "system error",
-		ParameterError: "Parameter error",
-		DBError:        "db error",
-		CacheError:     "cache error",
+		RpcSuccess:             "ok",
+		Success:                "ok",
+		BadRequest:             "bad request",
+		Unauthorized:           "Unauthorized",
+		Forbidden:              "Forbidden",
+		NotFound:               "not found",
+		SystemError:            "system error",
+		ParameterError:         "Parameter error",
+		DBError:                "db error",
+		CacheError:             "cache error",
+		RpcTimeout:             "timeout error",
+		RpcOverflow:            "overflow error",
+		RpcInternalServerError: "interval server error",
+		RpcInvalidParam:        "invalid param",
 	}
 )
 

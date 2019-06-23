@@ -6,21 +6,38 @@
 package dogrpc_test
 
 import (
+	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/net/dogrpc"
+	de "github.com/chuck1024/godog/error"
 	"testing"
 )
+
+type TestReq struct {
+	Data string
+}
+
+type TestResp struct {
+	Ret string
+}
+
+func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
+	doglog.Debug("rpc sever req:%v", req)
+
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
+
+	return uint32(de.RpcSuccess), "ok", nil, ret
+}
 
 func TestDogServer(t *testing.T) {
 	d := godog.Default()
 	// Rpc
-	d.RpcServer = dogrpc.NewDogRpcServer()
-	d.RpcServer.AddHandler(1024, func(req []byte) (uint32, []byte) {
-		t.Logf("rpc server request: %s", string(req))
-		code := uint32(0)
-		resp := []byte("Are you ok?")
-		return code, resp
-	})
+	d.RpcServer.AddDogHandler(1024, test)
+	if err := d.RpcServer.DogRpcRegister(); err != nil {
+		t.Logf("DogRpcRegister occur error:%s", err)
+		return
+	}
 
 	err := d.RpcServer.Run(10241)
 	if err != nil {

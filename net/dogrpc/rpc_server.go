@@ -15,17 +15,18 @@ import (
  * default rpc server
  */
 
-type Handler func([]byte) (uint32, []byte)
+type RpcHandlerFunc func([]byte) (uint32, []byte)
 
 type RpcServer struct {
-	addr string
-	m    map[uint32]Handler
-	ss   *Server
+	addr           string
+	ss             *Server
+	defaultHandler map[uint32]RpcHandlerFunc
+	wrapHandler    map[uint32]interface{}
 }
 
 func NewRpcServer() *RpcServer {
 	s := &RpcServer{
-		m: make(map[uint32]Handler),
+		defaultHandler: make(map[uint32]RpcHandlerFunc),
 	}
 
 	s.ss = &Server{
@@ -64,31 +65,36 @@ func (s *RpcServer) GetAddr() string {
 	return s.addr
 }
 
-func (s *RpcServer) AddHandler(headCmd uint32, f Handler) {
-	if _, ok := s.m[headCmd]; ok {
+func (s *RpcServer) AddHandler(headCmd uint32, f RpcHandlerFunc) {
+	if s.defaultHandler == nil {
+		s.defaultHandler = make(map[uint32]RpcHandlerFunc)
+	}
+
+	if _, ok := s.defaultHandler[headCmd]; ok {
 		doglog.Warn("[AddHandler] head cmd [%d] already registered.", headCmd)
 		return
 	}
 
-	s.m[headCmd] = f
+	s.defaultHandler[headCmd] = f
 	doglog.Info("[AddHandler] register head cmd [%d] success.", headCmd)
 }
 
-func (s *RpcServer) dispatchPacket(req Packet) (rsp Packet) {
+func (s *RpcServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 	packet := req.(*RpcPacket)
 	headCmd := packet.Cmd
 
-	f, ok := s.m[headCmd]
+	f, ok := s.defaultHandler[headCmd]
 	if !ok {
 		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
 		return NewRpcPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
 	code, body := GF.Handle(&Context{
-		Seq:     packet.Seq,
-		Method:  strconv.Itoa(int(headCmd)),
-		Handler: f,
-		Req:     req.(*RpcPacket).Body,
+		ClientAddr: clientAddr,
+		Seq:        packet.Seq,
+		Method:     strconv.Itoa(int(headCmd)),
+		Handler:    f,
+		Req:        req.(*RpcPacket).Body,
 	})
 
 	return NewRpcPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))

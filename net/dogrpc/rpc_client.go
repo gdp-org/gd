@@ -92,13 +92,13 @@ func (c *RpcClient) Connect() (*Client, error) {
 }
 
 // Invoke rpc call
-func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byte, err *dogError.CodeError) {
+func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (code uint32, rsp []byte, err *dogError.CodeError) {
 	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.Connect()
 		if err != nil {
 			doglog.Error("[Invoke] connect occur error:%s", err)
-			return nil, InternalServerError
+			return code, nil, InternalServerError
 		}
 		ct = cc
 	} else {
@@ -109,10 +109,11 @@ func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (rsp []byt
 	reqPkt = NewRpcPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
 		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
-		return nil, err
+		return code, nil, err
 	}
 
 	rsp = rspPkt.(*RpcPacket).Body
+	code = rspPkt.(*RpcPacket).ErrCode
 
-	return rsp, nil
+	return code, rsp, nil
 }

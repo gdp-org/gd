@@ -28,7 +28,7 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	st := time.Now()
 
 	if f.next == nil {
-		code, rsp = ctx.Handler(ctx.Req)
+		code, rsp = handlerWithRecover(ctx.Handler, ctx.Req)
 	} else {
 		code, rsp = f.next.handle(ctx)
 	}
@@ -39,9 +39,10 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	logData["code"] = code
 	logData["ret"] = string(rsp)
 	logData["cost"] = cost / time.Millisecond
-	logData["req"] = string(ctx.Req)
+	logData["args"] = string(ctx.Req)
 	logData["seq"] = ctx.Seq
 	logData["method"] = ctx.Method
+	logData["clientAddr"] = ctx.ClientAddr
 
 	logDataStr, jsonErr := json.Marshal(logData)
 	if jsonErr != nil {

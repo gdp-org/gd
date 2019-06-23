@@ -8,7 +8,7 @@ package main
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/net/dogrpc"
+	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
 	"github.com/gin-gonic/gin"
@@ -35,7 +35,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 
 func HandlerRpcTest(req []byte) (uint32, []byte) {
 	doglog.Debug("rpc server request: %s", string(req))
-	code := uint32(200)
+	code := uint32(de.RpcSuccess)
 	resp := []byte("Are you ok?")
 	return code, resp
 }
@@ -52,7 +52,6 @@ func main() {
 
 	// Rpc
 	d.RpcServer.AddHandler(1024, HandlerRpcTest)
-	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.LogFilter{}})
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")

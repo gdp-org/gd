@@ -6,8 +6,8 @@
 package httplib
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/chuck1024/doglog"
 	"github.com/gin-gonic/gin"
@@ -47,7 +47,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 		return nil, fmt.Errorf("params out 3 must be interface %v", toWrap)
 	}
 	if !wt.Out(2).Implements(errInterface) {
-		return nil, fmt.Errorf("params out 3 must be error %v", toWrap)
+		return nil, fmt.Errorf("params out 4 must be error %v", toWrap)
 	}
 
 	wrapped := func(c *gin.Context) {
@@ -114,7 +114,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 		out := refToWrap.Call(in)
 		if len(out) != 4 {
 			doglog.Error("[Warp] return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
-			Return(c, http.StatusInternalServerError, "ret not 5!", nil, nil)
+			Return(c, http.StatusInternalServerError, "ret not 4!", nil, nil)
 			return
 		}
 
@@ -203,4 +203,3 @@ func ParseRet(c *gin.Context) (ret interface{}, origErr interface{}) {
 	}
 	return
 }
-

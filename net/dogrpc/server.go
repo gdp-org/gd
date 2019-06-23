@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type HandlerFunc func(req Packet) (rsp Packet)
+type HandlerFunc func(clientAddr string, req Packet) (rsp Packet)
 
 type Server struct {
 	Addr             string
@@ -123,7 +123,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			<-acceptChan
 			return
 		case <-acceptChan:
-			doglog.Info("[serverHandler] [%s] connected.", clientAddr)
+			doglog.Debug("[serverHandler] [%s] connected.", clientAddr)
 		}
 
 		if err != nil {
@@ -169,7 +169,7 @@ func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr strin
 	}
 
 	responsesChan = nil
-	doglog.Info("[serverHandleConnection] [%s] disconnected.", clientAddr)
+	doglog.Debug("[serverHandleConnection] [%s] disconnected.", clientAddr)
 }
 
 func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
@@ -243,7 +243,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 			doglog.Error("[callHandlerWithRecover] [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
 		}
 	}()
-	rsp = handler(req)
+	rsp = handler(clientAddr, req)
 	return
 }
 

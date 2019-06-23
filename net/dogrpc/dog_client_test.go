@@ -6,6 +6,7 @@
 package dogrpc_test
 
 import (
+	"encoding/json"
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/utils"
 	"testing"
@@ -17,13 +18,18 @@ func TestDogClient(t *testing.T) {
 	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	c.AddAddr(utils.GetLocalIP() + ":10241")
 
-	body := []byte("How are you?")
+	b := &struct {
+		Data string
+	}{
+		Data:"How are you?",
+	}
+	body,_ := json.Marshal(b)
 
 	// use godog protocol
-	rsp, err := c.DogInvoke(1024, body)
+	code,rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}
 
-	t.Logf("resp=%s", string(rsp))
+	t.Logf("code=%d, resp=%s", code, string(rsp))
 }
