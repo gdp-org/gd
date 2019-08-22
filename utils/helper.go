@@ -271,7 +271,7 @@ func (helper *Helper) dealCommand(client net.Conn) {
 			key := arr[2]
 			value := strings.Join(arr[3:], " ")
 			ret = helper.Updater(id+" "+key, value, tpe, -1)
-		} else if tpe == "doglog" {
+		} else if tpe == "log" {
 			if len(arr) != 2 {
 				helper.help(client)
 				ret = false
@@ -282,7 +282,7 @@ func (helper *Helper) dealCommand(client net.Conn) {
 				client.Write([]byte("<" + err.Error() + "\n"))
 				ret = false
 			} else if lvl == -1 {
-				client.Write([]byte("<doglog:" + doglog.GetLevel() + "\n"))
+				client.Write([]byte("<log:" + doglog.GetLevel() + "\n"))
 			} else {
 				doglog.Debug("SetLogLevel:%d", lvl)
 				doglog.SetLevel(lvl)
