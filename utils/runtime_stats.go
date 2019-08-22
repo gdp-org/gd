@@ -6,6 +6,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"time"
@@ -65,4 +66,39 @@ func RuntimeStats(d time.Duration, f func(string)) {
 		}
 		m1 = m2
 	}
+}
+
+func GcStats() string {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	// in ms
+	lastGC := time.Unix(int64(m.LastGC/1000/1000/1000), 0)
+	pauseNs := m.PauseNs
+	numGC := m.NumGC
+	lastPause := int64(pauseNs[(numGC+255)%256] / 1000 / 1000)
+	gcStats := fmt.Sprintf("%dms,%s", lastPause, lastGC)
+	return gcStats
+}
+
+func MemStats2() string {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	// in mb
+	memStats, _ := json.Marshal(m)
+	return string(memStats)
+}
+
+func MemStats() string {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	// in mb
+	alloc := int(m.Alloc / 1024 / 1024)
+	sys := int(m.Sys / 1024 / 1024)
+	heapSys := int(m.HeapSys / 1024 / 1024)
+	heapAlloc := int(m.HeapAlloc / 1024 / 1024)
+	heapIdle := int(m.HeapIdle / 1024 / 1024)
+	heapReleased := int(m.HeapReleased / 1024 / 1024)
+	memStats := fmt.Sprintf("%d,%d,%d,%d,%d,%d", sys, alloc, heapSys, heapAlloc, heapIdle, heapReleased)
+	return memStats
 }
