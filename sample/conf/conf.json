@@ -3,7 +3,7 @@
   "Prog": {
     "MaxCPU": 2,
     "MaxMemory": "2g",
-    "HealthPort": 0
+    "HealthPort": 9527
   },
   "Server": {
     "AppName": "godog",

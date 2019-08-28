@@ -129,10 +129,11 @@ func (e *Engine) Run() error {
 	}
 
 	// http run
-	if e.Config.BaseConfig.Server.HttpPort == 0 {
+	httpPort := e.Config.BaseConfig.Server.HttpPort
+	if httpPort == 0 {
 		doglog.Info("[Run] Hasn't http server port")
 	} else {
-		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", e.Config.BaseConfig.Server.HttpPort)
+		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
 		if err = e.HttpServer.Run(); err != nil {
 			doglog.Error("[Run] Http server occur error in running application, error = %s", err.Error())
 			return err
@@ -146,6 +147,19 @@ func (e *Engine) Run() error {
 	} else {
 		if err = e.RpcServer.Run(rpcPort); err != nil {
 			doglog.Error("[Run] rpc server occur error in running application, error = %s", err.Error())
+			return err
+		}
+	}
+
+	// health port
+	healthPort := e.Config.BaseConfig.Prog.HealthPort
+	if rpcPort == 0 {
+		doglog.Info("[Run] Hasn't health server port")
+	} else {
+		host := fmt.Sprintf(":%d", healthPort)
+		health := &utils.Helper{Host: host,}
+		if err := health.Start(); err != nil {
+			doglog.Error("[Run] start health failed on %s\n", host)
 			return err
 		}
 	}
