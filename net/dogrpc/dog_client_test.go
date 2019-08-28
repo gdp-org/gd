@@ -21,12 +21,12 @@ func TestDogClient(t *testing.T) {
 	b := &struct {
 		Data string
 	}{
-		Data:"How are you?",
+		Data: "How are you?",
 	}
-	body,_ := json.Marshal(b)
+	body, _ := json.Marshal(b)
 
 	// use godog protocol
-	code,rsp, err := c.DogInvoke(1024, body)
+	code, rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}

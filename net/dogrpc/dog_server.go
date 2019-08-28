@@ -36,7 +36,7 @@ func NewDogRpcServer() *RpcServer {
 
 func (s *RpcServer) AddDogHandler(headCmd uint32, f interface{}) {
 	if s.wrapHandler == nil {
-		s.wrapHandler = make( map[uint32]interface{})
+		s.wrapHandler = make(map[uint32]interface{})
 	}
 
 	if _, ok := s.wrapHandler[headCmd]; ok {
