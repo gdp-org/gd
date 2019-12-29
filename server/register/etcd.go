@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/server"
-	"github.com/coreos/etcd/clientv3"
+	"github.com/etcd-io/etcd/clientv3"
 	"strings"
 	"time"
 )
