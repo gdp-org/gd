@@ -19,8 +19,7 @@ var (
 )
 
 func init() {
-	signal.Notify(Shutdown, syscall.SIGINT)
-	signal.Notify(Shutdown, syscall.SIGTERM)
+	signal.Notify(Shutdown, syscall.SIGINT, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
 	signal.Notify(Hup, syscall.SIGHUP)
 }
 
@@ -28,8 +27,8 @@ func (e *Engine) Signal() {
 	go func() {
 		for {
 			select {
-			case <-Shutdown:
-				doglog.Info("[Signal] receive signal SIGINT or SIGTERM, to stop server...")
+			case sig := <-Shutdown:
+				doglog.Info("[Signal] receive signal: %v, to stop server...", sig)
 				if e.RpcServer.GetAddr() != "" {
 					e.RpcServer.Stop()
 				}

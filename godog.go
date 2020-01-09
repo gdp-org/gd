@@ -101,7 +101,8 @@ func (e *Engine) InitLog() {
 }
 
 func (e *Engine) Run() error {
-	doglog.Info("[Run] start")
+	doglog.Info("- - - - - - - - - - - - - - - - - - -")
+	doglog.Info("[Run] process start")
 	// register signal
 	e.Signal()
 
@@ -116,6 +117,7 @@ func (e *Engine) Run() error {
 		doglog.Info("[Run] server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
 		doglog.Info("[Run] server stop...ok")
+		doglog.Info("- - - - - - - - - - - - - - - - - - -")
 		if err := utils.ReviewDumpPanic(file); err != nil {
 			doglog.Error("[Run] Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
@@ -138,6 +140,7 @@ func (e *Engine) Run() error {
 			doglog.Error("[Run] Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
+		defer e.HttpServer.Stop()
 	}
 
 	// rpc server
@@ -149,6 +152,7 @@ func (e *Engine) Run() error {
 			doglog.Error("[Run] rpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
+		defer e.RpcServer.Stop()
 	}
 
 	// health port
@@ -162,6 +166,7 @@ func (e *Engine) Run() error {
 			doglog.Error("[Run] start health failed on %s\n", host)
 			return err
 		}
+		defer health.Close()
 	}
 
 	<-Running

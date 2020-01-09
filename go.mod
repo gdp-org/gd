@@ -4,8 +4,9 @@ go 1.13
 
 require (
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/chuck1024/doglog v0.0.0-20190822081413-ffd32ab632b8
+	github.com/chuck1024/doglog v0.0.0-20200102090811-048350f97093
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
+	github.com/coreos/go-systemd v0.0.0-00010101000000-000000000000 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/etcd-io/etcd v3.3.18+incompatible
 	github.com/gin-gonic/gin v1.5.0
@@ -18,3 +19,5 @@ require (
 	google.golang.org/grpc v1.26.0 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )
+
+replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0
