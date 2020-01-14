@@ -31,6 +31,7 @@ The framework contains `config module`,`error module`,`net module` and `server m
 
 ---
 ## Quick start
+
 ```go
 package main
 
@@ -44,7 +45,6 @@ import (
 
 func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message string, err error, ret string) {
     doglog.Debug("httpServerTest req:%v", req)
-    
     ret = "ok!!!"
     return http.StatusOK, "ok", nil, ret
 }
@@ -68,6 +68,7 @@ func main() {
 **[config]**  
 So far, it only supports configuration with json in godog. Of course, it supports more and more format configuration in future.
 What's more, your configuration file must have the necessary parameters, like this:
+
 ```json
 {
   "Log": "conf/log.xml",
