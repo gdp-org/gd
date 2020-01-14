@@ -41,7 +41,6 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	logData["cost"] = cost / time.Millisecond
 	logData["args"] = string(ctx.Req)
 	logData["seq"] = ctx.Seq
-	logData["method"] = ctx.Method
 
 	logDataStr, jsonErr := json.Marshal(logData)
 	if jsonErr != nil {
@@ -50,13 +49,13 @@ func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	}
 
 	if code != uint32(de.RpcSuccess) {
-		doglog.WarnT("SESSION", "%s", logDataStr)
+		doglog.WarnT("SESSION", "%s %s", ctx.Method, logDataStr)
 	} else {
-		doglog.InfoT("SESSION", "%s", logDataStr)
+		doglog.InfoT("SESSION", "%s %s", ctx.Method, logDataStr)
 	}
 
 	if f.SlowCostThreshold > 0 && cost > time.Duration(f.SlowCostThreshold)*time.Millisecond {
-		doglog.WarnT("SERVER_SLOW", "%s", logDataStr)
+		doglog.WarnT("SERVER_SLOW", "%s %s", ctx.Method, logDataStr)
 	}
 
 	return code, rsp

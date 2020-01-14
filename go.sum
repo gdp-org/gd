@@ -9,6 +9,10 @@ github.com/chuck1024/doglog v0.0.0-20200102090811-048350f97093 h1:ivMxXonPRl7O6r
 github.com/chuck1024/doglog v0.0.0-20200102090811-048350f97093/go.mod h1:BHGpbfxHO1gEXTNOW5TMuJFxtZNEdk2OAj0FyNOLgVQ=
 github.com/chuck1024/doglog v0.0.0-20200114025055-1da1b3320aab h1:MCSBsHELHn9N/WSCD1PaWsNRU6nS0KIAlp4Iy99fqdc=
 github.com/chuck1024/doglog v0.0.0-20200114025055-1da1b3320aab/go.mod h1:S385Nvzw6iIaz7lmoWBNrY7It55YCeZIo4lBFT10W1A=
+github.com/chuck1024/doglog v0.0.0-20200114031146-6b51b6d51e8d h1:VHuVjWg74Lz3nIwRvqxF3xPbgaGqhVIsg461nDVsVUY=
+github.com/chuck1024/doglog v0.0.0-20200114031146-6b51b6d51e8d/go.mod h1:imH5p2vR563dIa6lfXcS43/ckEeFv7jNLmIpfCDildg=
+github.com/chuck1024/doglog v0.0.0-20200114052321-1297eb7c152e h1:t/85eDw3+d8MAJvQG0OFbxf7MD++HpHvkg899FJlXdw=
+github.com/chuck1024/doglog v0.0.0-20200114052321-1297eb7c152e/go.mod h1:imH5p2vR563dIa6lfXcS43/ckEeFv7jNLmIpfCDildg=
 github.com/chuck1024/gl v0.0.0-20200114021356-86a43847c45d h1:7KHz3EVhCpQvZMGzYmhkb+4mqnlIQ9/wrcnv+bMz4bM=
 github.com/chuck1024/gl v0.0.0-20200114021356-86a43847c45d/go.mod h1:5av27aHS4QFiWviPxvJ7+D2UDZAmp1SdjsJGelNcpow=
 github.com/chuck1024/gl v0.0.0-20200114031106-5a09ab9144f9 h1:YZoTDvRED06MBAJT6gANcH4Cpv+Nz8Q7CIj7ogekIt4=
