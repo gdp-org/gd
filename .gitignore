@@ -11,7 +11,10 @@
 utils/stat.go
 utils/stat_test.go
 sample/log/*
+sample/prof/*
 sample/dumpPanic.-dump-*
 sample/self.go
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+sample/log/
+sample/prof/

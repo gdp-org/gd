@@ -20,10 +20,13 @@
            %S - Source
            %M - Message
            %c - Sec
+           %G - Tag
+           %I - Ip
+           %l - logId
            It ignores unknown format strings (and removes them)
            Recommended: "[%D %T] [%L] (%S) %M"
         -->
-        <property name="format">%L	%D %T	%M	%S</property>
+        <property name="format">%L	%D %T	%l	%I	%G	%M	%S</property>
         <property name="rotate">true</property> <!-- true enables log rotation, otherwise append -->
         <property name="maxsize">0M</property> <!-- \d+[KMG]? Suffixes are in terms of 2**10 -->
         <property name="maxlines">0K</property> <!-- \d+[KMG]? Suffixes are in terms of thousands -->

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/gl"
 	"github.com/chuck1024/godog/utils"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -28,14 +29,25 @@ func GroupFilter() gin.HandlerFunc {
 	}
 }
 
+// example: use gl
+func GlFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		gl.Init()
+		defer gl.Close()
+		c.Next()
+	}
+}
+
 // example: log middle handle
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
 		traceId := strconv.FormatInt(st.UnixNano(), 10)
 		c.Set(TraceID, traceId)
+		gl.Set(gl.LogId, traceId)
 		realIp, _ := utils.GetRealIP(c.Request)
 		c.Set(REMOTE_IP, realIp)
+		gl.Set(gl.ClientIp, realIp)
 
 		c.Next()
 		uri := c.Request.RequestURI
@@ -84,18 +96,6 @@ func Logger() gin.HandlerFunc {
 			"err":        errStr,
 		}
 
-		traceIdObj, ok := c.Get(TraceID)
-		if ok {
-			traceIdStr, _ := traceIdObj.(string)
-			message["traceId"] = traceIdStr
-		}
-
-		ip, ok := c.Get(REMOTE_IP)
-		if ok {
-			IP, _ := ip.(string)
-			message["ip"] = IP
-		}
-
 		dataByte, err := json.Marshal(data)
 		if err != nil {
 			doglog.Error("[Logger] data cant transfer to json ?! data is %v", data)
@@ -119,9 +119,9 @@ func Logger() gin.HandlerFunc {
 		}
 
 		if cost > 500 {
-			doglog.Warn(fmt.Sprintf("%s [SESSION] %s", path, string(mj)))
+			doglog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s", path, string(mj)))
 			return
 		}
-		doglog.Info(fmt.Sprintf("%s [SESSION] %s", path, string(mj)))
+		doglog.InfoT("SESSION", fmt.Sprintf("%s %s", path, string(mj)))
 	}
 }
