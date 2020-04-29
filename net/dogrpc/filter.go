@@ -11,25 +11,25 @@ import (
 	"runtime"
 )
 
+var globalFilter = &Filters{}
+
 type Filter interface {
-	setNext(filter Filter)
-	handle(cxt *Context) (uint32, []byte)
+	SetNext(filter Filter)
+	Handle(cxt *Context) (uint32, []byte)
 }
 
 type Filters struct {
 	Filters []Filter
 }
 
-var GF = &Filters{}
-
 func InitFilters(filters []Filter) {
-	var frontFilter Filter
+	var front Filter
 	for _, filter := range filters {
-		GF.Filters = append(GF.Filters, filter)
-		if frontFilter != nil {
-			frontFilter.setNext(filter)
+		globalFilter.Filters = append(globalFilter.Filters, filter)
+		if front != nil {
+			front.SetNext(filter)
 		}
-		frontFilter = filter
+		front = filter
 	}
 }
 
@@ -38,7 +38,7 @@ func (f *Filters) Handle(ctx *Context) (uint32, []byte) {
 		return handlerWithRecover(ctx.Handler, ctx.Req)
 	}
 
-	return f.Filters[0].handle(ctx)
+	return f.Filters[0].Handle(ctx)
 }
 
 func handlerWithRecover(f RpcHandlerFunc, req []byte) (code uint32, resp []byte) {

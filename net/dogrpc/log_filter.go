@@ -20,17 +20,17 @@ type LogFilter struct {
 	SlowCostThreshold int
 }
 
-func (f *LogFilter) setNext(filter Filter) {
+func (f *LogFilter) SetNext(filter Filter) {
 	f.next = filter
 }
 
-func (f *LogFilter) handle(ctx *Context) (code uint32, rsp []byte) {
+func (f *LogFilter) Handle(ctx *Context) (code uint32, rsp []byte) {
 	st := time.Now()
 
 	if f.next == nil {
 		code, rsp = handlerWithRecover(ctx.Handler, ctx.Req)
 	} else {
-		code, rsp = f.next.handle(ctx)
+		code, rsp = f.next.Handle(ctx)
 	}
 
 	cost := time.Now().Sub(st)

@@ -19,11 +19,11 @@ type GlFilter struct {
 	SlowCostThreshold int
 }
 
-func (f *GlFilter) setNext(filter Filter) {
+func (f *GlFilter) SetNext(filter Filter) {
 	f.next = filter
 }
 
-func (f *GlFilter) handle(ctx *Context) (code uint32, rsp []byte) {
+func (f *GlFilter) Handle(ctx *Context) (code uint32, rsp []byte) {
 	gl.Init()
 	defer gl.Close()
 	st := time.Now()
@@ -34,7 +34,7 @@ func (f *GlFilter) handle(ctx *Context) (code uint32, rsp []byte) {
 	if f.next == nil {
 		code, rsp = handlerWithRecover(ctx.Handler, ctx.Req)
 	} else {
-		code, rsp = f.next.handle(ctx)
+		code, rsp = f.next.Handle(ctx)
 	}
 
 	return code, rsp

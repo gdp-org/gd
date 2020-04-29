@@ -89,7 +89,7 @@ func (s *RpcServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 		return NewRpcPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
-	code, body := GF.Handle(&Context{
+	code, body := globalFilter.Handle(&Context{
 		ClientAddr: clientAddr,
 		Seq:        packet.Seq,
 		Method:     strconv.Itoa(int(headCmd)),
