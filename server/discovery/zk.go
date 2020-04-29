@@ -50,7 +50,7 @@ func (z *ZkDiscovery) Watch(node string) error {
 
 	conn, _, err := zk.Connect(z.dns, time.Second*5, zk.WithLogInfo(false))
 	if err != nil {
-		doglog.Error("[Watch] zk connect occur error:%s", err)
+		doglog.Error("watch zk connect occur error:%s", err)
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (z *ZkDiscovery) unMsgNodeInfo(data []byte) *server.NodeInfo {
 	info = &server.DefaultNodeInfo{}
 	err := json.Unmarshal([]byte(data), info)
 	if err != nil {
-		doglog.Error("[GetNodeInfo] json unmarshal occur error:%s", err)
+		doglog.Error("GetNodeInfo json unmarshal occur error:%s", err)
 		return nil
 	}
 
@@ -118,14 +118,14 @@ func (z *ZkDiscovery) GetNodeInfo(node string) []server.NodeInfo {
 func (z *ZkDiscovery) watchNode(node ZkNode) {
 	children, _, err := z.nodes[node.node].client.Children(node.node)
 	if err != nil {
-		doglog.Error("[watchNode] Children occur error:%s", err)
+		doglog.Error("watch node Children occur error:%s", err)
 		return
 	}
 
 	for _, v := range children {
 		data, _, err := z.nodes[node.node].client.Get(node.node + "/" + v)
 		if err != nil {
-			doglog.Error("[watchNode] get occur error:%s", err)
+			doglog.Error("watch node get occur error:%s", err)
 			return
 		}
 		zkNode := z.unMsgNodeInfo(data)
@@ -135,7 +135,7 @@ func (z *ZkDiscovery) watchNode(node ZkNode) {
 	for {
 		_, _, childCh, err := z.nodes[node.node].client.ChildrenW(node.node)
 		if err != nil {
-			doglog.Error("[watchNode] watch childrenW occur error:%s", err)
+			doglog.Error("watch node watch childrenW occur error:%s", err)
 			return
 		}
 
@@ -144,7 +144,7 @@ func (z *ZkDiscovery) watchNode(node ZkNode) {
 			if childEvent.Type == zk.EventNodeChildrenChanged {
 				children, _, err := z.nodes[node.node].client.Children(node.node)
 				if err != nil {
-					doglog.Error("[watchNode] Children occur error:%s", err)
+					doglog.Error("watch node Children occur error:%s", err)
 					return
 				}
 
@@ -154,7 +154,7 @@ func (z *ZkDiscovery) watchNode(node ZkNode) {
 				for _, v := range children {
 					data, _, err := z.nodes[node.node].client.Get(node.node + "/" + v)
 					if err != nil {
-						doglog.Error("[watchNode] get occur error:%s", err)
+						doglog.Error("watch node get occur error:%s", err)
 						return
 					}
 					zkNode := z.unMsgNodeInfo(data)

@@ -37,7 +37,7 @@ type HttpServer struct {
 
 func (h *HttpServer) Run() error {
 	defer func() {
-		doglog.Info("[httpServer] start http server with:shutdownTimeout=%d,readTimeout=%d,writeTimeout=%d", h.HttpServerShutdownTimeout, h.HttpServerReadTimeout, h.HttpServerWriteTimeout)
+		doglog.Info("http server start http server with:shutdownTimeout=%d,readTimeout=%d,writeTimeout=%d", h.HttpServerShutdownTimeout, h.HttpServerReadTimeout, h.HttpServerWriteTimeout)
 	}()
 
 	if h.UseHttps {
@@ -81,14 +81,14 @@ func (h *HttpServer) Run() error {
 
 func (h *HttpServer) Stop() {
 	if h.server == nil {
-		doglog.Info("[httpServer] ungracefull http server shutdown %s", h.HttpServerRunHost)
+		doglog.Info("not graceful http server shutdown %s", h.HttpServerRunHost)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.HttpServerShutdownTimeout)*time.Second)
 	defer cancel()
 	if err := h.server.Shutdown(ctx); err != nil {
-		doglog.Error("[httpServer] http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunHost, h.HttpServerShutdownTimeout, err)
+		doglog.Error("http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunHost, h.HttpServerShutdownTimeout, err)
 	} else {
 		doglog.Info("http server shutdown %s", h.HttpServerRunHost)
 	}

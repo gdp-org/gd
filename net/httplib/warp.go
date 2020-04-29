@@ -76,7 +76,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 					} else {
 						body = []byte(c.Request.RequestURI)
 					}
-					doglog.Error("[Warp] data not valid!data=%s,func=%v,err=%v,readBodyErr=%v", string(body), toWrap, err, readBodyErr)
+					doglog.Error("warp data not valid!data=%s,func=%v,err=%v,readBodyErr=%v", string(body), toWrap, err, readBodyErr)
 					Return(c, http.StatusBadRequest, "data not valid", err, nil)
 					c.Set(SESSION_LOG_LEVEL, "INFO")
 					return
@@ -86,7 +86,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 		} else {
 			dataBts, ok := dataBtsObj.([]byte)
 			if !ok {
-				doglog.Error("[Warp] data not []byte!func=%v,data=%v", toWrap, dataBtsObj)
+				doglog.Error("warp data not []byte!func=%v,data=%v", toWrap, dataBtsObj)
 				Return(c, http.StatusInternalServerError, "data not byte array", nil, nil)
 				c.Set(SESSION_LOG_LEVEL, "INFO")
 				return
@@ -94,7 +94,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 			if dataBts != nil && len(dataBts) > 0 {
 				jsonErr := json.Unmarshal(dataBts, inValInterface)
 				if jsonErr != nil {
-					doglog.Info("[Warp] wrap data from json fail!bts=%s,func=%v,err=%v", string(dataBts), toWrap, jsonErr)
+					doglog.Info("warp wrap data from json fail!bts=%s,func=%v,err=%v", string(dataBts), toWrap, jsonErr)
 					Return(c, http.StatusInternalServerError, "data type not valid", jsonErr, nil)
 					c.Set(SESSION_LOG_LEVEL, "INFO")
 					return
@@ -113,7 +113,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 		in[1] = inVal
 		out := refToWrap.Call(in)
 		if len(out) != 4 {
-			doglog.Error("[Warp] return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
 			Return(c, http.StatusInternalServerError, "ret not 4!", nil, nil)
 			return
 		}
@@ -129,27 +129,27 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 			code, _ = out[0].Interface().(int)
 		} else {
 			code = http.StatusInternalServerError
-			doglog.Error("[Warp] unparseable code!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[1].CanInterface() {
 			message, _ = out[1].Interface().(string)
 		} else {
-			doglog.Error("[Warp] unparseable message!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[2].CanInterface() {
 			err, _ = out[2].Interface().(error)
 		} else {
-			doglog.Error("[Warp] unparseable err!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 		if out[3].CanInterface() {
 			ret = out[3].Interface()
 		} else {
-			doglog.Error("[Warp] unparseable result!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
-		doglog.Debug("[Warp] wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
+		doglog.Debug("warp wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
 		Return(c, code, message, err, ret)
 	}
 	return wrapped, nil

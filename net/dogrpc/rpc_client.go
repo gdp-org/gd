@@ -40,7 +40,7 @@ func NewClient(timeout time.Duration, retryNum uint32) *RpcClient {
 // add server address
 func (c *RpcClient) AddAddr(addr string) {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
-		doglog.Error("[AddAddr] parse addr failed, %s", err.Error())
+		doglog.Error("parse addr failed, %s", err.Error())
 	} else {
 		c.addrs = append(c.addrs, addr2)
 	}
@@ -50,10 +50,10 @@ func (c *RpcClient) AddAddr(addr string) {
 func (c *RpcClient) Stop() {
 	for addr, cc := range c.Cm {
 		cc.Stop()
-		doglog.Error("[Stop] stop client %s", addr)
+		doglog.Error("dog rpc client stop client %s", addr)
 	}
 
-	doglog.Info("[Stop] stop all done.")
+	doglog.Info("dog rpc client stop all done.")
 }
 
 // connect

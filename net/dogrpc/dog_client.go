@@ -49,7 +49,7 @@ func (c *RpcClient) DogConnect() (*Client, error) {
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			doglog.Warn("[Connect] Addr %s already created.", addr)
+			doglog.Warn("Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -66,7 +66,7 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code u
 	if len(client) == 0 {
 		cc, err := c.DogConnect()
 		if err != nil {
-			doglog.Error("[DogInvoke] connect occur error:%s", err)
+			doglog.Error("Invoke connect occur error:%s", err)
 			return code, nil, InternalServerError
 		}
 		ct = cc
@@ -77,7 +77,7 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code u
 	var reqPkt, rspPkt Packet
 	reqPkt = NewDogPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
-		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
+		doglog.Error("Invoke CallRetry occur error:%v ", err)
 		return code, nil, err
 	}
 

@@ -48,7 +48,7 @@ func handlerWithRecover(f RpcHandlerFunc, req []byte) (code uint32, resp []byte)
 			stackTrace := make([]byte, 1<<20)
 			n := runtime.Stack(stackTrace, false)
 			errStr := fmt.Sprintf("Panic occured: %v\n Stack trace: %s", x, stackTrace[:n])
-			doglog.Error("[handlerWithRecover] occur error:%s", errStr)
+			doglog.Error("handlerWithRecover occur error:%s", errStr)
 		}
 	}()
 

@@ -41,7 +41,7 @@ func (c *Client) Start() {
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		doglog.Warn("[Start]: the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		doglog.Warn("the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -92,7 +92,7 @@ func (c *Client) Stop() {
 	defer c.stopLock.Unlock()
 	c.stopLock.Lock()
 	if c.clientStopChan == nil {
-		doglog.Error("[Stop]: the client must be started before stopping it")
+		doglog.Error("the client must be started before stopping it")
 	}
 	close(c.clientStopChan)
 	c.stopWg.Wait()
@@ -116,7 +116,7 @@ func clientHandler(c *Client) {
 		go func() {
 			if conn, err = c.Dial(c.Addr); err != nil {
 				if stopping.Load() == nil {
-					doglog.Error("[clientHandler]>> cannot establish connection to [%s], error [%s]", c.Addr, err)
+					doglog.Error(">> cannot establish connection to [%s], error [%s]", c.Addr, err)
 				}
 			}
 			close(dialChan)
@@ -189,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		doglog.Error("[clientHandleConnection] occur error: %s", c.Addr+", %s"+err.Error())
+		doglog.Error("client Handle Connection occur error: %s", c.Addr+", %s"+err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -481,7 +481,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		doglog.Error("[acquireTimer] BUG: Active timer trapped into acquireTimer()")
+		doglog.Error("BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }

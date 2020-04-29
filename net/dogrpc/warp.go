@@ -55,7 +55,7 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 		in[0] = inVal
 		out := refToWrap.Call(in)
 		if len(out) != 4 {
-			doglog.Error("[Warp] return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
 			code = uint32(de.RpcInternalServerError)
 			resp = Return(uint32(de.RpcInternalServerError), "ret not 4!", nil, nil)
 			return
@@ -71,27 +71,27 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 			code, _ = out[0].Interface().(uint32)
 		} else {
 			code = uint32(de.RpcInternalServerError)
-			doglog.Error("[Warp] unparseable code!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[1].CanInterface() {
 			message, _ = out[1].Interface().(string)
 		} else {
-			doglog.Error("[Warp] unparseable message!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[2].CanInterface() {
 			err, _ = out[2].Interface().(error)
 		} else {
-			doglog.Error("[Warp] unparseable err!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 		if out[3].CanInterface() {
 			ret = out[3].Interface()
 		} else {
-			doglog.Error("[Warp] unparseable result!in=%v,out=%v,func=%v", in, out, toWrap)
+			doglog.Error("warp not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
-		doglog.Debug("[Warp] wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
+		doglog.Debug("warp wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
 		resp = Return(code, message, err, ret)
 		return
 	}

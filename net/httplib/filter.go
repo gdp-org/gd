@@ -98,7 +98,7 @@ func Logger() gin.HandlerFunc {
 
 		dataByte, err := json.Marshal(data)
 		if err != nil {
-			doglog.Error("[Logger] data cant transfer to json ?! data is %v", data)
+			doglog.Error("data cant transfer to json ?! data is %v", data)
 			message["data"] = data
 		} else {
 			datas, _ := simplejson.NewJson(dataByte)
@@ -106,16 +106,16 @@ func Logger() gin.HandlerFunc {
 		}
 		retByte, err := json.Marshal(ret)
 		if err != nil {
-			doglog.Error("[Logger] ret cant transfer to json ?! ret is %v", ret)
+			doglog.Error("ret cant transfer to json ?! ret is %v", ret)
 			message["ret"] = ret
 		} else {
-			retsj, _ := simplejson.NewJson(retByte)
-			message["ret"] = retsj
+			retStr, _ := simplejson.NewJson(retByte)
+			message["ret"] = retStr
 		}
 
 		mj, jsonErr := utils.Marshal(message)
 		if jsonErr != nil {
-			doglog.Error("[Logger] marshal occur error")
+			doglog.Error("json marshal occur error:%v", jsonErr)
 		}
 
 		if cost > 500 {

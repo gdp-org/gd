@@ -28,7 +28,7 @@ func (e *Engine) Signal() {
 		for {
 			select {
 			case sig := <-Shutdown:
-				doglog.Info("[Signal] receive signal: %v, to stop server...", sig)
+				doglog.Info("receive signal: %v, to stop server...", sig)
 				if e.RpcServer.GetAddr() != "" {
 					e.RpcServer.Stop()
 				}
@@ -37,5 +37,5 @@ func (e *Engine) Signal() {
 			}
 		}
 	}()
-	doglog.Info("[Signal] register signal ok")
+	doglog.Info("register signal ok")
 }

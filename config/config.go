@@ -69,7 +69,7 @@ func (a *DogAppConfig) initNewConfigure() {
 	total := map[string]interface{}{}
 	err := a.getConfig(a.BaseConfig, &total)
 	if err != nil {
-		doglog.Error("[initNewConfigure] Cannot parse config file, error = %s", err.Error())
+		doglog.Error("Cannot parse config file, error = %s", err.Error())
 		panic(err)
 	}
 
@@ -92,7 +92,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 	}
 
 	if err := utils.ParseJSON(appConfigPath, appCfg); err != nil {
-		doglog.Error("[getConfig] Parse config %s. error: %s\n", appConfigPath, err.Error())
+		doglog.Error("Parse config %s. error: %s\n", appConfigPath, err.Error())
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
 
 func (a *DogAppConfig) Set(key string, value interface{}) {
 	if v, ok := a.data[key]; ok {
-		doglog.Warn("[Set] Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
+		doglog.Warn("Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
 	}
 
 	a.data[key] = value
