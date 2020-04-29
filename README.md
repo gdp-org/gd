@@ -188,13 +188,14 @@ The NodeInfo is info of node.
 This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
  in your computer. Of course, you can choose to comment out these lines of code.
 
-service:
+server:
 ```go
 package main
 
 import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog"
+	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
 	"github.com/chuck1024/godog/net/httplib"
 	"github.com/chuck1024/godog/server/register"
@@ -221,24 +222,52 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 	return http.StatusOK, "ok", nil, ret
 }
 
-func HandlerRpcTest(req []byte) (uint32, []byte) {
-	doglog.Debug("rpc server request: %s", string(req))
-	code := uint32(200)
-	resp := []byte("Are you ok?")
-	return code, resp
+func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
+	doglog.Debug("rpc sever req:%v", req)
+
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
+
+	return uint32(de.RpcSuccess), "ok", nil, ret
+}
+
+func Register(e *godog.Engine) {
+	// http
+	e.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
+	e.HttpServer.SetInit(func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			httplib.GlFilter(),
+			httplib.GroupFilter(),
+			httplib.Logger(),
+		)
+
+		for k, v := range e.HttpServer.DefaultHandlerMap {
+			f, err := httplib.Wrap(v)
+			if err != nil {
+				return err
+			}
+			r.POST(k, f)
+		}
+
+		return nil
+	})
+
+	// Rpc
+	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
+	if err := e.RpcServer.DogRpcRegister(); err != nil {
+		doglog.Error("DogRpcRegister occur error:%s", err)
+		return
+	}
+	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
 }
 
 func main() {
 	d := godog.Default()
 	d.InitLog()
-	// Http
-	d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
-	d.HttpServer.DefaultRegister() 
-	// default dog rpc server, you can choose rpc server 
-	// d.RpcServer = dogrpc.NewRpcServer() 
-	
-	// Rpc
-	d.RpcServer.AddHandler(1024, HandlerRpcTest)
+
+	Register(d)
 
 	// register params
 	etcdHost, _ := d.Config.Strings("etcdHost")
@@ -261,7 +290,7 @@ func main() {
 }
 
 // you can use command to test http service.
-// curl http://127.0.0.1:10240/test
+// curl -X POST http://127.0.0.1:10240/test -H "Content-Type: application/json" --data '{"Data":"test"}'
 
 ```
 >* You can find it in "sample/service.go"
