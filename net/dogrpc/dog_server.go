@@ -45,14 +45,14 @@ func (s *RpcServer) AddDogHandler(headCmd uint32, f interface{}) {
 	}
 
 	s.wrapHandler[headCmd] = f
-	doglog.Info("[AddDogHandler] wrapHandler register head cmd [%d] success.", headCmd)
+	doglog.Info("AddDogHandler wrapHandler register head cmd [%d] success.", headCmd)
 }
 
 func (s *RpcServer) DogRpcRegister() error {
 	for k, v := range s.wrapHandler {
 		wf, err := wrap(v)
 		if err != nil {
-			doglog.Error("[DogRpcRegister] wrap occur error:%s", err)
+			doglog.Error("DogRpcRegister wrap occur error:%s", err)
 			return err
 		}
 		s.AddHandler(k, wf)
@@ -66,7 +66,7 @@ func (s *RpcServer) dogDispatchPacket(clientAddr string, req Packet) (rsp Packet
 
 	f, ok := s.defaultHandler[headCmd]
 	if !ok {
-		doglog.Error("[dispatchPacket] head cmd %d not register handler!", headCmd)
+		doglog.Error("dispatchPacket head cmd %d not register handler!", headCmd)
 		return NewDogPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 
