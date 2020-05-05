@@ -157,7 +157,7 @@ func (e *Engine) Run() error {
 
 	// health port
 	healthPort := e.Config.BaseConfig.Prog.HealthPort
-	if rpcPort == 0 {
+	if healthPort == 0 {
 		doglog.Info("Hasn't health server port")
 	} else {
 		host := fmt.Sprintf(":%d", healthPort)
