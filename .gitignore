@@ -8,8 +8,6 @@
 # Test binary, build with `go test -c`
 *.test
 .idea/*
-utils/stat.go
-utils/stat_test.go
 sample/log/*
 sample/prof/*
 sample/dumpPanic.-dump-*
