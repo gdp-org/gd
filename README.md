@@ -197,7 +197,7 @@ import (
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/ghttp"
+	"github.com/chuck1024/godog/net/dhttp"
 	"github.com/chuck1024/godog/server/register"
 	"github.com/chuck1024/godog/utils"
 	"github.com/gin-gonic/gin"

@@ -10,7 +10,7 @@ import (
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/ghttp"
+	"github.com/chuck1024/godog/net/dhttp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -49,13 +49,13 @@ func Register(e *godog.Engine) {
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
-			ghttp.GlFilter(),
-			ghttp.GroupFilter(),
-			ghttp.Logger(),
+			dhttp.GlFilter(),
+			dhttp.GroupFilter(),
+			dhttp.Logger(),
 		)
 
 		for k, v := range e.HttpServer.DefaultHandlerMap {
-			f, err := ghttp.Wrap(v)
+			f, err := dhttp.Wrap(v)
 			if err != nil {
 				return err
 			}

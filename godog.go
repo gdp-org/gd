@@ -10,7 +10,7 @@ import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/config"
 	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/ghttp"
+	"github.com/chuck1024/godog/net/dhttp"
 	"github.com/chuck1024/godog/utils"
 	"runtime"
 	"syscall"
@@ -19,14 +19,14 @@ import (
 
 type Engine struct {
 	Config     *config.Conf
-	HttpServer *ghttp.HttpServer
+	HttpServer *dhttp.HttpServer
 	RpcServer  *dogrpc.RpcServer
 }
 
 func Default() *Engine {
 	e := &Engine{
 		Config: config.Config(),
-		HttpServer: &ghttp.HttpServer{
+		HttpServer: &dhttp.HttpServer{
 			NoGinLog: true,
 		},
 		RpcServer: dogrpc.NewDogRpcServer(),
@@ -46,8 +46,8 @@ func (e *Engine) NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.Rp
 	return client
 }
 
-func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *ghttp.HttpClient {
-	client := &ghttp.HttpClient{
+func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
+	client := &dhttp.HttpClient{
 		Timeout: Timeout,
 		Domain:  Domain,
 	}
@@ -58,7 +58,7 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *ghttp.Http
 	return client
 }
 
-func (e *Engine) SetHttpServer(initer ghttp.HttpServerIniter) {
+func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {
 	e.HttpServer.SetInit(initer)
 }
 

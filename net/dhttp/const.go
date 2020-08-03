@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package ghttp
+package dhttp
 
 const (
 	REMOTE_IP         = "remote_ip"
