@@ -1,164 +1,55 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2020 godog Author. All rights reserved.
  * Author: Chuck1024
  */
 
 package config
 
 import (
-	"encoding/json"
-	"errors"
 	"github.com/chuck1024/doglog"
-	"github.com/chuck1024/godog/utils"
-	"os"
-	"path/filepath"
-	"strings"
+	"gopkg.in/ini.v1"
+	"sync"
 )
 
 var (
-	appConfigPath string
+	defaultConfigName = "conf/conf.ini"
+	cache             sync.Map
 )
 
-type DogAppConfig struct {
-	BaseConfig *BaseConfigure
-	data       map[string]interface{}
+type Conf struct {
+	ini *ini.File
 }
 
-type BaseConfigure struct {
-	Log string
-
-	Prog struct {
-		MaxCPU     int
-		MaxMemory  string
-		HealthPort int
-	}
-
-	Server struct {
-		AppName  string
-		HttpPort int
-		RpcPort  int
-	}
+func (c *Conf) Section(name string) *ini.Section {
+	return c.ini.Section(name)
 }
 
-func NewDogConfig() *DogAppConfig {
-	c := &DogAppConfig{
-		BaseConfig: new(BaseConfigure),
-		data:       make(map[string]interface{}),
-	}
-
-	workPath, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	var filename = "conf.json"
-	appConfigPath = filepath.Join(workPath, "conf", filename)
-	if !utils.Exists(appConfigPath) {
-		doglog.Debug("conf.json not exist")
-		return &DogAppConfig{
-			BaseConfig: new(BaseConfigure),
-			data:       make(map[string]interface{}),
+func Config() *Conf {
+	cfg, ok := getFile(defaultConfigName)
+	if !ok {
+		tmp, err := ini.Load(defaultConfigName)
+		if err != nil {
+			doglog.Crash("Config ini load occur error:%v", err)
+			return nil
 		}
+		setFile(defaultConfigName, tmp)
+		cfg = tmp
 	}
-
-	c.initNewConfigure()
-	return c
+	return &Conf{ini: cfg}
 }
 
-func (a *DogAppConfig) initNewConfigure() {
-	total := map[string]interface{}{}
-	err := a.getConfig(a.BaseConfig, &total)
-	if err != nil {
-		doglog.Error("Cannot parse config file, error = %s", err.Error())
-		panic(err)
+func getFile(name string) (*ini.File, bool) {
+	fo, ok := cache.Load(name)
+	if !ok || fo == nil {
+		return ini.Empty(), false
 	}
-
-	for k, v := range total {
-		if s, ok := v.(string); ok {
-			a.Set(k, s)
-		}
-		if s, ok := v.(float64); ok {
-			a.Set(k, s)
-		}
-		if s, ok := v.(bool); ok {
-			a.Set(k, s)
-		}
+	f, ok := fo.(*ini.File)
+	if !ok || f == nil {
+		return ini.Empty(), false
 	}
+	return f, ok
 }
 
-func (a *DogAppConfig) getConfig(base interface{}, appCfg interface{}) error {
-	if appCfg == nil {
-		return utils.ParseJSON(appConfigPath, base)
-	}
-
-	if err := utils.ParseJSON(appConfigPath, appCfg); err != nil {
-		doglog.Error("Parse config %s. error: %s\n", appConfigPath, err.Error())
-		return err
-	}
-
-	bytes, _ := json.Marshal(appCfg)
-	_ = json.Unmarshal(bytes, base)
-
-	return nil
-}
-
-func (a *DogAppConfig) Set(key string, value interface{}) {
-	if v, ok := a.data[key]; ok {
-		doglog.Warn("Try to replace value[%#+v] to key = %s, original value: %s", value, key, v)
-	}
-
-	a.data[key] = value
-}
-
-func (a *DogAppConfig) String(key string) (string, error) {
-	if v, ok := a.data[key]; ok {
-		switch v.(type) {
-		case string:
-			return v.(string), nil
-		default:
-			return "", errors.New("value type isn't string")
-		}
-	}
-
-	return "", errors.New("failed to get value of key. No key")
-}
-
-func (a *DogAppConfig) Strings(key string) ([]string, error) {
-	if v, ok := a.data[key]; ok {
-		switch v.(type) {
-		case string:
-			result := strings.Split(v.(string), ";")
-			return result, nil
-		default:
-			return []string{}, errors.New("value type isn't string")
-		}
-	}
-
-	return []string{}, errors.New("failed to get value of key. No key")
-}
-
-func (a *DogAppConfig) Int(key string) (int, error) {
-	if v, ok := a.data[key]; ok {
-		switch v.(type) {
-		case float64:
-			return int(v.(float64)), nil
-		default:
-			return 0, errors.New("value type isn't int")
-		}
-	}
-
-	return 0, errors.New("failed to get value of key. No key")
-}
-
-func (a *DogAppConfig) Bool(key string) (bool, error) {
-	if v, ok := a.data[key]; ok {
-		switch v.(type) {
-		case bool:
-			return v.(bool), nil
-		default:
-			return false, errors.New("value type isn't bool")
-		}
-	}
-
-	return false, errors.New("failed to get value of key. No key")
+func setFile(name string, file *ini.File) {
+	cache.Store(name, file)
 }

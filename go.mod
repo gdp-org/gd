@@ -18,6 +18,7 @@ require (
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	google.golang.org/grpc v1.26.0 // indirect
+	gopkg.in/ini.v1 v1.57.0
 	moul.io/http2curl v1.0.0 // indirect
 )
 

@@ -10,7 +10,7 @@ import (
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/godog/config"
 	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/httplib"
+	"github.com/chuck1024/godog/net/ghttp"
 	"github.com/chuck1024/godog/utils"
 	"runtime"
 	"syscall"
@@ -18,19 +18,26 @@ import (
 )
 
 type Engine struct {
-	Config     *config.DogAppConfig
-	HttpServer *httplib.HttpServer
+	Config     *config.Conf
+	HttpServer *ghttp.HttpServer
 	RpcServer  *dogrpc.RpcServer
 }
 
 func Default() *Engine {
-	return &Engine{
-		Config: config.NewDogConfig(),
-		HttpServer: &httplib.HttpServer{
+	e := &Engine{
+		Config: config.Config(),
+		HttpServer: &ghttp.HttpServer{
 			NoGinLog: true,
 		},
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
+
+	if e.Config.Section("Log").Key("log").String() != "" {
+		doglog.LoadConfiguration(e.Config.Section("Log").Key("log").String())
+		doglog.Info("config:%v", e.Config)
+	}
+
+	return e
 }
 
 // timeout Millisecond
@@ -39,8 +46,8 @@ func (e *Engine) NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.Rp
 	return client
 }
 
-func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *httplib.HttpClient {
-	client := &httplib.HttpClient{
+func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *ghttp.HttpClient {
+	client := &ghttp.HttpClient{
 		Timeout: Timeout,
 		Domain:  Domain,
 	}
@@ -51,12 +58,12 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *httplib.Ht
 	return client
 }
 
-func (e *Engine) SetHttpServer(initer httplib.HttpServerIniter) {
+func (e *Engine) SetHttpServer(initer ghttp.HttpServerIniter) {
 	e.HttpServer.SetInit(initer)
 }
 
 func (e *Engine) initCPUAndMemory() error {
-	maxCPU := e.Config.BaseConfig.Prog.MaxCPU
+	maxCPU, _ := e.Config.Section("Process").Key("maxCPU").Int()
 	numCpus := runtime.NumCPU()
 	if maxCPU <= 0 {
 		if numCpus > 3 {
@@ -69,10 +76,10 @@ func (e *Engine) initCPUAndMemory() error {
 	}
 	runtime.GOMAXPROCS(maxCPU)
 
-	if e.Config.BaseConfig.Prog.MaxMemory != "" {
-		maxMemory, err := utils.ParseMemorySize(e.Config.BaseConfig.Prog.MaxMemory)
+	if e.Config.Section("Process").Key("maxMemory").String() != "" {
+		maxMemory, err := utils.ParseMemorySize(e.Config.Section("Process").Key("maxMemory").String())
 		if err != nil {
-			doglog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config.BaseConfig.Prog.MaxMemory, err.Error()))
+			doglog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config.Section("Process").Key("maxMemory").String(), err.Error()))
 		}
 
 		var rlimit syscall.Rlimit
@@ -92,14 +99,6 @@ func (e *Engine) initCPUAndMemory() error {
 	return nil
 }
 
-func (e *Engine) InitLog() {
-	// init log
-	if e.Config.BaseConfig.Log != "" {
-		doglog.LoadConfiguration(e.Config.BaseConfig.Log)
-		doglog.Info("config:%v", e.Config)
-	}
-}
-
 func (e *Engine) Run() error {
 	doglog.Info("- - - - - - - - - - - - - - - - - - -")
 	doglog.Info("process start")
@@ -107,7 +106,7 @@ func (e *Engine) Run() error {
 	e.Signal()
 
 	// dump when error occurs
-	file, err := utils.Dump(e.Config.BaseConfig.Server.AppName)
+	file, err := utils.Dump(e.Config.Section("Server").Key("serverName").String())
 	if err != nil {
 		doglog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
@@ -131,7 +130,7 @@ func (e *Engine) Run() error {
 	}
 
 	// http run
-	httpPort := e.Config.BaseConfig.Server.HttpPort
+	httpPort, _ := e.Config.Section("Server").Key("httpPort").Int()
 	if httpPort == 0 {
 		doglog.Info("Hasn't http server port")
 	} else {
@@ -144,7 +143,7 @@ func (e *Engine) Run() error {
 	}
 
 	// rpc server
-	rpcPort := e.Config.BaseConfig.Server.RpcPort
+	rpcPort, _ := e.Config.Section("Server").Key("tcpPort").Int()
 	if rpcPort == 0 {
 		doglog.Info("Hasn't rpc server port")
 	} else {
@@ -156,12 +155,12 @@ func (e *Engine) Run() error {
 	}
 
 	// health port
-	healthPort := e.Config.BaseConfig.Prog.HealthPort
+	healthPort, _ := e.Config.Section("Process").Key("healthPort").Int()
 	if healthPort == 0 {
 		doglog.Info("Hasn't health server port")
 	} else {
 		host := fmt.Sprintf(":%d", healthPort)
-		health := &utils.Helper{Host: host,}
+		health := &utils.Helper{Host: host}
 		if err := health.Start(); err != nil {
 			doglog.Error("start health failed on %s\n", host)
 			return err

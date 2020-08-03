@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package httplib
+package ghttp
 
 const (
 	REMOTE_IP         = "remote_ip"

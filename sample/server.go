@@ -10,9 +10,7 @@ import (
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/httplib"
-	"github.com/chuck1024/godog/server/register"
-	"github.com/chuck1024/godog/utils"
+	"github.com/chuck1024/godog/net/ghttp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -51,13 +49,13 @@ func Register(e *godog.Engine) {
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
-			httplib.GlFilter(),
-			httplib.GroupFilter(),
-			httplib.Logger(),
+			ghttp.GlFilter(),
+			ghttp.GroupFilter(),
+			ghttp.Logger(),
 		)
 
 		for k, v := range e.HttpServer.DefaultHandlerMap {
-			f, err := httplib.Wrap(v)
+			f, err := ghttp.Wrap(v)
 			if err != nil {
 				return err
 			}
@@ -78,22 +76,8 @@ func Register(e *godog.Engine) {
 
 func main() {
 	d := godog.Default()
-	d.InitLog()
 
 	Register(d)
-
-	// register params
-	etcdHost, _ := d.Config.Strings("etcdHost")
-	root, _ := d.Config.String("root")
-	environ, _ := d.Config.String("environ")
-	group, _ := d.Config.String("group")
-	weight, _ := d.Config.Int("weight")
-
-	// register
-	var r register.DogRegister
-	r = &register.EtcdRegister{}
-	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
-	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.RpcPort, uint64(weight))
 
 	err := d.Run()
 	if err != nil {
