@@ -33,10 +33,15 @@ func Default() *Engine {
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 
-	if e.Config("Log","log").String() != "" {
-		httpPort, _ := e.Config("Server","httpPort").Int()
-		if err := RestoreLogConfig("", e.Config("Server","serverName").String(),
-			httpPort, e.Config("Log","level").String(), e.Config("Log","logDir").String()); err != nil {
+	enable, _ := e.Config("Log", "enable").Bool()
+	if enable {
+		port, _ := e.Config("Server", "httpPort").Int()
+		if port == 0 {
+			port, _ = e.Config("Server", "rcpPort").Int()
+		}
+
+		if err := RestoreLogConfig("", e.Config("Server", "serverName").String(),
+			port, e.Config("Log", "level").String(), e.Config("Log", "logDir").String()); err != nil {
 
 		}
 		dlog.LoadConfiguration(logConfigFile)
@@ -53,7 +58,7 @@ func (e *Engine) Run() error {
 	e.Signal()
 
 	// dump when error occurs
-	file, err := utls.Dump(e.Config("Server","serverName").String())
+	file, err := utls.Dump(e.Config("Server", "serverName").String())
 	if err != nil {
 		dlog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
@@ -77,7 +82,7 @@ func (e *Engine) Run() error {
 	}
 
 	// http run
-	httpPort, _ := e.Config("Server","httpPort").Int()
+	httpPort, _ := e.Config("Server", "httpPort").Int()
 	if httpPort == 0 {
 		dlog.Info("Hasn't http server port")
 	} else {
@@ -90,7 +95,7 @@ func (e *Engine) Run() error {
 	}
 
 	// rpc server
-	rpcPort, _ := e.Config("Server","rcpPort").Int()
+	rpcPort, _ := e.Config("Server", "rcpPort").Int()
 	if rpcPort == 0 {
 		dlog.Info("Hasn't rpc server port")
 	} else {
@@ -102,7 +107,7 @@ func (e *Engine) Run() error {
 	}
 
 	// health port
-	healthPort, _ := e.Config("Process","healthPort").Int()
+	healthPort, _ := e.Config("Process", "healthPort").Int()
 	if healthPort == 0 {
 		dlog.Info("Hasn't health server port")
 	} else {
@@ -120,7 +125,7 @@ func (e *Engine) Run() error {
 }
 
 func (e *Engine) initCPUAndMemory() error {
-	maxCPU, _ := e.Config("Process","maxCPU").Int()
+	maxCPU, _ := e.Config("Process", "maxCPU").Int()
 	numCpus := runtime.NumCPU()
 	if maxCPU <= 0 {
 		if numCpus > 3 {
@@ -133,10 +138,10 @@ func (e *Engine) initCPUAndMemory() error {
 	}
 	runtime.GOMAXPROCS(maxCPU)
 
-	if e.Config("Process","maxMemory").String() != "" {
-		maxMemory, err := utls.ParseMemorySize(e.Config("Process","maxMemory").String())
+	if e.Config("Process", "maxMemory").String() != "" {
+		maxMemory, err := utls.ParseMemorySize(e.Config("Process", "maxMemory").String())
 		if err != nil {
-			dlog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config("Process","maxMemory").String(), err.Error()))
+			dlog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config("Process", "maxMemory").String(), err.Error()))
 		}
 
 		var rlimit syscall.Rlimit
