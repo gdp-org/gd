@@ -7,7 +7,7 @@ require (
 	github.com/chuck1024/dlog v0.0.0-20200804032506-74d3b3b23cd4
 	github.com/chuck1024/gl v0.0.0-20200114031106-5a09ab9144f9
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
-	github.com/coreos/go-systemd v0.0.0-00010101000000-000000000000 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/etcd-io/etcd v3.3.18+incompatible
 	github.com/gin-gonic/gin v1.5.0
