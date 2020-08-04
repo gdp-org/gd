@@ -8,23 +8,23 @@ package main
 import (
 	"fmt"
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/server/discovery"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/server/discovery"
 	"time"
 )
 
 func main() {
-	d := godog.Default()
+	d := gd.Default()
 	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	// discovery
 	var r discovery.DogDiscovery
 	r = &discovery.EtcdDiscovery{}
 	r.NewDiscovery([]string{"localhost:2379"})
-	r.Watch("/root/github/godog/stagging/pool")
+	r.Watch("/root/github/gd/stagging/pool")
 	r.Run()
 	time.Sleep(100 * time.Millisecond)
 
-	hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
+	hosts := r.GetNodeInfo("/root/github/gd/stagging/pool")
 	for _, v := range hosts {
 		dlog.Debug("%s:%d", v.GetIp(), v.GetPort())
 	}

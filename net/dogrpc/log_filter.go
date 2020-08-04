@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 godog Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"encoding/json"
 	"github.com/chuck1024/dlog"
-	de "github.com/chuck1024/godog/error"
+	de "github.com/chuck1024/gd/error"
 	"time"
 )
 

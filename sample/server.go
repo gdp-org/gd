@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -7,10 +7,10 @@ package main
 
 import (
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/godog"
-	de "github.com/chuck1024/godog/error"
-	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/dhttp"
+	"github.com/chuck1024/gd"
+	de "github.com/chuck1024/gd/error"
+	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -43,7 +43,7 @@ func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *
 	return uint32(de.RpcSuccess), "ok", nil, ret
 }
 
-func Register(e *godog.Engine) {
+func Register(e *gd.Engine) {
 	// http
 	e.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
@@ -75,7 +75,7 @@ func Register(e *godog.Engine) {
 }
 
 func main() {
-	d := godog.Default()
+	d := gd.Default()
 
 	Register(d)
 

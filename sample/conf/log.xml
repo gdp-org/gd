@@ -7,10 +7,10 @@
     </filter>
 
     <filter enabled="true">
-        <tag>godog</tag>
+        <tag>gd</tag>
         <type>file</type>
         <level>DEBUG</level>
-        <property name="filename">log/godog.log</property>
+        <property name="filename">log/gd.log</property>
         <!--
            %T - Time (15:04:05 MST)
            %t - Time (15:04)
@@ -34,10 +34,10 @@
     </filter>
 
     <filter enabled="true">
-        <tag>godog_err</tag>
+        <tag>gd_err</tag>
         <type>file</type>
         <level>WARNING</level>
-        <property name="filename">log/godog_err.log</property>
+        <property name="filename">log/gd_err.log</property>
         <property name="format">%L	%D %T	%M	%S</property>
         <property name="rotate">true</property> <!-- true enables log rotation, otherwise append -->
         <property name="maxsize">0M</property> <!-- \d+[KMG]? Suffixes are in terms of 2**10 -->

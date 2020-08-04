@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -7,8 +7,8 @@ package dogrpc_test
 
 import (
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/godog"
-	de "github.com/chuck1024/godog/error"
+	"github.com/chuck1024/gd"
+	de "github.com/chuck1024/gd/error"
 	"testing"
 )
 
@@ -31,7 +31,7 @@ func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) 
 }
 
 func TestDogServer(t *testing.T) {
-	d := godog.Default()
+	d := gd.Default()
 	// Rpc
 	d.RpcServer.AddDogHandler(1024, test)
 	if err := d.RpcServer.DogRpcRegister(); err != nil {

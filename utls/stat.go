@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/chuck1024/dlog"
-	dogErr "github.com/chuck1024/godog/error"
+	dogErr "github.com/chuck1024/gd/error"
 	"math"
 	"os"
 	"sort"

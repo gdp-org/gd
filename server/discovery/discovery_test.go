@@ -6,7 +6,7 @@
 package discovery_test
 
 import (
-	"github.com/chuck1024/godog/server/discovery"
+	"github.com/chuck1024/gd/server/discovery"
 	"testing"
 	"time"
 )
@@ -15,11 +15,11 @@ func TestDiscEtcd(t *testing.T) {
 	var r discovery.DogDiscovery
 	r = &discovery.EtcdDiscovery{}
 	r.NewDiscovery([]string{"localhost:2379"})
-	r.Watch("/root/github/godog/stagging/pool")
+	r.Watch("/root/github/gd/stagging/pool")
 	r.Run()
 	time.Sleep(100 * time.Millisecond)
 
-	n1 := r.GetNodeInfo("/root/github/godog/stagging/pool")
+	n1 := r.GetNodeInfo("/root/github/gd/stagging/pool")
 	for _, v := range n1 {
 		t.Logf("%s:%d", v.GetIp(), v.GetPort())
 	}
@@ -31,10 +31,10 @@ func TestDiscZk(t *testing.T) {
 	var r discovery.DogDiscovery
 	r = &discovery.ZkDiscovery{}
 	r.NewDiscovery([]string{"localhost:2181"})
-	r.Watch("/root/godog/test/stagging/pool")
+	r.Watch("/root/gd/test/stagging/pool")
 	r.Run()
 	time.Sleep(100 * time.Millisecond)
-	n1 := r.GetNodeInfo("/root/godog/test/stagging/pool")
+	n1 := r.GetNodeInfo("/root/gd/test/stagging/pool")
 	for _, v := range n1 {
 		t.Logf("%s:%d", v.GetIp(), v.GetPort())
 	}

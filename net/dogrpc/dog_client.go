@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"bufio"
 	"github.com/chuck1024/dlog"
-	dogError "github.com/chuck1024/godog/error"
+	dogError "github.com/chuck1024/gd/error"
 	"io"
 	"math/rand"
 	"net"

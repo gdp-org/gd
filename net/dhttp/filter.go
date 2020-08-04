@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 godog Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -11,8 +11,8 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gl"
-	"github.com/chuck1024/godog/utls"
-	"github.com/chuck1024/godog/utls/network"
+	"github.com/chuck1024/gd/utls"
+	"github.com/chuck1024/gd/utls/network"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"

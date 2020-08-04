@@ -1,19 +1,19 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/utls/network"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/utls/network"
 	"testing"
 	"time"
 )
 
 func TestRpcClient(t *testing.T) {
-	d := godog.Default()
+	d := gd.Default()
 	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	c.AddAddr(network.GetLocalIP() + ":10241")
 

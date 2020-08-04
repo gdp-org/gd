@@ -1,6 +1,6 @@
-# GoDog
+# gd
 
-"go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗" in Chinese, which is very cute.
+"go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So gd means "狗狗" in Chinese, which is very cute.
 
 ---
 ## Author
@@ -13,16 +13,16 @@ email : chuck.ch1024@outlook.com
 ---
 ## Installation
 
-Start with cloning godog:
+Start with cloning gd:
 
 ```
-> go get github.com/chuck1024/godog
+> go get github.com/chuck1024/gd
 ```
 
 ---
 ## Introduction
 
-GoDog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
+gd is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
 The framework contains `config module`,`error module`,`net module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
@@ -38,7 +38,7 @@ package main
 import (
     "github.com/bitly/go-simplejson"
     "github.com/chuck1024/dlog"
-    "github.com/chuck1024/godog"
+    "github.com/chuck1024/gd"
     "github.com/gin-gonic/gin"
     "net/http"
 )
@@ -50,7 +50,7 @@ func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message st
 }
 
 func main() {
-    d := godog.Default()
+    d := gd.Default()
     d.InitLog()
     d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
     d.HttpServer.DefaultRegister()
@@ -66,7 +66,7 @@ func main() {
 
 ---
 **[config]**  
-So far, it only supports configuration with ini in godog. Of course, it supports more and more format configuration in future.
+So far, it only supports configuration with ini in gd. Of course, it supports more and more format configuration in future.
 What's more, your configuration file must have the necessary parameters, like this:
 
 ```ini
@@ -81,7 +81,7 @@ maxMemory  = "2g"
 healthPort = 9527
 
 [Server]
-serverName = "godog"
+serverName = "gd"
 httpPort   = 10240
 rcpPort    = 10241
 ```
@@ -115,7 +115,7 @@ type RpcPacket struct {
     Body      []byte
 }
 
-godog rpc packet:
+gd rpc packet:
 type DogPacket struct {
     Header
     Body []byte
@@ -180,12 +180,12 @@ nodeInfo:
         Weight  uint64 `json:"weight"`
     }
 ```
-The DogRegister and DogDiscovery are interface, godog supports zookeeper and etcd, so you can use others.
+The DogRegister and DogDiscovery are interface, gd supports zookeeper and etcd, so you can use others.
 The NodeInfo is info of node.
 
 ---
 ## Usage
-This example simply demonstrates the use of the godog. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
+This example simply demonstrates the use of the gd. of course, you need to make conf.json in conf Folder. The example use service discovery with etcd. So, you can install etcd
  in your computer. Of course, you can choose to comment out these lines of code.
 
 server:
@@ -194,12 +194,12 @@ package main
 
 import (
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/godog"
-	de "github.com/chuck1024/godog/error"
-	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/net/dhttp"
-	"github.com/chuck1024/godog/server/register"
-	"github.com/chuck1024/godog/utls"
+	"github.com/chuck1024/gd"
+	de "github.com/chuck1024/gd/error"
+	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/chuck1024/gd/net/dhttp"
+	"github.com/chuck1024/gd/server/register"
+	"github.com/chuck1024/gd/utls"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -232,7 +232,7 @@ func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *
 	return uint32(de.RpcSuccess), "ok", nil, ret
 }
 
-func Register(e *godog.Engine) {
+func Register(e *gd.Engine) {
 	// http
 	e.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
@@ -264,7 +264,7 @@ func Register(e *godog.Engine) {
 }
 
 func main() {
-	d := godog.Default()
+	d := gd.Default()
 	d.InitLog()
 
 	Register(d)
@@ -303,23 +303,23 @@ package main
 import (
     "fmt"
     "github.com/chuck1024/dlog"
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/server/discovery"
+    "github.com/chuck1024/gd"
+    "github.com/chuck1024/gd/server/discovery"
     "time"
 )
 
 func main() {
-    d := godog.Default()
+    d := gd.Default()
     c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
     // discovery 
     var r discovery.DogDiscovery
     r = &discovery.EtcdDiscovery{}
     r.NewDiscovery([]string{"localhost:2379"})
-    r.Watch("/root/github/godog/stagging/pool")
+    r.Watch("/root/github/gd/stagging/pool")
     r.Run()
     time.Sleep(100*time.Millisecond)
    
-    hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
+    hosts := r.GetNodeInfo("/root/github/gd/stagging/pool")
     for _,v := range hosts {
         dlog.Debug("%s:%d",v.GetIp(),v.GetPort())
     }
@@ -358,7 +358,7 @@ func main() {
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/godog/net/dogrpc"
+	"github.com/chuck1024/gd/net/dogrpc"
 	"testing"
 )
 
@@ -387,14 +387,14 @@ func TestRpcServer(t *testing.T) {
 package dogrpc_test
 
 import (
-    "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/utls"
+    "github.com/chuck1024/gd"
+    "github.com/chuck1024/gd/utls"
     "testing"
     "time"
 )
 
 func TestRpcClient(t *testing.T) {
-    d := godog.Default()
+    d := gd.Default()
     c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
     c.AddAddr(utils.GetLocalIP() + ":10241")
 
@@ -478,7 +478,7 @@ func GetErrorType(code int) string {
 package register_test
 
 import (
-	"github.com/chuck1024/godog/server/register"
+	"github.com/chuck1024/gd/server/register"
 	"testing"
 	"time"
 )
@@ -486,7 +486,7 @@ import (
 func TestEtcd(t *testing.T){
     var r register.DogRegister
     r = &register.EtcdRegister{}
-    r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging","godog", "test", )
+    r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging","gd", "test", )
 
     r.Run("127.0.0.1", 10240,10)
     time.Sleep(3 * time.Second)
@@ -496,7 +496,7 @@ func TestEtcd(t *testing.T){
 func TestZk(t *testing.T){
     var r register.DogRegister
     r = &register.ZkRegister{}
-    r.NewRegister([]string{"localhost:2181"}, "/root/", "stagging","godog", "test", )
+    r.NewRegister([]string{"localhost:2181"}, "/root/", "stagging","gd", "test", )
     r.Run("127.0.0.1", 10240,10)
     time.Sleep(10 * time.Second)
     r.Close()
@@ -506,7 +506,7 @@ func TestZk(t *testing.T){
 package discovery_test
 
 import (
-    "github.com/chuck1024/godog/server/discovery"
+    "github.com/chuck1024/gd/server/discovery"
     "testing"
     "time"
 )
@@ -515,11 +515,11 @@ func TestDiscEtcd(t *testing.T){
     var r discovery.DogDiscovery
     r = &discovery.EtcdDiscovery{}
     r.NewDiscovery([]string{"localhost:2379"})
-    r.Watch("/root/godog/test/stagging/pool")
+    r.Watch("/root/gd/test/stagging/pool")
     r.Run()
     time.Sleep(100*time.Millisecond)
 
-    n1 := r.GetNodeInfo("/root/godog/test/stagging/pool")
+    n1 := r.GetNodeInfo("/root/gd/test/stagging/pool")
     for _,v := range n1 {
         t.Logf("%s:%d",v.GetIp(),v.GetPort())
     }
@@ -531,10 +531,10 @@ func TestDiscZk(t *testing.T){
     var r discovery.DogDiscovery
     r = &discovery.ZkDiscovery{}
     r.NewDiscovery([]string{"localhost:2181"})
-    r.Watch("/root/godog/test/stagging/pool")
+    r.Watch("/root/gd/test/stagging/pool")
     r.Run()
     time.Sleep(100*time.Millisecond)
-    n1 := r.GetNodeInfo("/root/godog/test/stagging/pool")
+    n1 := r.GetNodeInfo("/root/gd/test/stagging/pool")
     for _,v := range n1 {
         t.Logf("%s:%d",v.GetIp(),v.GetPort())
     }
@@ -547,4 +547,4 @@ More information can be obtained in the source code
 ---
 ## License
 
-godog is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  
+gd is released under the [**MIT LICENSE**](http://opensource.org/licenses/mit-license.php).  

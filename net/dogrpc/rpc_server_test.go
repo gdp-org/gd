@@ -1,12 +1,12 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/godog/net/dogrpc"
+	"github.com/chuck1024/gd/net/dogrpc"
 	"testing"
 )
 

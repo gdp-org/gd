@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -156,7 +156,7 @@ func (e *RpcPacketEncoder) Flush() error {
 }
 
 /*
- * DogPacket. It is protocol of godog.
+ * DogPacket. It is protocol of gd.
  */
 
 const (

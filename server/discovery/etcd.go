@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 godog Author. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/godog/server"
+	"github.com/chuck1024/gd/server"
 	"github.com/etcd-io/etcd/clientv3"
 	"sync"
 	"time"
