@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"encoding/json"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	de "github.com/chuck1024/godog/error"
 	"time"
 )
@@ -44,18 +44,18 @@ func (f *LogFilter) Handle(ctx *Context) (code uint32, rsp []byte) {
 
 	logDataStr, jsonErr := json.Marshal(logData)
 	if jsonErr != nil {
-		doglog.Warn("logData json marshal fail, error:%s", jsonErr)
+		dlog.Warn("logData json marshal fail, error:%s", jsonErr)
 		return uint32(de.SystemError), rsp
 	}
 
 	if code != uint32(de.RpcSuccess) {
-		doglog.WarnT("SESSION", "%s %s", ctx.Method, logDataStr)
+		dlog.WarnT("SESSION", "%s %s", ctx.Method, logDataStr)
 	} else {
-		doglog.InfoT("SESSION", "%s %s", ctx.Method, logDataStr)
+		dlog.InfoT("SESSION", "%s %s", ctx.Method, logDataStr)
 	}
 
 	if f.SlowCostThreshold > 0 && cost > time.Duration(f.SlowCostThreshold)*time.Millisecond {
-		doglog.WarnT("SERVER_SLOW", "%s %s", ctx.Method, logDataStr)
+		dlog.WarnT("SERVER_SLOW", "%s %s", ctx.Method, logDataStr)
 	}
 
 	return code, rsp

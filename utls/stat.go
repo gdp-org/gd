@@ -8,7 +8,7 @@ package utls
 import (
 	"bytes"
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	dogErr "github.com/chuck1024/godog/error"
 	"math"
 	"os"
@@ -81,7 +81,7 @@ func (st *Stat) End(ret int) {
 	st.e = time.Now()
 
 	if statMgr == nil {
-		doglog.Error("StatMgr is not init.")
+		dlog.Error("StatMgr is not init.")
 	} else {
 		statMgr.addStat(st)
 	}
@@ -144,7 +144,7 @@ func StatMgrInstance() *StatMgr {
 func (mgr *StatMgr) Init(statPath string, statGap time.Duration) {
 	var err error
 	if mgr.statFile, err = os.OpenFile(statPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err != nil {
-		doglog.Error("init stat file failed, %s", err.Error())
+		dlog.Error("init stat file failed, %s", err.Error())
 		return
 	}
 
@@ -209,7 +209,7 @@ func (mgr *StatMgr) dump() {
 
 		sps := strings.Split(k, sep)
 		if len(sps) != 2 {
-			doglog.Error("invalid stat key, ", k)
+			dlog.Error("invalid stat key, ", k)
 			continue
 		}
 		cmd := sps[0]
@@ -250,7 +250,7 @@ func (mgr *StatMgr) dump() {
 	buf.WriteString("\n")
 
 	if _, err = mgr.statFile.Write(buf.Bytes()); err != nil {
-		doglog.Error("write stat failed, %s", err.Error())
+		dlog.Error("write stat failed, %s", err.Error())
 	} else {
 		mgr.rotateFile()
 	}
@@ -309,7 +309,7 @@ const MaxStatFileCount = 10
 func (mgr *StatMgr) rotateFile() {
 	f, err := mgr.statFile.Stat()
 	if err != nil {
-		doglog.Error("stat %s failed.", mgr.statFile.Name())
+		dlog.Error("stat %s failed.", mgr.statFile.Name())
 		return
 	}
 	if f.Size() < int64(MaxStatFileSize) {
@@ -331,6 +331,6 @@ func (mgr *StatMgr) rotateFile() {
 
 	mgr.statFile, err = os.OpenFile(statFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		doglog.Error("rotate stat file failed: %s", err.Error())
+		dlog.Error("rotate stat file failed: %s", err.Error())
 	}
 }

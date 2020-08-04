@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"bufio"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	dogError "github.com/chuck1024/godog/error"
 	"io"
 	"math/rand"
@@ -49,7 +49,7 @@ func (c *RpcClient) DogConnect() (*Client, error) {
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			doglog.Warn("Addr %s already created.", addr)
+			dlog.Warn("Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -66,7 +66,7 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code u
 	if len(client) == 0 {
 		cc, err := c.DogConnect()
 		if err != nil {
-			doglog.Error("Invoke connect occur error:%s", err)
+			dlog.Error("Invoke connect occur error:%s", err)
 			return code, nil, InternalServerError
 		}
 		ct = cc
@@ -77,7 +77,7 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code u
 	var reqPkt, rspPkt Packet
 	reqPkt = NewDogPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
-		doglog.Error("Invoke CallRetry occur error:%v ", err)
+		dlog.Error("Invoke CallRetry occur error:%v ", err)
 		return code, nil, err
 	}
 

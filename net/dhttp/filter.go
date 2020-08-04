@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gl"
 	"github.com/chuck1024/godog/utls"
 	"github.com/chuck1024/godog/utls/network"
@@ -99,7 +99,7 @@ func Logger() gin.HandlerFunc {
 
 		dataByte, err := json.Marshal(data)
 		if err != nil {
-			doglog.Error("data cant transfer to json ?! data is %v", data)
+			dlog.Error("data cant transfer to json ?! data is %v", data)
 			message["data"] = data
 		} else {
 			datas, _ := simplejson.NewJson(dataByte)
@@ -107,7 +107,7 @@ func Logger() gin.HandlerFunc {
 		}
 		retByte, err := json.Marshal(ret)
 		if err != nil {
-			doglog.Error("ret cant transfer to json ?! ret is %v", ret)
+			dlog.Error("ret cant transfer to json ?! ret is %v", ret)
 			message["ret"] = ret
 		} else {
 			retStr, _ := simplejson.NewJson(retByte)
@@ -116,13 +116,13 @@ func Logger() gin.HandlerFunc {
 
 		mj, jsonErr := utls.Marshal(message)
 		if jsonErr != nil {
-			doglog.Error("json marshal occur error:%v", jsonErr)
+			dlog.Error("json marshal occur error:%v", jsonErr)
 		}
 
 		if cost > 500 {
-			doglog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s", path, string(mj)))
+			dlog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s", path, string(mj)))
 			return
 		}
-		doglog.InfoT("SESSION", fmt.Sprintf("%s %s", path, string(mj)))
+		dlog.InfoT("SESSION", fmt.Sprintf("%s %s", path, string(mj)))
 	}
 }

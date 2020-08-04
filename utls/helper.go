@@ -8,7 +8,7 @@ package utls
 import (
 	"bufio"
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"io"
 	"net"
 	"os"
@@ -49,12 +49,12 @@ func (helper *Helper) Start() error {
 
 	err = os.MkdirAll(PPROF_DUMP_DIR, 0755)
 	if err != nil {
-		doglog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
+		dlog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
 	}
 
 	err = os.MkdirAll(PPROF_DUMP_BACKUP_DIR, 0755)
 	if err != nil {
-		doglog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
+		dlog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
 	}
 
 	go helper.waitTcp()
@@ -69,11 +69,11 @@ func (helper *Helper) waitTcp() {
 			}, nil)
 		} else {
 			if x, ok := err.(*net.OpError); ok && x.Op == "accept" {
-				doglog.Info("Stoping Tcp Accept")
+				dlog.Info("Stoping Tcp Accept")
 				break
 			}
 
-			doglog.Warn("Accept failed: %v", err)
+			dlog.Warn("Accept failed: %v", err)
 			continue
 		}
 	}
@@ -96,14 +96,14 @@ func writeHeap(forceGc bool) {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write heap fail, %s", err)
+		dlog.Error("write heap fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("heap").WriteTo(f, 1)
-	doglog.Info("write heap to file %s", f)
+	dlog.Info("write heap to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp heap file %s to /home/work/")
+	dlog.Info("cp heap file %s to /home/work/")
 }
 
 func writeTrace(s int64) {
@@ -111,21 +111,21 @@ func writeTrace(s int64) {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write trace fail, %s", err)
+		dlog.Error("write trace fail, %s", err)
 		return
 	}
 	defer f.Close()
 	err = trace.Start(f)
 	if err != nil {
-		doglog.Error("start trace fail, %s", err)
+		dlog.Error("start trace fail, %s", err)
 		return
 	}
 	defer trace.Stop()
 	time.Sleep(time.Duration(s) * time.Second)
-	doglog.Info("write trace to file %s", fn)
+	dlog.Info("write trace to file %s", fn)
 
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp trace file %s to /home/work/")
+	dlog.Info("cp trace file %s to /home/work/")
 }
 
 func WriteMutex() {
@@ -133,14 +133,14 @@ func WriteMutex() {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write mutex fail, %s", err)
+		dlog.Error("write mutex fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("mutex").WriteTo(f, 1)
-	doglog.Info("write mutex to file %s", f)
+	dlog.Info("write mutex to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp mutex file %s to /home/work/")
+	dlog.Info("cp mutex file %s to /home/work/")
 }
 
 func WriteThreadCreate() {
@@ -148,14 +148,14 @@ func WriteThreadCreate() {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write threadCreate fail, %s", err)
+		dlog.Error("write threadCreate fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("threadcreate").WriteTo(f, 1)
-	doglog.Info("write threadCreate to file %s", f)
+	dlog.Info("write threadCreate to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp threadCreate file %s to /home/work/")
+	dlog.Info("cp threadCreate file %s to /home/work/")
 }
 
 func WriteBlock() {
@@ -163,14 +163,14 @@ func WriteBlock() {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write block fail, %s", err)
+		dlog.Error("write block fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("block").WriteTo(f, 1)
-	doglog.Info("write block to file %s", f)
+	dlog.Info("write block to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp block file %s to /home/work/")
+	dlog.Info("cp block file %s to /home/work/")
 }
 
 func writeGoroutine() {
@@ -178,14 +178,14 @@ func writeGoroutine() {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write goroutine fail, %s", err)
+		dlog.Error("write goroutine fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("goroutine").WriteTo(f, 1)
-	doglog.Info("write gouroutine to file %s", f)
+	dlog.Info("write gouroutine to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp goroutine file %s to /home/work/")
+	dlog.Info("cp goroutine file %s to /home/work/")
 }
 
 func CpuProfiling(s int64) {
@@ -197,19 +197,19 @@ func cpuProfiling(s int64) {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write cpuprofile fail, %s", err)
+		dlog.Error("write cpuprofile fail, %s", err)
 		return
 	}
 	defer f.Close()
 	if err := pprof.StartCPUProfile(f); err != nil {
-		doglog.Error("write cpuprofile fail, %s", err)
+		dlog.Error("write cpuprofile fail, %s", err)
 		return
 	}
 	time.Sleep(time.Duration(s) * time.Second)
 	pprof.StopCPUProfile()
 
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp cpu file %s to /home/work/")
+	dlog.Info("cp cpu file %s to /home/work/")
 }
 
 func WriteGoroutine() {
@@ -217,14 +217,14 @@ func WriteGoroutine() {
 	fn := "prof/" + fn0
 	f, err := os.Create(fn)
 	if err != nil {
-		doglog.Error("write goroutine fail, %s", err)
+		dlog.Error("write goroutine fail, %s", err)
 		return
 	}
 	defer f.Close()
 	pprof.Lookup("goroutine").WriteTo(f, 1)
-	doglog.Info("write goroutine to file %s", f)
+	dlog.Info("write goroutine to file %s", f)
 	CopyFile(fn, "/home/work/"+fn0)
-	doglog.Info("cp goroutine file %s to /home/work/")
+	dlog.Info("cp goroutine file %s to /home/work/")
 }
 
 func (helper *Helper) help(client net.Conn) {
@@ -235,7 +235,7 @@ func (helper *Helper) help(client net.Conn) {
 	client.Write([]byte("  find\t\t<id> <key>\n"))
 	client.Write([]byte("  trace n \t\tdump n second trace info to prof/trace_xxx.out\n"))
 	client.Write([]byte("  heap <nogc>\t\tdump current heap to prof/heap_xxx.prof\n"))
-	client.Write([]byte("  doglog\t\t-1:CURRENT,0:FNST,1:FINE,2:DEBG,3:TRAC,4:INFO,5:WARN,6:EROR,7:CRIT\n"))
+	client.Write([]byte("  dlog\t\t-1:CURRENT,0:FNST,1:FINE,2:DEBG,3:TRAC,4:INFO,5:WARN,6:EROR,7:CRIT\n"))
 	client.Write([]byte("  deploy\t<file1> <file2> ;\"deploy all\" means deploy all accessable file\n"))
 }
 
@@ -282,10 +282,10 @@ func (helper *Helper) dealCommand(client net.Conn) {
 				client.Write([]byte("<" + err.Error() + "\n"))
 				ret = false
 			} else if lvl == -1 {
-				client.Write([]byte("<log:" + doglog.GetLevel() + "\n"))
+				client.Write([]byte("<log:" + dlog.GetLevel() + "\n"))
 			} else {
-				doglog.Debug("SetLogLevel:%d", lvl)
-				doglog.SetLevel(lvl)
+				dlog.Debug("SetLogLevel:%d", lvl)
+				dlog.SetLevel(lvl)
 			}
 		} else if tpe == "heap" {
 			forceGc := true

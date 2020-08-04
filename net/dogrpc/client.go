@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	dogError "github.com/chuck1024/godog/error"
 	"io"
 	"runtime"
@@ -37,11 +37,11 @@ type Client struct {
 }
 
 func (c *Client) Start() {
-	doglog.Info("start %s", c.Addr)
+	dlog.Info("start %s", c.Addr)
 	defer c.startLock.Unlock()
 	c.startLock.Lock()
 	if c.clientStopChan != nil {
-		doglog.Warn("the given client is already started. Call Client.Stop() before calling Client.Start() again!")
+		dlog.Warn("the given client is already started. Call Client.Stop() before calling Client.Start() again!")
 	}
 
 	if c.Conns <= 0 {
@@ -92,7 +92,7 @@ func (c *Client) Stop() {
 	defer c.stopLock.Unlock()
 	c.stopLock.Lock()
 	if c.clientStopChan == nil {
-		doglog.Error("the client must be started before stopping it")
+		dlog.Error("the client must be started before stopping it")
 	}
 	close(c.clientStopChan)
 	c.stopWg.Wait()
@@ -116,7 +116,7 @@ func clientHandler(c *Client) {
 		go func() {
 			if conn, err = c.Dial(c.Addr); err != nil {
 				if stopping.Load() == nil {
-					doglog.Error(">> cannot establish connection to [%s], error [%s]", c.Addr, err)
+					dlog.Error(">> cannot establish connection to [%s], error [%s]", c.Addr, err)
 				}
 			}
 			close(dialChan)
@@ -189,7 +189,7 @@ func clientHandleConnection(c *Client, conn io.ReadWriteCloser) {
 	}
 
 	if err != nil {
-		doglog.Error("client Handle Connection occur error: %s", c.Addr+", %s"+err.Error())
+		dlog.Error("client Handle Connection occur error: %s", c.Addr+", %s"+err.Error())
 	}
 
 	for _, m := range pendingRequests {
@@ -262,7 +262,7 @@ func clientWriter(c *Client, conn io.Writer, pendingRequests map[uint32]*AsyncRe
 
 			if n > 3*c.PendingRequests {
 				// timeout Clear connect
-				doglog.Info("pending requests(%d), clean canceled req...", n)
+				dlog.Info("pending requests(%d), clean canceled req...", n)
 				pendingRequestLock.Lock()
 				for _, m := range pendingRequests {
 					atomic.AddUint32(&c.pendingRequestsCount, ^uint32(0))
@@ -481,7 +481,7 @@ func acquireTimer(timeout time.Duration) *time.Timer {
 
 	t := tv.(*time.Timer)
 	if t.Reset(timeout) {
-		doglog.Error("BUG: Active timer trapped into acquireTimer()")
+		dlog.Error("BUG: Active timer trapped into acquireTimer()")
 	}
 	return t
 }

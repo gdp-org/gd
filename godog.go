@@ -3,15 +3,15 @@
  * Author: Chuck1024
  */
 
-package godog
+package gd
 
 import (
 	"fmt"
-	"github.com/chuck1024/doglog"
-	"github.com/chuck1024/godog/config"
-	"github.com/chuck1024/godog/net/dhttp"
-	"github.com/chuck1024/godog/net/dogrpc"
-	"github.com/chuck1024/godog/utls"
+	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/config"
+	"github.com/chuck1024/gd/net/dhttp"
+	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/chuck1024/gd/utls"
 	"gopkg.in/ini.v1"
 	"runtime"
 	"syscall"
@@ -39,8 +39,8 @@ func Default() *Engine {
 			httpPort, e.Config("Log","level").String(), e.Config("Log","logDir").String()); err != nil {
 
 		}
-		doglog.LoadConfiguration(logConfigFile)
-		doglog.Info("config:%v", e.Config)
+		dlog.LoadConfiguration(logConfigFile)
+		dlog.Info("config:%v", e.Config)
 	}
 
 	return e
@@ -48,43 +48,43 @@ func Default() *Engine {
 
 // Engine Run
 func (e *Engine) Run() error {
-	doglog.Info("- - - - - - - - - - - - - - - - - - -")
-	doglog.Info("process start")
+	dlog.Info("- - - - - - - - - - - - - - - - - - -")
+	dlog.Info("process start")
 	// register signal
 	e.Signal()
 
 	// dump when error occurs
 	file, err := utls.Dump(e.Config("Server","serverName").String())
 	if err != nil {
-		doglog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+		dlog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
 
 	// output exit info
 	defer func() {
-		doglog.Info("server stop...code: %d", runtime.NumGoroutine())
+		dlog.Info("server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
-		doglog.Info("server stop...ok")
-		doglog.Info("- - - - - - - - - - - - - - - - - - -")
+		dlog.Info("server stop...ok")
+		dlog.Info("- - - - - - - - - - - - - - - - - - -")
 		if err := utls.ReviewDumpPanic(file); err != nil {
-			doglog.Error("Failed to review dump dumpPanic file, error = %s", err.Error())
+			dlog.Error("Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
 	}()
 
 	// init cpu and memory
 	err = e.initCPUAndMemory()
 	if err != nil {
-		doglog.Error("Cannot init CPU and memory module, error = %s", err.Error())
+		dlog.Error("Cannot init CPU and memory module, error = %s", err.Error())
 		return err
 	}
 
 	// http run
 	httpPort, _ := e.Config("Server","httpPort").Int()
 	if httpPort == 0 {
-		doglog.Info("Hasn't http server port")
+		dlog.Info("Hasn't http server port")
 	} else {
 		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
 		if err = e.HttpServer.Run(); err != nil {
-			doglog.Error("Http server occur error in running application, error = %s", err.Error())
+			dlog.Error("Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
 		defer e.HttpServer.Stop()
@@ -93,10 +93,10 @@ func (e *Engine) Run() error {
 	// rpc server
 	rpcPort, _ := e.Config("Server","rcpPort").Int()
 	if rpcPort == 0 {
-		doglog.Info("Hasn't rpc server port")
+		dlog.Info("Hasn't rpc server port")
 	} else {
 		if err = e.RpcServer.Run(rpcPort); err != nil {
-			doglog.Error("rpc server occur error in running application, error = %s", err.Error())
+			dlog.Error("rpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
 		defer e.RpcServer.Stop()
@@ -105,12 +105,12 @@ func (e *Engine) Run() error {
 	// health port
 	healthPort, _ := e.Config("Process","healthPort").Int()
 	if healthPort == 0 {
-		doglog.Info("Hasn't health server port")
+		dlog.Info("Hasn't health server port")
 	} else {
 		host := fmt.Sprintf(":%d", healthPort)
 		health := &utls.Helper{Host: host}
 		if err := health.Start(); err != nil {
-			doglog.Error("start health failed on %s\n", host)
+			dlog.Error("start health failed on %s\n", host)
 			return err
 		}
 		defer health.Close()
@@ -137,20 +137,20 @@ func (e *Engine) initCPUAndMemory() error {
 	if e.Config("Process","maxMemory").String() != "" {
 		maxMemory, err := utls.ParseMemorySize(e.Config("Process","maxMemory").String())
 		if err != nil {
-			doglog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config("Process","maxMemory").String(), err.Error()))
+			dlog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config("Process","maxMemory").String(), err.Error()))
 		}
 
 		var rlimit syscall.Rlimit
 		syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
-		doglog.Info("old rlimit mem:%v", rlimit)
+		dlog.Info("old rlimit mem:%v", rlimit)
 		rlimit.Cur = uint64(maxMemory)
 		rlimit.Max = uint64(maxMemory)
 		err = syscall.Setrlimit(syscall.RLIMIT_AS, &rlimit)
 		if err != nil {
-			doglog.Crash(fmt.Sprintf("syscall Setrlimit fail, rlimit:%v, error:%s", rlimit, err.Error()))
+			dlog.Crash(fmt.Sprintf("syscall Setrlimit fail, rlimit:%v, error:%s", rlimit, err.Error()))
 		} else {
 			syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
-			doglog.Info("new rlimit mem:%v", rlimit)
+			dlog.Info("new rlimit mem:%v", rlimit)
 		}
 	}
 
@@ -173,7 +173,7 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *dhttp.Http
 		Domain:  Domain,
 	}
 	if err := client.Start(); err != nil {
-		doglog.Error("http client start occur error:%s", err.Error())
+		dlog.Error("http client start occur error:%s", err.Error())
 		return nil
 	}
 	return client

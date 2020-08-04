@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -219,7 +219,7 @@ func PathExists(path string) bool {
 
 func Store2File(file string, content string) error {
 	if content == "" {
-		doglog.Error("write empty to file? file=%s,content=%s", file, content)
+		dlog.Error("write empty to file? file=%s,content=%s", file, content)
 	}
 	dir, err := filepath.Abs(filepath.Dir(file))
 	if err != nil {

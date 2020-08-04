@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog/server"
 	"github.com/etcd-io/etcd/clientv3"
 	"strings"
@@ -72,14 +72,14 @@ func (r *EtcdRegister) SetHeartBeat(heartBeat time.Duration) {
 func (r *EtcdRegister) Run(ip string, port int, weight uint64) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			doglog.Error("etcd register panic %s", r)
+			dlog.Error("etcd register panic %s", r)
 			return
 		}
 	}()
 
 	ch, err := r.register(ip, port, weight)
 	if err != nil {
-		doglog.Error("etcd register occur error:%s", err)
+		dlog.Error("etcd register occur error:%s", err)
 		return
 	}
 
@@ -88,15 +88,15 @@ func (r *EtcdRegister) Run(ip string, port int, weight uint64) (err error) {
 			select {
 			case _, ok := <-ch:
 				if !ok {
-					doglog.Debug("etcd register keep alive channel closed")
+					dlog.Debug("etcd register keep alive channel closed")
 					r.revoke()
 					return
 				}
 			case <-r.client.Ctx().Done():
-				doglog.Warn("etcd server closed.")
+				dlog.Warn("etcd server closed.")
 				return
 			case <-r.exitChan:
-				doglog.Debug("etcd register stop")
+				dlog.Debug("etcd register stop")
 				return
 			}
 		}
@@ -115,14 +115,14 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 	node := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
 
-	doglog.Info("etcd register node:%s", node)
+	dlog.Info("etcd register node:%s", node)
 
 	dataByte, _ := json.Marshal(r.nodeInfo)
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
 	resp, err := r.client.Grant(ctx, int64(r.heartBeat))
 	cancel()
 	if err != nil {
-		doglog.Error("etcd register client grant occur error:%s", err)
+		dlog.Error("etcd register client grant occur error:%s", err)
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 		_, err := r.client.Put(context.TODO(), node, string(dataByte), clientv3.WithLease(resp.ID))
 		cancel()
 		if err != nil {
-			doglog.Warn("ectd client set err:%v", err)
+			dlog.Warn("ectd client set err:%v", err)
 			continue
 		}
 
@@ -139,7 +139,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 		break
 	}
 
-	doglog.Info("register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
+	dlog.Info("register success!!! service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
 
 	return r.client.KeepAlive(context.TODO(), resp.ID)
@@ -150,10 +150,10 @@ func (r *EtcdRegister) revoke() error {
 	_, err := r.client.Revoke(ctx, r.leaseID)
 	cancel()
 	if err != nil {
-		doglog.Error("revoke occur error:", err)
+		dlog.Error("revoke occur error:", err)
 	}
 
-	doglog.Info("revoke service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
+	dlog.Info("revoke service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,
 		r.nodeInfo.GetIp(), r.nodeInfo.GetPort())
 	return err
 }

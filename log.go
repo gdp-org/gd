@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package godog
+package gd
 
 import (
 	"encoding/xml"
@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/chuck1024/godog/utls"
+	"github.com/chuck1024/gd/utls"
 )
 
 var (

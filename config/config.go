@@ -6,7 +6,7 @@
 package config
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"gopkg.in/ini.v1"
 	"sync"
 )
@@ -29,7 +29,7 @@ func Config() *Conf {
 	if !ok {
 		tmp, err := ini.Load(defaultConfigName)
 		if err != nil {
-			doglog.Crash("Config ini load occur error:%v", err)
+			dlog.Crash("Config ini load occur error:%v", err)
 			return nil
 		}
 		setFile(defaultConfigName, tmp)

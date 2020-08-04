@@ -6,7 +6,7 @@
 package dogrpc
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	dogError "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/utls/network"
 	"math/rand"
@@ -40,7 +40,7 @@ func NewClient(timeout time.Duration, retryNum uint32) *RpcClient {
 // add server address
 func (c *RpcClient) AddAddr(addr string) {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
-		doglog.Error("parse addr failed, %s", err.Error())
+		dlog.Error("parse addr failed, %s", err.Error())
 	} else {
 		c.addrs = append(c.addrs, addr2)
 	}
@@ -50,10 +50,10 @@ func (c *RpcClient) AddAddr(addr string) {
 func (c *RpcClient) Stop() {
 	for addr, cc := range c.Cm {
 		cc.Stop()
-		doglog.Error("dog rpc client stop client %s", addr)
+		dlog.Error("dog rpc client stop client %s", addr)
 	}
 
-	doglog.Info("dog rpc client stop all done.")
+	dlog.Info("dog rpc client stop all done.")
 }
 
 // connect
@@ -80,7 +80,7 @@ func (c *RpcClient) Connect() (*Client, error) {
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {
-			doglog.Warn("[Connect] Addr %s already created.", addr)
+			dlog.Warn("[Connect] Addr %s already created.", addr)
 		}
 	} else {
 		if cc.clientStopChan == nil {
@@ -97,7 +97,7 @@ func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (code uint
 	if len(client) == 0 {
 		cc, err := c.Connect()
 		if err != nil {
-			doglog.Error("[Invoke] connect occur error:%s", err)
+			dlog.Error("[Invoke] connect occur error:%s", err)
 			return code, nil, InternalServerError
 		}
 		ct = cc
@@ -108,7 +108,7 @@ func (c *RpcClient) Invoke(cmd uint32, req []byte, client ...*Client) (code uint
 	var reqPkt, rspPkt Packet
 	reqPkt = NewRpcPacket(cmd, req)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
-		doglog.Error("[Invoke] CallRetry occur error:%v ", err)
+		dlog.Error("[Invoke] CallRetry occur error:%v ", err)
 		return code, nil, err
 	}
 

@@ -37,14 +37,14 @@ package main
 
 import (
     "github.com/bitly/go-simplejson"
-    "github.com/chuck1024/doglog"
+    "github.com/chuck1024/dlog"
     "github.com/chuck1024/godog"
     "github.com/gin-gonic/gin"
     "net/http"
 )
 
 func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message string, err error, ret string) {
-    doglog.Debug("httpServerTest req:%v", req)
+    dlog.Debug("httpServerTest req:%v", req)
     ret = "ok!!!"
     return http.StatusOK, "ok", nil, ret
 }
@@ -58,7 +58,7 @@ func main() {
     d.Config.BaseConfig.Server.HttpPort = 10240
     err := d.Run()
     if err != nil {
-        doglog.Error("Error occurs, error = %s", err.Error())
+        dlog.Error("Error occurs, error = %s", err.Error())
         return
     }
 }
@@ -193,7 +193,7 @@ server:
 package main
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
@@ -213,7 +213,7 @@ type TestResp struct {
 }
 
 func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
-	doglog.Debug("httpServerTest req:%v", req)
+	dlog.Debug("httpServerTest req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -223,7 +223,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	doglog.Debug("rpc sever req:%v", req)
+	dlog.Debug("rpc sever req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -257,7 +257,7 @@ func Register(e *godog.Engine) {
 	// Rpc
 	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
 	if err := e.RpcServer.DogRpcRegister(); err != nil {
-		doglog.Error("DogRpcRegister occur error:%s", err)
+		dlog.Error("DogRpcRegister occur error:%s", err)
 		return
 	}
 	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
@@ -284,7 +284,7 @@ func main() {
 
 	err := d.Run()
 	if err != nil {
-		doglog.Error("Error occurs, error = %s", err.Error())
+		dlog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
@@ -302,7 +302,7 @@ package main
 
 import (
     "fmt"
-    "github.com/chuck1024/doglog"
+    "github.com/chuck1024/dlog"
     "github.com/chuck1024/godog"
     "github.com/chuck1024/godog/server/discovery"
     "time"
@@ -321,7 +321,7 @@ func main() {
    
     hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
     for _,v := range hosts {
-        doglog.Debug("%s:%d",v.GetIp(),v.GetPort())
+        dlog.Debug("%s:%d",v.GetIp(),v.GetPort())
     }
    
     // you can choose one or use load balance algorithm to choose best one.
@@ -336,7 +336,7 @@ func main() {
 
     code, rsp, err := c.DogInvoke(1024, body)
     if err != nil {
-        doglog.Error("Error when sending request to server: %s", err)
+        dlog.Error("Error when sending request to server: %s", err)
     }
 
     // or use rpc protocol
@@ -345,7 +345,7 @@ func main() {
         //t.Logf("Error when sending request to server: %s", err)
     //}
 
-    doglog.Debug("code=%d,resp=%s", code, string(rsp))
+    dlog.Debug("code=%d,resp=%s", code, string(rsp))
 }
 ```
 >* It contained "sample/rpc_client.go"

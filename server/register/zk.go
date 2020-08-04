@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog/server"
 	"github.com/samuel/go-zookeeper/zk"
 	"strings"
@@ -35,12 +35,12 @@ func (z *ZkRegister) NewRegister(hosts []string, root, environ, group, service s
 
 	conn, _, err := zk.Connect(hosts, time.Second*5, zk.WithLogInfo(false))
 	if err != nil {
-		doglog.Error("zk connect occur error:%s", err)
+		dlog.Error("zk connect occur error:%s", err)
 		return
 	}
 
 	z.client = conn
-	doglog.Debug("zk connect success")
+	dlog.Debug("zk connect success")
 	return
 }
 
@@ -70,7 +70,7 @@ func (z *ZkRegister) isExistNode() (err error) {
 
 	isExist, _, err := z.client.Exists(node)
 	if err != nil {
-		doglog.Error("zk client Exists occur error: %s", err)
+		dlog.Error("zk client Exists occur error: %s", err)
 		return
 	}
 
@@ -81,12 +81,12 @@ func (z *ZkRegister) isExistNode() (err error) {
 		for _, v := range paths {
 			path, err := z.client.Create(v, []byte(""), 0, zk.WorldACL(zk.PermAll))
 			if err != nil {
-				doglog.Error("zk create path occur error: %s", err)
+				dlog.Error("zk create path occur error: %s", err)
 				return err
 			}
 
 			if v != path {
-				doglog.Error("zk create path [%s] != path [%s]", node, path)
+				dlog.Error("zk create path [%s] != path [%s]", node, path)
 				return errors.New("rootPath is equal path")
 			}
 		}
@@ -98,7 +98,7 @@ func (z *ZkRegister) isExistNode() (err error) {
 func (z *ZkRegister) Run(ip string, port int, weight uint64) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			doglog.Error("zk register panic %s", r)
+			dlog.Error("zk register panic %s", r)
 			return
 		}
 	}()
@@ -112,13 +112,13 @@ func (z *ZkRegister) Run(ip string, port int, weight uint64) (err error) {
 
 	err = z.isExistNode()
 	if err != nil {
-		doglog.Error("zk isExistNode occur error:%s", err)
+		dlog.Error("zk isExistNode occur error:%s", err)
 		return
 	}
 
 	err = z.run()
 	if err != nil {
-		doglog.Error("zk run occur error:%s", err)
+		dlog.Error("zk run occur error:%s", err)
 		return
 	}
 
@@ -128,17 +128,17 @@ func (z *ZkRegister) Run(ip string, port int, weight uint64) (err error) {
 func (z *ZkRegister) run() (err error) {
 	p := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", z.root, z.group, z.service, z.environ,
 		z.nodeInfo.GetIp(), z.nodeInfo.GetPort())
-	doglog.Info("zk p: %s", p)
+	dlog.Info("zk p: %s", p)
 
 	dataByte, _ := json.Marshal(&z.nodeInfo)
 	path, err := z.client.Create(p, dataByte, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
-		doglog.Error("zk create occur error:%s", err)
+		dlog.Error("zk create occur error:%s", err)
 		return
 	}
 
 	if path == p {
-		doglog.Info("zk create success! path:%s", path)
+		dlog.Info("zk create success! path:%s", path)
 	}
 
 	return

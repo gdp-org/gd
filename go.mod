@@ -1,10 +1,10 @@
-module github.com/chuck1024/godog
+module github.com/chuck1024/gd
 
 go 1.13
 
 require (
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/chuck1024/doglog v0.0.0-20200114052321-1297eb7c152e
+	github.com/chuck1024/dlog v0.0.0-20200804032506-74d3b3b23cd4
 	github.com/chuck1024/gl v0.0.0-20200114031106-5a09ab9144f9
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-00010101000000-000000000000 // indirect

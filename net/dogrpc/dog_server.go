@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"bufio"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"io"
 	"strconv"
 )
@@ -40,19 +40,19 @@ func (s *RpcServer) AddDogHandler(headCmd uint32, f interface{}) {
 	}
 
 	if _, ok := s.wrapHandler[headCmd]; ok {
-		doglog.Warn("[AddDogHandler] wrapHandler head cmd [%d] already registered.", headCmd)
+		dlog.Warn("[AddDogHandler] wrapHandler head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.wrapHandler[headCmd] = f
-	doglog.Info("AddDogHandler wrapHandler register head cmd [%d] success.", headCmd)
+	dlog.Info("AddDogHandler wrapHandler register head cmd [%d] success.", headCmd)
 }
 
 func (s *RpcServer) DogRpcRegister() error {
 	for k, v := range s.wrapHandler {
 		wf, err := wrap(v)
 		if err != nil {
-			doglog.Error("DogRpcRegister wrap occur error:%s", err)
+			dlog.Error("DogRpcRegister wrap occur error:%s", err)
 			return err
 		}
 		s.AddHandler(k, wf)
@@ -66,7 +66,7 @@ func (s *RpcServer) dogDispatchPacket(clientAddr string, req Packet) (rsp Packet
 
 	f, ok := s.defaultHandler[headCmd]
 	if !ok {
-		doglog.Error("dispatchPacket head cmd %d not register handler!", headCmd)
+		dlog.Error("dispatchPacket head cmd %d not register handler!", headCmd)
 		return NewDogPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 

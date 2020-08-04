@@ -7,7 +7,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog"
 	"github.com/chuck1024/godog/server/discovery"
 	"time"
@@ -26,7 +26,7 @@ func main() {
 
 	hosts := r.GetNodeInfo("/root/github/godog/stagging/pool")
 	for _, v := range hosts {
-		doglog.Debug("%s:%d", v.GetIp(), v.GetPort())
+		dlog.Debug("%s:%d", v.GetIp(), v.GetPort())
 	}
 
 	// you can choose one or use load balance algorithm to choose best one.
@@ -41,8 +41,8 @@ func main() {
 
 	code, rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
-		doglog.Error("Error when sending request to server: %s", err)
+		dlog.Error("Error when sending request to server: %s", err)
 	}
 
-	doglog.Debug("code=%d, resp=%s", code, string(rsp))
+	dlog.Debug("code=%d, resp=%s", code, string(rsp))
 }

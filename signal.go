@@ -3,10 +3,10 @@
  * Author: Chuck1024
  */
 
-package godog
+package gd
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,7 +28,7 @@ func (e *Engine) Signal() {
 		for {
 			select {
 			case sig := <-Shutdown:
-				doglog.Info("receive signal: %v, to stop server...", sig)
+				dlog.Info("receive signal: %v, to stop server...", sig)
 				if e.RpcServer.GetAddr() != "" {
 					e.RpcServer.Stop()
 				}
@@ -37,5 +37,5 @@ func (e *Engine) Signal() {
 			}
 		}
 	}()
-	doglog.Info("register signal ok")
+	dlog.Info("register signal ok")
 }

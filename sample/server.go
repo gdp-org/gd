@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"github.com/chuck1024/godog/net/dogrpc"
@@ -24,7 +24,7 @@ type TestResp struct {
 }
 
 func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
-	doglog.Debug("httpServerTest req:%v", req)
+	dlog.Debug("httpServerTest req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -34,7 +34,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	doglog.Debug("rpc sever req:%v", req)
+	dlog.Debug("rpc sever req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -68,7 +68,7 @@ func Register(e *godog.Engine) {
 	// Rpc
 	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
 	if err := e.RpcServer.DogRpcRegister(); err != nil {
-		doglog.Error("DogRpcRegister occur error:%s", err)
+		dlog.Error("DogRpcRegister occur error:%s", err)
 		return
 	}
 	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
@@ -81,7 +81,7 @@ func main() {
 
 	err := d.Run()
 	if err != nil {
-		doglog.Error("Error occurs, error = %s", err.Error())
+		dlog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }

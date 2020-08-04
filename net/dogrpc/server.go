@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	dogError "github.com/chuck1024/godog/error"
 	"io"
 	"runtime"
@@ -95,7 +95,7 @@ func (s *Server) Stop() {
 	close(s.serverStopChan)
 	s.stopWg.Wait()
 	s.serverStopChan = nil
-	doglog.Info("rpc server stop %s",s.Addr)
+	dlog.Info("rpc server stop %s",s.Addr)
 }
 
 func serverHandler(s *Server, workersCh chan struct{}) {
@@ -111,7 +111,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 		go func() {
 			if conn, clientAddr, err = s.Listener.Accept(); err != nil {
 				if stopping.Load() == nil {
-					doglog.Error("server handler [%s] cannot accept new connection: [%s]", s.Addr, err)
+					dlog.Error("server handler [%s] cannot accept new connection: [%s]", s.Addr, err)
 				}
 			}
 			close(acceptChan)
@@ -124,7 +124,7 @@ func serverHandler(s *Server, workersCh chan struct{}) {
 			<-acceptChan
 			return
 		case <-acceptChan:
-			doglog.Debug("server handler [%s] connected.", clientAddr)
+			dlog.Debug("server handler [%s] connected.", clientAddr)
 		}
 
 		if err != nil {
@@ -170,13 +170,13 @@ func serverHandleConnection(s *Server, conn io.ReadWriteCloser, clientAddr strin
 	}
 
 	responsesChan = nil
-	doglog.Debug("serverHandle connection [%s] disconnected.", clientAddr)
+	dlog.Debug("serverHandle connection [%s] disconnected.", clientAddr)
 }
 
 func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, responsesChan chan<- *serverMessage, stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			doglog.Error("server reader [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
+			dlog.Error("server reader [%s]->[%s] dumpPanic when reading data from client: %v", clientAddr, s.Addr, r)
 		}
 		close(done)
 	}()
@@ -192,7 +192,7 @@ func serverReader(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 	for {
 		if req, err = dec.Decode(); err != nil {
 			if !isClientDisconnect(err) && !isServerStop(stopChan) {
-				doglog.Error("server reader [%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
+				dlog.Error("server reader [%s] -> [%s] cannot decode request: [%s]", clientAddr, s.Addr, err)
 			}
 			return
 		}
@@ -241,7 +241,7 @@ func callHandlerWithRecover(handler HandlerFunc, clientAddr string, serverAddr s
 			stackTrace := make([]byte, 1<<20)
 			n := runtime.Stack(stackTrace, false)
 			errStr := fmt.Sprintf("Panic occured: %v\n Stack trace: %s", x, stackTrace[:n])
-			doglog.Error("callHandlerWithRecover [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
+			dlog.Error("callHandlerWithRecover [%s] -> [%s]. %s", clientAddr, serverAddr, errStr)
 		}
 	}()
 	rsp = handler(clientAddr, req)
@@ -295,7 +295,7 @@ func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 		serverMessagePool.Put(m)
 
 		if err := enc.Encode(rsp); err != nil {
-			doglog.Error("server writer [%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
+			dlog.Error("server writer [%s] -> [%s] cannot send response: [%s]", clientAddr, s.Addr, err)
 			return
 		}
 	}

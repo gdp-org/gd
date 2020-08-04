@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"fmt"
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"strconv"
 )
 
@@ -38,14 +38,14 @@ func NewRpcServer() *RpcServer {
 
 func (s *RpcServer) Run(port int) error {
 	addr := fmt.Sprintf(":%d", port)
-	doglog.Info("dog rpc try to listen port: %d", port)
+	dlog.Info("dog rpc try to listen port: %d", port)
 
 	s.addr = addr
 	s.ss.Addr = addr
 
 	err := s.ss.Serve()
 	if err != nil {
-		doglog.Error("dog Start occur error:%s", err.Error())
+		dlog.Error("dog Start occur error:%s", err.Error())
 		return err
 	}
 
@@ -71,12 +71,12 @@ func (s *RpcServer) AddHandler(headCmd uint32, f RpcHandlerFunc) {
 	}
 
 	if _, ok := s.defaultHandler[headCmd]; ok {
-		doglog.Warn("add handler head cmd [%d] already registered.", headCmd)
+		dlog.Warn("add handler head cmd [%d] already registered.", headCmd)
 		return
 	}
 
 	s.defaultHandler[headCmd] = f
-	doglog.Info("register head cmd [%d] success.", headCmd)
+	dlog.Info("register head cmd [%d] success.", headCmd)
 }
 
 func (s *RpcServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
@@ -85,7 +85,7 @@ func (s *RpcServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 
 	f, ok := s.defaultHandler[headCmd]
 	if !ok {
-		doglog.Error("dispatch packet head cmd %d not register handler!", headCmd)
+		dlog.Error("dispatch packet head cmd %d not register handler!", headCmd)
 		return NewRpcPacketWithRet(headCmd, []byte(""), packet.Seq, uint32(InvalidParam.Code()))
 	}
 

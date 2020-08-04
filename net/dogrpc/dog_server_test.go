@@ -6,7 +6,7 @@
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/doglog"
+	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/godog"
 	de "github.com/chuck1024/godog/error"
 	"testing"
@@ -21,7 +21,7 @@ type TestResp struct {
 }
 
 func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	doglog.Debug("rpc sever req:%v", req)
+	dlog.Debug("rpc sever req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
