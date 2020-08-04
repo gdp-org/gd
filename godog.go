@@ -40,7 +40,6 @@ func Default() *Engine {
 
 		}
 		dlog.LoadConfiguration(logConfigFile)
-		dlog.Info("config:%v", e.Config)
 	}
 
 	return e
