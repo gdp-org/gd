@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"github.com/chuck1024/doglog"
 	dogError "github.com/chuck1024/godog/error"
-	"github.com/chuck1024/godog/utils"
+	"github.com/chuck1024/godog/utls/network"
 	"math/rand"
 	"net"
 	"sync"
@@ -33,7 +33,7 @@ func NewClient(timeout time.Duration, retryNum uint32) *RpcClient {
 		Cm:       make(map[string]*Client),
 		Timeout:  timeout,
 		RetryNum: retryNum,
-		localIp:  utils.GetLocalIP(),
+		localIp:  network.GetLocalIP(),
 	}
 }
 

@@ -3,22 +3,22 @@
  * Author: Chuck1024
  */
 
-package utils
+package utls
 
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/chuck1024/doglog"
 	"io"
 	"io/ioutil"
-	"net"
-	"net/http"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func loadFile(filename string) ([]byte, error) {
@@ -37,49 +37,6 @@ func loadFile(filename string) ([]byte, error) {
 	return buf, nil
 }
 
-// IsLocalIP, 检查是否为本地 IP
-func IsLocalIP(request *http.Request) (bool, error) {
-	ip, err := GetRealIP(request)
-	if err != nil {
-		return false, err
-	}
-	if (len(ip) >= 3 && ip[0:3] == "10.") || ip == "127.0.0.1" {
-		return true, nil
-	}
-	return false, nil
-}
-
-func GetRealIP(request *http.Request) (string, error) {
-	var ip string
-
-	if len(request.Header.Get("X-Forwarded-For")) > 0 {
-		// Reference: http://en.wikipedia.org/wiki/X-Forwarded-For#Format
-		xForwardedFor := strings.Split(request.Header.Get("X-Forwarded-For"), ", ")
-		if len(xForwardedFor) > 0 && net.ParseIP(xForwardedFor[0]) != nil {
-			ip = xForwardedFor[0]
-		}
-	}
-
-	//nginx remoteAddr "X-Real-IP"
-	if len(ip) == 0 && len(request.Header.Get("X-Real-IP")) > 0 {
-		xRealIP := request.Header.Get("X-Real-IP")
-		if len(xRealIP) > 0 && net.ParseIP(xRealIP) != nil {
-			ip = xRealIP
-		}
-	}
-	if len(ip) == 0 && len(request.RemoteAddr) > 0 {
-		remoteAddr := strings.Split(request.RemoteAddr, ":")
-		if len(remoteAddr) == 2 && net.ParseIP(remoteAddr[0]) != nil {
-			ip = remoteAddr[0]
-		}
-	}
-
-	if len(ip) == 0 {
-		return "", errors.New(fmt.Sprintf("cannot get real ip from request %+v", request))
-	}
-	return ip, nil
-}
-
 func LoadJsonToObject(filename string, t interface{}) error {
 	buf, e := loadFile(filename)
 	if buf == nil || e != nil {
@@ -91,66 +48,6 @@ func LoadJsonToObject(filename string, t interface{}) error {
 	}
 
 	return nil
-}
-
-func ParseJSON(path string, v interface{}) error {
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-
-	mode := info.Mode()
-	if mode.IsDir() {
-		return errors.New("Invalid config file.it is directory. ")
-	}
-
-	if !mode.IsRegular() {
-		return errors.New("Invalid config file,it is not a regular file. ")
-	}
-
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	var lines [][]byte
-	buf := bytes.NewBuffer(data)
-	for {
-		line, err := buf.ReadBytes('\n')
-		line = bytes.Trim(line, " \t\r\n")
-		if len(line) > 0 && !bytes.HasPrefix(line, []byte("//")) {
-			lines = append(lines, line)
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	data = bytes.Join(lines, []byte{})
-	if err = json.Unmarshal(data, v); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		os.Stderr.WriteString("Oops: " + err.Error() + "\n")
-	} else {
-		for _, a := range addrs {
-			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-				if ipnet.IP.To4() != nil {
-					return ipnet.IP.String()
-				}
-			}
-		}
-	}
-	return ""
 }
 
 func FuncName(skip int) string {
@@ -292,4 +189,54 @@ func copyFileContents(src, dst string) (err error) {
 	}
 	err = out.Sync()
 	return
+}
+
+var letterRunes = []rune("0123456789abcdefghipqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandString(n int) string {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[r.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func EnsureDir(dir string) error {
+	return os.MkdirAll(dir, 0755)
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}
+
+func Store2File(file string, content string) error {
+	if content == "" {
+		doglog.Error("write empty to file? file=%s,content=%s", file, content)
+	}
+	dir, err := filepath.Abs(filepath.Dir(file))
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.WriteString(content)
+	if err != nil {
+		return err
+	}
+	return nil
 }

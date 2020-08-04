@@ -66,32 +66,32 @@ func main() {
 
 ---
 **[config]**  
-So far, it only supports configuration with json in godog. Of course, it supports more and more format configuration in future.
+So far, it only supports configuration with ini in godog. Of course, it supports more and more format configuration in future.
 What's more, your configuration file must have the necessary parameters, like this:
 
-```json
-{
-  "Log": "conf/log.xml",
-  "Prog": {
-    "MaxCPU": 2,
-    "MaxMemory": "2g",
-    "HealthPort": 0
-  },
-  "Server": {
-    "AppName": "godog",
-    "HttpPort": 10240,
-    "RpcPort": 10241
-  }
-}
+```ini
+[Log]
+log    = "conf/log.xml"
+level  = "DEBUG"
+logDir = "log"
+
+[Process]
+maxCPU     = 2
+maxMemory  = "2g"
+healthPort = 9527
+
+[Server]
+serverName = "godog"
+httpPort   = 10240
+rcpPort    = 10241
 ```
 
-**Log**: config of log.
-**Prog.MaxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  
-**Prog.MaxMemory**: a limit of memory usage.
-**Prog.HealthPort**: the port for monitor. If it is 0, monitor server will not run. 
-**Server.AppName**: server name.  
-**Server.HttpPort**: http port. If it is 0, http server will not run.   
-**Server.RpcPort**: rpc port. If it is 0, rpc server will not run. 
+**Process.maxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  
+**Process.maxMemory**: a limit of memory usage.
+**Process.healthPort**: the port for monitor. If it is 0, monitor server will not run. 
+**Server.serverName**: server name.  
+**Server.httpPort**: http port. If it is 0, http server will not run.   
+**Server.rpcPort**: rpc port. If it is 0, rpc server will not run. 
 
 Those items mentioned above are the base need of a server application. And they are defined in config file: sample/conf/conf.json.
 
@@ -199,7 +199,7 @@ import (
 	"github.com/chuck1024/godog/net/dogrpc"
 	"github.com/chuck1024/godog/net/dhttp"
 	"github.com/chuck1024/godog/server/register"
-	"github.com/chuck1024/godog/utils"
+	"github.com/chuck1024/godog/utls"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -388,7 +388,7 @@ package dogrpc_test
 
 import (
     "github.com/chuck1024/godog"
-    "github.com/chuck1024/godog/utils"
+    "github.com/chuck1024/godog/utls"
     "testing"
     "time"
 )
@@ -409,74 +409,6 @@ func TestRpcClient(t *testing.T) {
 }
 ```
 >* You can find it in "net/dogrpc/rpc_client_test.go"
-
----
-`config module` provides the related configuration of the project.
->* You can find it in "sample/config_test.go"
-
-```go
-package main_test
-
-import (
-	"github.com/chuck1024/doglog"
-    "github.com/chuck1024/godog"
-    "testing"
-)
-
-func TestConfig(t *testing.T) {
-	// init log
-	doglog.LoadConfiguration("conf/log.xml")
-
-    // Notice: config contains BaseConfigure. config.json must contain the BaseConfigure configuration.
-    // The location of config.json is "conf/conf.json". Of course, you change it if you want.
-
-    d := godog.Default()
-    d.InitLog()
-    // AppConfig.BaseConfig.Server.AppName is service name
-    name := d.Config.BaseConfig.Server.AppName
-    t.Logf("name:%s", name)
-
-    // you can add configuration items directly in conf.json
-    stringValue, err := d.Config.String("stringKey")
-    if err != nil {
-        doglog.Error("get key occur error: %s", err)
-        return
-    }
-    t.Logf("value:%s", stringValue)
-
-    stringsValue, err := d.Config.Strings("stringsKey")
-    if err != nil {
-        doglog.Error("get key occur error: %s", err)
-        return
-    }
-    t.Logf("value:%s", stringsValue)
-    
-    intValue, err := d.Config.Int("intKey")
-    if err != nil {
-        doglog.Error("get key occur error: %s", err)
-        return
-    }
-    t.Logf("value:%d", intValue)
-
-    BoolValue, err := d.Config.Bool("boolKey")
-    if err != nil {
-        doglog.Error("get key occur error: %s", err)
-        return
-    }
-    t.Logf("value:%t", BoolValue)
-
-    // you can add config key-value if you need.
-    d.Config.Set("yourKey", "yourValue")
-
-    // get config key
-    yourValue, err := d.Config.String("yourKey")
-    if err != nil {
-        doglog.Error("get key occur error: %s", err)
-        return
-    }
-    t.Logf("yourValue:%s", yourValue)
-}
-```
 
 ---
 `error module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,

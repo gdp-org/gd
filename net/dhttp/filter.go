@@ -11,7 +11,8 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/doglog"
 	"github.com/chuck1024/gl"
-	"github.com/chuck1024/godog/utils"
+	"github.com/chuck1024/godog/utls"
+	"github.com/chuck1024/godog/utls/network"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -45,7 +46,7 @@ func Logger() gin.HandlerFunc {
 		traceId := strconv.FormatInt(st.UnixNano(), 10)
 		c.Set(TraceID, traceId)
 		gl.Set(gl.LogId, traceId)
-		realIp, _ := utils.GetRealIP(c.Request)
+		realIp, _ := network.GetRealIP(c.Request)
 		c.Set(REMOTE_IP, realIp)
 		gl.Set(gl.ClientIp, realIp)
 
@@ -113,7 +114,7 @@ func Logger() gin.HandlerFunc {
 			message["ret"] = retStr
 		}
 
-		mj, jsonErr := utils.Marshal(message)
+		mj, jsonErr := utls.Marshal(message)
 		if jsonErr != nil {
 			doglog.Error("json marshal occur error:%v", jsonErr)
 		}

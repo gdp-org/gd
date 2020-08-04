@@ -8,7 +8,7 @@ package dogrpc_test
 import (
 	"encoding/json"
 	"github.com/chuck1024/godog"
-	"github.com/chuck1024/godog/utils"
+	"github.com/chuck1024/godog/utls/network"
 	"testing"
 	"time"
 )
@@ -16,7 +16,7 @@ import (
 func TestDogClient(t *testing.T) {
 	d := godog.Default()
 	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
-	c.AddAddr(utils.GetLocalIP() + ":10241")
+	c.AddAddr(network.GetLocalIP() + ":10241")
 
 	b := &struct {
 		Data string
