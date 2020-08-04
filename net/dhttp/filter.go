@@ -43,9 +43,17 @@ func GlFilter() gin.HandlerFunc {
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
-		traceId := strconv.FormatInt(st.UnixNano(), 10)
-		c.Set(TraceID, traceId)
-		gl.Set(gl.LogId, traceId)
+
+		// traceId
+		traceId := c.Query("traceId")
+		if traceId != "" {
+			gl.Set(gl.LogId, traceId)
+		} else {
+			traceId = strconv.FormatInt(st.UnixNano(), 10)
+			c.Set(TraceID, traceId)
+			gl.Set(gl.LogId, traceId)
+		}
+
 		realIp, _ := network.GetRealIP(c.Request)
 		c.Set(REMOTE_IP, realIp)
 		gl.Set(gl.ClientIp, realIp)
