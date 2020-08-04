@@ -20,8 +20,8 @@ import (
 	"time"
 )
 
-const PPROF_DUMP_DIR = "prof"
-const PPROF_DUMP_BACKUP_DIR = "./prof"
+const ProfDumpDir = "prof"
+const ProfDumpBackupDir = "./prof"
 
 type UpdateFunc func(Key, Value, Type string, Offset int64) bool
 type FindFunc func(key string) (string, error)
@@ -47,14 +47,14 @@ func (helper *Helper) Start() error {
 	}
 	helper.listener = l
 
-	err = os.MkdirAll(PPROF_DUMP_DIR, 0755)
+	err = os.MkdirAll(ProfDumpDir, 0755)
 	if err != nil {
-		dlog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
+		dlog.Info("Helper create dir fail, path:%s, err:%v", ProfDumpDir, err)
 	}
 
-	err = os.MkdirAll(PPROF_DUMP_BACKUP_DIR, 0755)
+	err = os.MkdirAll(ProfDumpBackupDir, 0755)
 	if err != nil {
-		dlog.Info("Helper create dir fail, path:%s, err:%v", PPROF_DUMP_DIR, err)
+		dlog.Info("Helper create dir fail, path:%s, err:%v", ProfDumpDir, err)
 	}
 
 	go helper.waitTcp()
@@ -102,8 +102,6 @@ func writeHeap(forceGc bool) {
 	defer f.Close()
 	pprof.Lookup("heap").WriteTo(f, 1)
 	dlog.Info("write heap to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp heap file %s to /home/work/")
 }
 
 func writeTrace(s int64) {
@@ -123,9 +121,6 @@ func writeTrace(s int64) {
 	defer trace.Stop()
 	time.Sleep(time.Duration(s) * time.Second)
 	dlog.Info("write trace to file %s", fn)
-
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp trace file %s to /home/work/")
 }
 
 func WriteMutex() {
@@ -139,8 +134,6 @@ func WriteMutex() {
 	defer f.Close()
 	pprof.Lookup("mutex").WriteTo(f, 1)
 	dlog.Info("write mutex to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp mutex file %s to /home/work/")
 }
 
 func WriteThreadCreate() {
@@ -154,8 +147,6 @@ func WriteThreadCreate() {
 	defer f.Close()
 	pprof.Lookup("threadcreate").WriteTo(f, 1)
 	dlog.Info("write threadCreate to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp threadCreate file %s to /home/work/")
 }
 
 func WriteBlock() {
@@ -169,8 +160,6 @@ func WriteBlock() {
 	defer f.Close()
 	pprof.Lookup("block").WriteTo(f, 1)
 	dlog.Info("write block to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp block file %s to /home/work/")
 }
 
 func writeGoroutine() {
@@ -184,8 +173,6 @@ func writeGoroutine() {
 	defer f.Close()
 	pprof.Lookup("goroutine").WriteTo(f, 1)
 	dlog.Info("write gouroutine to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp goroutine file %s to /home/work/")
 }
 
 func CpuProfiling(s int64) {
@@ -207,9 +194,6 @@ func cpuProfiling(s int64) {
 	}
 	time.Sleep(time.Duration(s) * time.Second)
 	pprof.StopCPUProfile()
-
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp cpu file %s to /home/work/")
 }
 
 func WriteGoroutine() {
@@ -223,8 +207,6 @@ func WriteGoroutine() {
 	defer f.Close()
 	pprof.Lookup("goroutine").WriteTo(f, 1)
 	dlog.Info("write goroutine to file %s", f)
-	CopyFile(fn, "/home/work/"+fn0)
-	dlog.Info("cp goroutine file %s to /home/work/")
 }
 
 func (helper *Helper) help(client net.Conn) {
