@@ -111,9 +111,6 @@ func RestoreLogConfig(configFilePath string, binName string, port int, logLevel 
 		}
 	}
 
-	if utls.PathExists(configFilePath) {
-		return nil
-	}
 	if logLevel == "" {
 		logLevel = "DEBUG"
 	}
