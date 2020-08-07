@@ -33,11 +33,11 @@ func Default() *Engine {
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 
-	enable, _ := e.Config("Log", "enable").Bool()
+	enable := e.Config("Log", "enable").MustBool(true)
 	if enable {
-		port, _ := e.Config("Server", "httpPort").Int()
+		port := e.Config("Server", "httpPort").MustInt()
 		if port == 0 {
-			port, _ = e.Config("Server", "rcpPort").Int()
+			port = e.Config("Server", "rcpPort").MustInt()
 		}
 
 		if err := RestoreLogConfig("", e.Config("Server", "serverName").String(),
@@ -82,7 +82,7 @@ func (e *Engine) Run() error {
 	}
 
 	// http run
-	httpPort, _ := e.Config("Server", "httpPort").Int()
+	httpPort := e.Config("Server", "httpPort").MustInt()
 	if httpPort == 0 {
 		dlog.Info("Hasn't http server port")
 	} else {
@@ -95,7 +95,7 @@ func (e *Engine) Run() error {
 	}
 
 	// rpc server
-	rpcPort, _ := e.Config("Server", "rcpPort").Int()
+	rpcPort := e.Config("Server", "rcpPort").MustInt()
 	if rpcPort == 0 {
 		dlog.Info("Hasn't rpc server port")
 	} else {
@@ -107,7 +107,7 @@ func (e *Engine) Run() error {
 	}
 
 	// health port
-	healthPort, _ := e.Config("Process", "healthPort").Int()
+	healthPort := e.Config("Process", "healthPort").MustInt()
 	if healthPort == 0 {
 		dlog.Info("Hasn't health server port")
 	} else {
@@ -125,7 +125,7 @@ func (e *Engine) Run() error {
 }
 
 func (e *Engine) initCPUAndMemory() error {
-	maxCPU, _ := e.Config("Process", "maxCPU").Int()
+	maxCPU := e.Config("Process", "maxCPU").MustInt()
 	numCpus := runtime.NumCPU()
 	if maxCPU <= 0 {
 		if numCpus > 3 {
