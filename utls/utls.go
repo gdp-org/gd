@@ -196,7 +196,7 @@ func copyFileContents(src, dst string) (err error) {
 var letterRunes = []rune("0123456789abcdefghipqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func RandString(n int) string {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[r.Intn(len(letterRunes))]
