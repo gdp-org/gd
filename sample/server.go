@@ -45,7 +45,6 @@ func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *
 
 func Register(e *gd.Engine) {
 	// http
-	e.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
@@ -54,13 +53,10 @@ func Register(e *gd.Engine) {
 			dhttp.Logger(),
 		)
 
-		for k, v := range e.HttpServer.DefaultHandlerMap {
-			f, err := dhttp.Wrap(v)
-			if err != nil {
-				return err
-			}
-			r.GET(k, f)
-			r.POST(k, f)
+		e.HttpServer.POST(r, "test", HandlerHttpTest)
+
+		if err := e.HttpServer.CheckHandle(); err != nil {
+			return err
 		}
 
 		return nil

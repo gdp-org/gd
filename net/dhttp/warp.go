@@ -19,36 +19,42 @@ import (
 var ptrToGinCtx = reflect.PtrTo(reflect.TypeOf((*gin.Context)(nil))).Kind()
 var errInterface = reflect.TypeOf((*error)(nil)).Elem()
 
-// example: warp to gin.HandlerFunc -- func(*Context)
-func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
-	refToWrap := reflect.ValueOf(toWrap)
+func CheckWarp(toWrap interface{}) error {
 	wt := reflect.TypeOf(toWrap)
 	if wt.Kind() != reflect.Func {
-		return nil, fmt.Errorf("toWrap must be func,type=%v,func=%v", wt, toWrap)
+		return fmt.Errorf("toWrap must be func,type=%v,func=%v", wt, toWrap)
 	}
 	wtNumIn := wt.NumIn()
 	if wtNumIn < 2 {
-		return nil, fmt.Errorf("params in count must > 2 %v", toWrap)
+		return fmt.Errorf("params in count must > 2 %v", toWrap)
 	}
 	if wt.In(0).Kind() != ptrToGinCtx {
-		return nil, fmt.Errorf("first param in must *gin.Context %v", toWrap)
+		return fmt.Errorf("first param in must *gin.Context %v", toWrap)
 	}
-	inType := wt.In(1)
 	if wt.NumOut() < 4 {
-		return nil, fmt.Errorf("params out count must > 4 %v", toWrap)
+		return fmt.Errorf("params out count must > 4 %v", toWrap)
 	}
 	if wt.Out(0).Kind() != reflect.Int {
-		return nil, fmt.Errorf("params out 1 must be int %v", toWrap)
+		return fmt.Errorf("params out 1 must be int %v", toWrap)
 	}
 	if wt.Out(1).Kind() != reflect.String {
-		return nil, fmt.Errorf("params out 2 must be string %v", toWrap)
+		return fmt.Errorf("params out 2 must be string %v", toWrap)
 	}
 	if wt.Out(2).Kind() != reflect.Interface {
-		return nil, fmt.Errorf("params out 3 must be interface %v", toWrap)
+		return fmt.Errorf("params out 3 must be interface %v", toWrap)
 	}
 	if !wt.Out(2).Implements(errInterface) {
-		return nil, fmt.Errorf("params out 4 must be error %v", toWrap)
+		return fmt.Errorf("params out 4 must be error %v", toWrap)
 	}
+	return nil
+}
+
+// example: warp to gin.HandlerFunc -- func(*Context)
+func Wrap(toWrap interface{}) gin.HandlerFunc {
+	refToWrap := reflect.ValueOf(toWrap)
+	wt := reflect.TypeOf(toWrap)
+	wtNumIn := wt.NumIn()
+	inType := wt.In(1)
 
 	wrapped := func(c *gin.Context) {
 		var inVal reflect.Value
@@ -153,7 +159,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 		dlog.Debug("warp wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
 		Return(c, code, message, err, ret)
 	}
-	return wrapped, nil
+	return wrapped
 }
 
 func Return(c *gin.Context, code int, message string, err error, result interface{}) {
