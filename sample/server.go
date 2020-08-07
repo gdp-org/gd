@@ -59,6 +59,7 @@ func Register(e *gd.Engine) {
 			if err != nil {
 				return err
 			}
+			r.GET(k, f)
 			r.POST(k, f)
 		}
 
