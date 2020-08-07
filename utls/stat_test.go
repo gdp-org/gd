@@ -8,7 +8,7 @@ package utls
 import (
 	"errors"
 	"fmt"
-	dogErr "github.com/chuck1024/gd/error"
+	dogErr "github.com/chuck1024/gd/derror"
 	"log"
 	"math/rand"
 	"testing"

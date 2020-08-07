@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package error
+package derror
 
 import (
 	"fmt"

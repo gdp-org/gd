@@ -8,7 +8,7 @@ package main
 import (
 	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd"
-	de "github.com/chuck1024/gd/error"
+	de "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/gin-gonic/gin"
@@ -82,7 +82,7 @@ func main() {
 
 	err := d.Run()
 	if err != nil {
-		dlog.Error("Error occurs, error = %s", err.Error())
+		dlog.Error("Error occurs, derror = %s", err.Error())
 		return
 	}
 }

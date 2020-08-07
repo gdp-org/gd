@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/chuck1024/dlog"
-	de "github.com/chuck1024/gd/error"
+	de "github.com/chuck1024/gd/derror"
 	"reflect"
 )
 
@@ -39,7 +39,7 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 		return nil, fmt.Errorf("params out 3 must be interface %v", toWrap)
 	}
 	if !wt.Out(2).Implements(errInterface) {
-		return nil, fmt.Errorf("params out 4 must be error %v", toWrap)
+		return nil, fmt.Errorf("params out 4 must be derror %v", toWrap)
 	}
 
 	wrapped := func(req []byte) (code uint32, resp []byte) {

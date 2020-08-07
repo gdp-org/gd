@@ -22,7 +22,7 @@ func TestRpcServer(t *testing.T) {
 
 	err := d.Run(10241)
 	if err != nil {
-		t.Logf("Error occurs, error = %s", err.Error())
+		t.Logf("Error occurs, derror = %s", err.Error())
 		return
 	}
 }

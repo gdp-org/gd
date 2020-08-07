@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/chuck1024/dlog"
-	dogErr "github.com/chuck1024/gd/error"
+	dogErr "github.com/chuck1024/gd/derror"
 	"math"
 	"os"
 	"sort"

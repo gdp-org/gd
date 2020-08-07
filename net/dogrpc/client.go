@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"fmt"
 	"github.com/chuck1024/dlog"
-	dogError "github.com/chuck1024/gd/error"
+	dogError "github.com/chuck1024/gd/derror"
 	"io"
 	"runtime"
 	"sync"

@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"encoding/json"
 	"github.com/chuck1024/dlog"
-	de "github.com/chuck1024/gd/error"
+	de "github.com/chuck1024/gd/derror"
 	"time"
 )
 

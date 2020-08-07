@@ -6,7 +6,7 @@
 package dogrpc
 
 import (
-	"github.com/chuck1024/gd/error"
+	"github.com/chuck1024/gd/derror"
 	"time"
 )
 
@@ -21,10 +21,10 @@ const (
 )
 
 var (
-	TimeOutError        = error.SetCodeType(10001, "timeout error.")
-	OverflowError       = error.SetCodeType(10002, "overflow error.")
-	InternalServerError = error.SetCodeType(10003, "interval server error.")
-	InvalidParam        = error.SetCodeType(10004, "invalid param")
+	TimeOutError        = derror.SetCodeType(10001, "timeout error.")
+	OverflowError       = derror.SetCodeType(10002, "overflow error.")
+	InternalServerError = derror.SetCodeType(10003, "interval server error.")
+	InvalidParam        = derror.SetCodeType(10004, "invalid param")
 )
 
 var closedFlushChan = make(chan time.Time)

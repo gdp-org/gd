@@ -8,7 +8,7 @@ package dogrpc_test
 import (
 	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd"
-	de "github.com/chuck1024/gd/error"
+	de "github.com/chuck1024/gd/derror"
 	"testing"
 )
 

@@ -79,7 +79,7 @@ func (r *EtcdRegister) Run(ip string, port int, weight uint64) (err error) {
 
 	ch, err := r.register(ip, port, weight)
 	if err != nil {
-		dlog.Error("etcd register occur error:%s", err)
+		dlog.Error("etcd register occur derror:%s", err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (r *EtcdRegister) register(ip string, port int, weight uint64) (<-chan *cli
 	resp, err := r.client.Grant(ctx, int64(r.heartBeat))
 	cancel()
 	if err != nil {
-		dlog.Error("etcd register client grant occur error:%s", err)
+		dlog.Error("etcd register client grant occur derror:%s", err)
 		return nil, err
 	}
 
@@ -150,7 +150,7 @@ func (r *EtcdRegister) revoke() error {
 	_, err := r.client.Revoke(ctx, r.leaseID)
 	cancel()
 	if err != nil {
-		dlog.Error("revoke occur error:", err)
+		dlog.Error("revoke occur derror:", err)
 	}
 
 	dlog.Info("revoke service:%s/%s/%s/%s/pool/%s:%d", r.root, r.group, r.service, r.environ,

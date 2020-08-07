@@ -8,7 +8,7 @@ package dogrpc
 import (
 	"fmt"
 	"github.com/chuck1024/dlog"
-	dogError "github.com/chuck1024/gd/error"
+	dogError "github.com/chuck1024/gd/derror"
 	"io"
 	"runtime"
 	"sync"
@@ -256,7 +256,7 @@ func serverWriter(s *Server, conn io.ReadWriteCloser, clientAddr string, respons
 	var err error
 	var enc MessageEncoder
 	if enc, err = s.Encoder(conn, s.SendBufferSize); err != nil {
-		err = fmt.Errorf("init encoder error:%s", err.Error())
+		err = fmt.Errorf("init encoder derror:%s", err.Error())
 		return
 	}
 

@@ -195,7 +195,7 @@ package main
 import (
 	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd"
-	de "github.com/chuck1024/gd/error"
+	de "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/server/register"
@@ -411,11 +411,11 @@ func TestRpcClient(t *testing.T) {
 >* You can find it in "net/dogrpc/rpc_client_test.go"
 
 ---
-`error module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,
+`derror module` provides the relation usages of error. It supports the structs of CodeError which contains code, error type,
 and error msg.
 
 ```go
-package error
+package derror
 
 type CodeError struct {
     errCode int
@@ -458,7 +458,7 @@ var (
     }
 )
 
-// get error type. you can also add type to ErrMap.
+// get derror type. you can also add type to ErrMap.
 func GetErrorType(code int) string {
     t, ok := ErrMap[code]
     if !ok {
