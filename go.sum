@@ -19,6 +19,8 @@ github.com/chuck1024/gl v0.0.0-20200114021356-86a43847c45d h1:7KHz3EVhCpQvZMGzYm
 github.com/chuck1024/gl v0.0.0-20200114021356-86a43847c45d/go.mod h1:5av27aHS4QFiWviPxvJ7+D2UDZAmp1SdjsJGelNcpow=
 github.com/chuck1024/gl v0.0.0-20200114031106-5a09ab9144f9 h1:YZoTDvRED06MBAJT6gANcH4Cpv+Nz8Q7CIj7ogekIt4=
 github.com/chuck1024/gl v0.0.0-20200114031106-5a09ab9144f9/go.mod h1:5av27aHS4QFiWviPxvJ7+D2UDZAmp1SdjsJGelNcpow=
+github.com/chuck1024/gl v0.0.0-20200807031608-b7ba680d501d h1:TCmL51CfymRjTWk/PW4vNms50gX9sjXtBoqyhzjGvD8=
+github.com/chuck1024/gl v0.0.0-20200807031608-b7ba680d501d/go.mod h1:5av27aHS4QFiWviPxvJ7+D2UDZAmp1SdjsJGelNcpow=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/etcd v3.3.18+incompatible h1:Zz1aXgDrFFi1nadh58tA9ktt06cmPTwNNP3dXwIq1lE=
 github.com/coreos/etcd v3.3.18+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=

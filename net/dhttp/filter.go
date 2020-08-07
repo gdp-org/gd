@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/dlog"
-	"github.com/chuck1024/gl"
 	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
+	"github.com/chuck1024/gl"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -24,7 +24,7 @@ func GroupFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 		ret, _ := ParseRet(c)
-		httpStatusInterface, _ := c.Get(CODE)
+		httpStatusInterface, _ := c.Get(Code)
 		httpStatus := httpStatusInterface.(int)
 		c.JSON(httpStatus, ret)
 	}
@@ -34,6 +34,7 @@ func GroupFilter() gin.HandlerFunc {
 func GlFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		gl.Init()
+		gl.SetLogger(dlog.Global)
 		defer gl.Close()
 		c.Next()
 	}
@@ -49,16 +50,17 @@ func Logger() gin.HandlerFunc {
 		if traceId != "" {
 			gl.Set(gl.LogId, traceId)
 		} else {
-			traceId = strconv.FormatInt(st.UnixNano(), 10)
+			traceId = utls.TraceId()
 			c.Set(TraceID, traceId)
 			gl.Set(gl.LogId, traceId)
 		}
 
 		realIp, _ := network.GetRealIP(c.Request)
-		c.Set(REMOTE_IP, realIp)
+		c.Set(RemoteIP, realIp)
 		gl.Set(gl.ClientIp, realIp)
 
 		c.Next()
+
 		uri := c.Request.RequestURI
 		uriSplits := strings.Split(uri, "?")
 		path := uri
@@ -69,9 +71,9 @@ func Logger() gin.HandlerFunc {
 		costDu := time.Now().Sub(st)
 		cost := costDu / time.Millisecond
 
-		data, ok := c.Get(DATA)
+		data, ok := c.Get(Data)
 		if !ok {
-			dataRaw, ok := c.Get(DATA_RAW)
+			dataRaw, ok := c.Get(DataRaw)
 			if ok {
 				paramsBts, ok := dataRaw.([]byte)
 				if !ok {
@@ -82,11 +84,11 @@ func Logger() gin.HandlerFunc {
 			}
 		}
 
-		ret, _ := c.Get(RET)
-		httpStatusInterface, _ := c.Get(CODE)
+		ret, _ := c.Get(Ret)
+		httpStatusInterface, _ := c.Get(Code)
 		httpStatus := httpStatusInterface.(int)
 
-		handleErr, _ := c.Get(ERR)
+		handleErr, _ := c.Get(Err)
 		errStr := ""
 		handleErrErr, ok := handleErr.(error)
 		if ok {
@@ -110,8 +112,8 @@ func Logger() gin.HandlerFunc {
 			dlog.Error("data cant transfer to json ?! data is %v", data)
 			message["data"] = data
 		} else {
-			datas, _ := simplejson.NewJson(dataByte)
-			message["data"] = datas
+			dataJson, _ := simplejson.NewJson(dataByte)
+			message["data"] = dataJson
 		}
 		retByte, err := json.Marshal(ret)
 		if err != nil {

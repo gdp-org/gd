@@ -46,7 +46,7 @@ func (f *FixedGoroutinePool) Close() {
 	f.wg.Wait()
 }
 
-var TIMTOUR_ERR = fmt.Errorf("insert into gouroutine pool timeout")
+var TIMTOUR_Err = fmt.Errorf("insert into gouroutine pool timeout")
 
 type FixedGoroutinePoolTimeout struct {
 	Size          int64
@@ -65,7 +65,7 @@ func (f *FixedGoroutinePoolTimeout) Execute(function func()) error {
 		select {
 		case f.semaphoreChan <- true:
 		case <-time.After(f.Timeout):
-			return TIMTOUR_ERR
+			return TIMTOUR_Err
 		}
 
 	} else {

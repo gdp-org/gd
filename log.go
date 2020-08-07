@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	l               = sync.Mutex{}
-	logConfigFile   = "conf/log.xml"
-	defaultLogDir   = "log"
-	defaultFormat   = "%L	%D %T	%l	%I	%G	%M	%S"
-	inContainerEnv  = false
+	l              = sync.Mutex{}
+	logConfigFile  = "conf/log.xml"
+	defaultLogDir  = "log"
+	defaultFormat  = "%L	%D %T	%l	%I	%G	%M	%S"
+	inContainerEnv = false
 )
 
 type xmlLoggerConfig struct {
@@ -127,7 +127,7 @@ func RestoreLogConfig(configFilePath string, binName string, port int, logLevel 
 		binName = ex
 	}
 
-	if logLevel != "DEBUG" && logLevel != "INFO" && logLevel != "WARNING" && logLevel != "ERROR" {
+	if logLevel != "DEBUG" && logLevel != "INFO" && logLevel != "WARNING" && logLevel != "ErrOR" {
 		return fmt.Errorf("invalid log level %v", logLevel)
 	}
 

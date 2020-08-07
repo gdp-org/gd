@@ -95,7 +95,7 @@ func (s *Server) Stop() {
 	close(s.serverStopChan)
 	s.stopWg.Wait()
 	s.serverStopChan = nil
-	dlog.Info("rpc server stop %s",s.Addr)
+	dlog.Info("rpc server stop %s", s.Addr)
 }
 
 func serverHandler(s *Server, workersCh chan struct{}) {

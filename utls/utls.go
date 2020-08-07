@@ -7,6 +7,8 @@ package utls
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/chuck1024/dlog"
@@ -239,4 +241,15 @@ func Store2File(file string, content string) error {
 		return err
 	}
 	return nil
+}
+
+func TraceId() string {
+	h := md5.New()
+	rand.Seed(time.Now().UnixNano())
+	h.Write([]byte(strconv.FormatInt(rand.Int63(), 10)))
+	h.Write([]byte("-"))
+	h.Write([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)))
+	h.Write([]byte("-"))
+	h.Write([]byte(strconv.FormatInt(int64(rand.Int31()), 10)))
+	return hex.EncodeToString(h.Sum([]byte("godog")))
 }

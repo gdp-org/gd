@@ -62,10 +62,10 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 
 		// parse data
 		// data_raw is possible to encrypt data
-		dataBtsObj, ok := c.Get(DATA_RAW)
+		dataBtsObj, ok := c.Get(DataRaw)
 		if !ok {
 			if c.Request.Method == "GET" {
-				c.Set(DATA, inValInterface)
+				c.Set(Data, inValInterface)
 			} else {
 				err := c.Bind(inValInterface)
 				if err != nil {
@@ -78,17 +78,17 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 					}
 					dlog.Error("warp data not valid!data=%s,func=%v,err=%v,readBodyErr=%v", string(body), toWrap, err, readBodyErr)
 					Return(c, http.StatusBadRequest, "data not valid", err, nil)
-					c.Set(SESSION_LOG_LEVEL, "INFO")
+					c.Set(SessionLogLevel, "INFO")
 					return
 				}
-				c.Set(DATA, inValInterface)
+				c.Set(Data, inValInterface)
 			}
 		} else {
 			dataBts, ok := dataBtsObj.([]byte)
 			if !ok {
 				dlog.Error("warp data not []byte!func=%v,data=%v", toWrap, dataBtsObj)
 				Return(c, http.StatusInternalServerError, "data not byte array", nil, nil)
-				c.Set(SESSION_LOG_LEVEL, "INFO")
+				c.Set(SessionLogLevel, "INFO")
 				return
 			}
 			if dataBts != nil && len(dataBts) > 0 {
@@ -96,7 +96,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 				if jsonErr != nil {
 					dlog.Info("warp wrap data from json fail!bts=%s,func=%v,err=%v", string(dataBts), toWrap, jsonErr)
 					Return(c, http.StatusInternalServerError, "data type not valid", jsonErr, nil)
-					c.Set(SESSION_LOG_LEVEL, "INFO")
+					c.Set(SessionLogLevel, "INFO")
 					return
 				}
 			} else {
@@ -105,7 +105,7 @@ func Wrap(toWrap interface{}) (gin.HandlerFunc, error) {
 					inValInterface = inVal.Interface()
 				}
 			}
-			c.Set(DATA, inValInterface)
+			c.Set(Data, inValInterface)
 		}
 
 		in := make([]reflect.Value, wtNumIn)
@@ -161,20 +161,20 @@ func Return(c *gin.Context, code int, message string, err error, result interfac
 	ret["result"] = result
 	ret["message"] = message
 
-	c.Set(RET, ret)
-	c.Set(CODE, code)
+	c.Set(Ret, ret)
+	c.Set(Code, code)
 	if err != nil {
-		c.Set(ERR, err)
+		c.Set(Err, err)
 	}
 }
 
 func ParseRet(c *gin.Context) (ret interface{}, origErr interface{}) {
-	origErr, _ = c.Get(ERR)
-	retObj, ok := c.Get(RET)
+	origErr, _ = c.Get(Err)
+	retObj, ok := c.Get(Ret)
 	if !ok {
 		if origErr == nil {
 			err := errors.New("no ret found")
-			c.Set(ERR, err)
+			c.Set(Err, err)
 		}
 		ret = gin.H{
 			"code":    http.StatusInternalServerError,
@@ -185,10 +185,10 @@ func ParseRet(c *gin.Context) (ret interface{}, origErr interface{}) {
 		if retObj == nil {
 			if origErr != nil {
 				err := fmt.Errorf("ret empty?,origRet=%v,origErr=%v", retObj, origErr)
-				c.Set(ERR, err)
+				c.Set(Err, err)
 			} else {
 				err := fmt.Errorf("ret empty?,origRet=%v", retObj)
-				c.Set(ERR, err)
+				c.Set(Err, err)
 			}
 
 			ret = gin.H{
