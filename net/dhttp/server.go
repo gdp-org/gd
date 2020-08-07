@@ -31,8 +31,7 @@ type HttpServer struct {
 	HttpServerRunHost         string
 	HttpServerIniter          HttpServerIniter
 
-	// default
-	DefaultHandlerMap map[string]interface{}
+	HandlerMap map[string]interface{}
 }
 
 func (h *HttpServer) Run() error {
@@ -98,32 +97,64 @@ func (h *HttpServer) SetInit(i HttpServerIniter) {
 	h.HttpServerIniter = i
 }
 
-func (h *HttpServer) DefaultAddHandler(url string, handle interface{}) {
-	if h.DefaultHandlerMap == nil {
-		h.DefaultHandlerMap = make(map[string]interface{})
+func (h *HttpServer) AddHandler(url string, handle interface{}) {
+	if h.HandlerMap == nil {
+		h.HandlerMap = make(map[string]interface{})
 	}
-	h.DefaultHandlerMap[url] = handle
+	h.HandlerMap[url] = handle
 }
 
-func (h *HttpServer) DefaultRegister() {
-	h.HttpServerIniter = func(g *gin.Engine) error {
-		r := g.Group("")
-		r.Use(
-			GroupFilter(),
-			Logger(),
-		)
-
-		for k, v := range h.DefaultHandlerMap {
-			f, err := Wrap(v)
-			if err != nil {
-				return err
-			}
-			r.GET(k, f)
-			r.POST(k, f)
+func (h *HttpServer) CheckHandle() error {
+	for _, v := range h.HandlerMap {
+		if err := CheckWarp(v); err != nil {
+			return err
 		}
-
-		return nil
 	}
+	return nil
+}
+
+// For GET, POST, PUT, PATCH and DELETE requests the respective shortcut
+// functions can be used.
+func (h *HttpServer) Handle(group *gin.RouterGroup, httpMethod, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.Handle(httpMethod, relativePath, ginHandler)
+}
+
+func (h *HttpServer) POST(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.POST(relativePath, ginHandler)
+}
+
+func (h *HttpServer) GET(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.GET(relativePath, ginHandler)
+}
+
+func (h *HttpServer) DELETE(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.DELETE(relativePath, ginHandler)
+}
+
+func (h *HttpServer) PATCH(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.DELETE(relativePath, ginHandler)
+}
+
+func (h *HttpServer) PUT(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.DELETE(relativePath, ginHandler)
+}
+
+func (h *HttpServer) OPTIONS(group *gin.RouterGroup, relativePath string, handler interface{}) {
+	h.AddHandler(relativePath, handler)
+	ginHandler := Wrap(handler)
+	group.DELETE(relativePath, ginHandler)
 }
 
 func (h *HttpServer) makeHttpServer() error {
