@@ -51,9 +51,22 @@ func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message st
 
 func main() {
     d := gd.Default()
-    d.InitLog()
-    d.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
-    d.HttpServer.DefaultRegister()
+    d.HttpServer.SetInit(func(g *gin.Engine) error {
+    	r := g.Group("")
+    	r.Use(
+    		dhttp.GlFilter(),
+    		dhttp.GroupFilter(),
+    		dhttp.Logger(),
+    	)
+    
+    	d.HttpServer.POST(r, "test", HandlerHttpTest)
+    
+    	if err := d.HttpServer.CheckHandle(); err != nil {
+    		return err
+    	}
+    
+    	return nil
+    })
     
     d.Config.BaseConfig.Server.HttpPort = 10240
     err := d.Run()
@@ -196,10 +209,8 @@ import (
 	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/net/dhttp"
-	"github.com/chuck1024/gd/server/register"
-	"github.com/chuck1024/gd/utls"
+	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -234,21 +245,18 @@ func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *
 
 func Register(e *gd.Engine) {
 	// http
-	e.HttpServer.DefaultAddHandler("test", HandlerHttpTest)
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
-			httplib.GlFilter(),
-			httplib.GroupFilter(),
-			httplib.Logger(),
+			dhttp.GlFilter(),
+			dhttp.GroupFilter(),
+			dhttp.Logger(),
 		)
 
-		for k, v := range e.HttpServer.DefaultHandlerMap {
-			f, err := httplib.Wrap(v)
-			if err != nil {
-				return err
-			}
-			r.POST(k, f)
+		e.HttpServer.POST(r, "test", HandlerHttpTest)
+
+		if err := e.HttpServer.CheckHandle(); err != nil {
+			return err
 		}
 
 		return nil
@@ -265,22 +273,8 @@ func Register(e *gd.Engine) {
 
 func main() {
 	d := gd.Default()
-	d.InitLog()
 
 	Register(d)
-
-	// register params
-	etcdHost, _ := d.Config.Strings("etcdHost")
-	root, _ := d.Config.String("root")
-	environ, _ := d.Config.String("environ")
-	group, _ := d.Config.String("group")
-	weight, _ := d.Config.Int("weight")
-
-	// register
-	var r register.DogRegister
-	r = &register.EtcdRegister{}
-	r.NewRegister(etcdHost, root, environ, group, d.Config.BaseConfig.Server.AppName)
-	r.Run(utils.GetLocalIP(), d.Config.BaseConfig.Server.RpcPort, uint64(weight))
 
 	err := d.Run()
 	if err != nil {

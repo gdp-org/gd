@@ -78,7 +78,7 @@ func main() {
 
 	err := d.Run()
 	if err != nil {
-		dlog.Error("Error occurs, derror = %s", err.Error())
+		dlog.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
