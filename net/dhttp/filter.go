@@ -136,3 +136,24 @@ func Logger() gin.HandlerFunc {
 		dlog.InfoT("SESSION", fmt.Sprintf("%s %s", path, string(mj)))
 	}
 }
+
+// example: stat filter
+func StatFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uri := c.Request.RequestURI
+		uriSplits := strings.Split(uri, "?")
+		path := uri
+		if len(uriSplits) > 0 {
+			path = uriSplits[0]
+		}
+
+		st := utls.NewStat()
+		st.Begin(path)
+
+		c.Next()
+
+		httpStatusInterface, _ := c.Get(Code)
+		httpStatus := httpStatusInterface.(int)
+		st.End(httpStatus)
+	}
+}

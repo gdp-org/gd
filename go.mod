@@ -1,6 +1,6 @@
 module github.com/chuck1024/gd
 
-go 1.13
+go 1.14
 
 require (
 	github.com/bitly/go-simplejson v0.5.0
@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
-	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	google.golang.org/grpc v1.26.0 // indirect

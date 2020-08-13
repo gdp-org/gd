@@ -81,6 +81,13 @@ func (e *Engine) Run() error {
 		return err
 	}
 
+	// init stat
+	enable := e.Config("Log", "stat").MustBool(false)
+	if enable {
+		statInterval := e.Config("Log", "statInterval").MustInt64(5)
+		utls.StatMgrInstance().Init(e.Config("Log", "logDir").String()+"/stat.log", time.Second*time.Duration(statInterval))
+	}
+
 	// http run
 	httpPort := e.Config("Server", "httpPort").MustInt()
 	if httpPort == 0 {

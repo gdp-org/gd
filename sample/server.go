@@ -49,6 +49,7 @@ func Register(e *gd.Engine) {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),
+			dhttp.StatFilter(),
 			dhttp.GroupFilter(),
 			dhttp.Logger(),
 		)
