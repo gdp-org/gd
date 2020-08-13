@@ -30,9 +30,9 @@ func ReviewDumpPanic(file *os.File) error {
 	return nil
 }
 
-func Dump(name string) (*os.File, error) {
+func Dump(fileDir, name string) (*os.File, error) {
 	suffix := fmt.Sprintf("-dump-%s", name)
-	filename := dumpPrefix + suffix + "." + strconv.Itoa(os.Getpid())
+	filename := fileDir + "/" + dumpPrefix + suffix + "." + strconv.Itoa(os.Getpid())
 	file, err := os.OpenFile(filename, dumpFlag, dumpMode)
 	if err != nil {
 		return file, err

@@ -58,7 +58,7 @@ func (e *Engine) Run() error {
 	e.Signal()
 
 	// dump when error occurs
-	file, err := utls.Dump(e.Config("Server", "serverName").String())
+	file, err := utls.Dump(e.Config("Log", "logDir").String(), e.Config("Server", "serverName").String())
 	if err != nil {
 		dlog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
