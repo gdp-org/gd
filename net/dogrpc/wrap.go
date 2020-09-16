@@ -55,7 +55,7 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 		in[0] = inVal
 		out := refToWrap.Call(in)
 		if len(out) != 4 {
-			dlog.Error("warp return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
 			code = uint32(de.RpcInternalServerError)
 			resp = Return(uint32(de.RpcInternalServerError), "ret not 4!", nil, nil)
 			return
@@ -71,27 +71,27 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 			code, _ = out[0].Interface().(uint32)
 		} else {
 			code = uint32(de.RpcInternalServerError)
-			dlog.Error("warp not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[1].CanInterface() {
 			message, _ = out[1].Interface().(string)
 		} else {
-			dlog.Error("warp not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[2].CanInterface() {
 			err, _ = out[2].Interface().(error)
 		} else {
-			dlog.Error("warp not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 		if out[3].CanInterface() {
 			ret = out[3].Interface()
 		} else {
-			dlog.Error("warp not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
-		dlog.Debug("warp wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
+		dlog.Debug("wrap wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
 		resp = Return(code, message, err, ret)
 		return
 	}

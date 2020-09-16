@@ -49,7 +49,7 @@ func CheckWrap(toWrap interface{}) error {
 	return nil
 }
 
-// example: warp to gin.HandlerFunc -- func(*Context)
+// example: wrap to gin.HandlerFunc -- func(*Context)
 func Wrap(toWrap interface{}) gin.HandlerFunc {
 	refToWrap := reflect.ValueOf(toWrap)
 	wt := reflect.TypeOf(toWrap)
@@ -83,7 +83,7 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 					} else {
 						body = []byte(c.Request.RequestURI)
 					}
-					dlog.Error("warp data not valid!data=%s,func=%v,err=%v,readBodyErr=%v", string(body), toWrap, err, readBodyErr)
+					dlog.Error("wrap data not valid!data=%s,func=%v,err=%v,readBodyErr=%v", string(body), toWrap, err, readBodyErr)
 					Return(c, http.StatusBadRequest, "data not valid", err, nil)
 					c.Set(SessionLogLevel, "INFO")
 					return
@@ -93,7 +93,7 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 		} else {
 			dataBts, ok := dataBtsObj.([]byte)
 			if !ok {
-				dlog.Error("warp data not []byte!func=%v,data=%v", toWrap, dataBtsObj)
+				dlog.Error("wrap data not []byte!func=%v,data=%v", toWrap, dataBtsObj)
 				Return(c, http.StatusInternalServerError, "data not byte array", nil, nil)
 				c.Set(SessionLogLevel, "INFO")
 				return
@@ -101,7 +101,7 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 			if dataBts != nil && len(dataBts) > 0 {
 				jsonErr := json.Unmarshal(dataBts, inValInterface)
 				if jsonErr != nil {
-					dlog.Info("warp wrap data from json fail!bts=%s,func=%v,err=%v", string(dataBts), toWrap, jsonErr)
+					dlog.Info("wrap wrap data from json fail!bts=%s,func=%v,err=%v", string(dataBts), toWrap, jsonErr)
 					Return(c, http.StatusInternalServerError, "data type not valid", jsonErr, nil)
 					c.Set(SessionLogLevel, "INFO")
 					return
@@ -120,7 +120,7 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 		in[1] = inVal
 		out := refToWrap.Call(in)
 		if len(out) != 4 {
-			dlog.Error("warp return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap return not 4!in=%v,out=%v,func=%v", in, out, toWrap)
 			Return(c, http.StatusInternalServerError, "ret not 4!", nil, nil)
 			return
 		}
@@ -136,27 +136,27 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 			code, _ = out[0].Interface().(int)
 		} else {
 			code = http.StatusInternalServerError
-			dlog.Error("warp not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse code!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[1].CanInterface() {
 			message, _ = out[1].Interface().(string)
 		} else {
-			dlog.Error("warp not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse message!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
 		if out[2].CanInterface() {
 			err, _ = out[2].Interface().(error)
 		} else {
-			dlog.Error("warp not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse err!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 		if out[3].CanInterface() {
 			ret = out[3].Interface()
 		} else {
-			dlog.Error("warp not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
+			dlog.Error("wrap not parse result!in=%v,out=%v,func=%v", in, out, toWrap)
 		}
 
-		dlog.Debug("warp wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
+		dlog.Debug("wrap wrapped call,in=%v,out=%v,func=%v", in, out, toWrap)
 		Return(c, code, message, err, ret)
 	}
 	return wrapped
