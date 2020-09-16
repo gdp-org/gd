@@ -19,7 +19,7 @@ import (
 var ptrToGinCtx = reflect.PtrTo(reflect.TypeOf((*gin.Context)(nil))).Kind()
 var errInterface = reflect.TypeOf((*error)(nil)).Elem()
 
-func CheckWarp(toWrap interface{}) error {
+func CheckWrap(toWrap interface{}) error {
 	wt := reflect.TypeOf(toWrap)
 	if wt.Kind() != reflect.Func {
 		return fmt.Errorf("toWrap must be func,type=%v,func=%v", wt, toWrap)

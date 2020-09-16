@@ -106,7 +106,7 @@ func (h *HttpServer) AddHandler(url string, handle interface{}) {
 
 func (h *HttpServer) CheckHandle() error {
 	for _, v := range h.HandlerMap {
-		if err := CheckWarp(v); err != nil {
+		if err := CheckWrap(v); err != nil {
 			return err
 		}
 	}
