@@ -174,13 +174,17 @@ func (e *Engine) Config(name, key string) *ini.Key {
 	return e.conf.Section(name).Key(key)
 }
 
+func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {
+	e.HttpServer.SetInit(initer)
+}
+
 // timeout Millisecond
-func (e *Engine) NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
+func NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
 	client := dogrpc.NewClient(timeout, retryNum)
 	return client
 }
 
-func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
+func NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
 	client := &dhttp.HttpClient{
 		Timeout: Timeout,
 		Domain:  Domain,
@@ -190,8 +194,4 @@ func (e *Engine) NewHttpClient(Timeout time.Duration, Domain string) *dhttp.Http
 		return nil
 	}
 	return client
-}
-
-func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {
-	e.HttpServer.SetInit(initer)
 }
