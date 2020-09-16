@@ -6,8 +6,8 @@
 package dogrpc
 
 import (
-	"github.com/chuck1024/dlog"
 	dogError "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/utls/network"
 	"math/rand"
 	"net"

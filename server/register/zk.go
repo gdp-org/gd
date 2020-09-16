@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/server"
 	"github.com/samuel/go-zookeeper/zk"
 	"strings"

@@ -1,8 +1,14 @@
-package utls
+/**
+ * Copyright 2019 redisdb Author. All rights reserved.
+ * Author: Chuck1024
+ */
+
+package redisdb
 
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -10,6 +16,7 @@ type FixedGoroutinePool struct {
 	Size          int64
 	semaphoreChan chan bool
 	wg            sync.WaitGroup
+	counter       int64
 }
 
 func (f *FixedGoroutinePool) Start() error {
@@ -20,10 +27,12 @@ func (f *FixedGoroutinePool) Start() error {
 func (f *FixedGoroutinePool) Execute(function func()) {
 	f.semaphoreChan <- true
 	f.wg.Add(1)
+	atomic.AddInt64(&f.counter, 1)
 	go func() {
 		defer func() {
 			<-f.semaphoreChan
 			f.wg.Done()
+			atomic.AddInt64(&f.counter, -1)
 		}()
 		function()
 	}()
@@ -32,13 +41,19 @@ func (f *FixedGoroutinePool) Execute(function func()) {
 func (f *FixedGoroutinePool) ExecuteWithArg(function func(args ...interface{}), arg ...interface{}) {
 	f.semaphoreChan <- true
 	f.wg.Add(1)
+	atomic.AddInt64(&f.counter, 1)
 	go func() {
 		defer func() {
 			<-f.semaphoreChan
 			f.wg.Done()
+			atomic.AddInt64(&f.counter, -1)
 		}()
 		function(arg...)
 	}()
+}
+
+func (f *FixedGoroutinePool) GetGoroutineCount() int64 {
+	return atomic.LoadInt64(&f.counter)
 }
 
 func (f *FixedGoroutinePool) Close() {
@@ -46,13 +61,14 @@ func (f *FixedGoroutinePool) Close() {
 	f.wg.Wait()
 }
 
-var TIMTOUR_Err = fmt.Errorf("insert into gouroutine pool timeout")
+var TIMTOUR_ERR = fmt.Errorf("insert into gouroutine pool timeout")
 
 type FixedGoroutinePoolTimeout struct {
 	Size          int64
 	Timeout       time.Duration
 	semaphoreChan chan bool
 	wg            sync.WaitGroup
+	counter       int64
 }
 
 func (f *FixedGoroutinePoolTimeout) Start() error {
@@ -65,21 +81,27 @@ func (f *FixedGoroutinePoolTimeout) Execute(function func()) error {
 		select {
 		case f.semaphoreChan <- true:
 		case <-time.After(f.Timeout):
-			return TIMTOUR_Err
+			return TIMTOUR_ERR
 		}
 
 	} else {
 		f.semaphoreChan <- true
 	}
 	f.wg.Add(1)
+	atomic.AddInt64(&f.counter, 1)
 	go func() {
 		defer func() {
 			<-f.semaphoreChan
 			f.wg.Done()
+			atomic.AddInt64(&f.counter, -1)
 		}()
 		function()
 	}()
 	return nil
+}
+
+func (f *FixedGoroutinePoolTimeout) GetGoroutineCount() int64 {
+	return atomic.LoadInt64(&f.counter)
 }
 
 func (f *FixedGoroutinePoolTimeout) Close() {
@@ -128,6 +150,14 @@ func (g *GoRoutinePoolWithConfig) ExecuteKey(key string, function func()) {
 		return
 	}
 	g.ExecuteDefault(function)
+}
+
+func (g *GoRoutinePoolWithConfig) GetGoroutineCount(key string) int64 {
+	pool := g.reservedPools[key]
+	if pool != nil {
+		return pool.GetGoroutineCount()
+	}
+	return g.defaultPool.GetGoroutineCount()
 }
 
 func (g *GoRoutinePoolWithConfig) Close() {

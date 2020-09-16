@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"

@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"fmt"
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"strconv"
 )
 

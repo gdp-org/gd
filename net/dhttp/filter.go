@@ -9,10 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
-	"github.com/chuck1024/gl"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -147,7 +148,7 @@ func StatFilter() gin.HandlerFunc {
 			path = uriSplits[0]
 		}
 
-		st := utls.NewStat()
+		st := stat.NewStat()
 		st.Begin(path)
 
 		c.Next()

@@ -3,13 +3,14 @@
  * Author: Chuck1024
  */
 
-package utls
+package stat
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/chuck1024/dlog"
 	dogErr "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/utls"
 	"math"
 	"os"
 	"sort"
@@ -57,21 +58,21 @@ func (st *Stat) BeginAt(cmd string, begin time.Time) *Stat {
 
 // BeginFuncCmd use funcName as cmd
 func (st *Stat) BeginFuncCmd() *Stat {
-	st.cmd = FuncName(2)
+	st.cmd = utls.FuncName(2)
 	st.b = time.Now()
 	return st
 }
 
 // BeginFuncCmdAt use funcName as cmd but set begin
 func (st *Stat) BeginFuncCmdAt(begin time.Time) *Stat {
-	st.cmd = FuncName(2)
+	st.cmd = utls.FuncName(2)
 	st.b = begin
 	return st
 }
 
 // beginFuncAt use funcName as cmd but set begin
 func (st *Stat) beginFuncAt(pre string, skip int, begin time.Time) *Stat {
-	st.cmd = pre + "." + FuncName(skip)
+	st.cmd = pre + "." + utls.FuncName(skip)
 	st.b = begin
 	return st
 }

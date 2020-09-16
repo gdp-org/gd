@@ -7,10 +7,12 @@ package gd
 
 import (
 	"fmt"
-	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd/config"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/chuck1024/gd/runtime/helper"
+	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
 	"gopkg.in/ini.v1"
 	"runtime"
@@ -85,7 +87,7 @@ func (e *Engine) Run() error {
 	enable := e.Config("Log", "stat").MustBool(false)
 	if enable {
 		statInterval := e.Config("Log", "statInterval").MustInt64(5)
-		utls.StatMgrInstance().Init(e.Config("Log", "logDir").String()+"/stat.log", time.Second*time.Duration(statInterval))
+		stat.StatMgrInstance().Init(e.Config("Log", "logDir").String()+"/stat.log", time.Second*time.Duration(statInterval))
 	}
 
 	// http run
@@ -119,7 +121,7 @@ func (e *Engine) Run() error {
 		dlog.Info("Hasn't health server port")
 	} else {
 		host := fmt.Sprintf(":%d", healthPort)
-		health := &utls.Helper{Host: host}
+		health := &helper.Helper{Host: host}
 		if err := health.Start(); err != nil {
 			dlog.Error("start health failed on %s\n", host)
 			return err

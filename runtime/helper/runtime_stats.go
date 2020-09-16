@@ -3,11 +3,12 @@
  * Author: Chuck1024
  */
 
-package utls
+package helper
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/chuck1024/gd/utls"
 	"runtime"
 	"time"
 )
@@ -48,7 +49,7 @@ func formatGCPause(m1, m2 *runtime.MemStats) string {
 
 func FormatMemStats(m1, m2 *runtime.MemStats) string {
 	return fmt.Sprintf("Goroutines: %d, GCPause: %s, HeapObjects: %d, HeapAlloc: %s, Mallocs: %d",
-		runtime.NumGoroutine(), formatGCPause(m1, m2), m2.HeapObjects, HumanSize(m2.HeapAlloc), m2.Mallocs)
+		runtime.NumGoroutine(), formatGCPause(m1, m2), m2.HeapObjects, utls.HumanSize(m2.HeapAlloc), m2.Mallocs)
 }
 
 // get runtime stats,contained goroutine numbers,gc pause,heap objects,heap alloc and malloc

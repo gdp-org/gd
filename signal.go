@@ -6,7 +6,7 @@
 package gd
 
 import (
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"os"
 	"os/signal"
 	"syscall"

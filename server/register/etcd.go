@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/server"
 	"github.com/etcd-io/etcd/clientv3"
 	"strings"

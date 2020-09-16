@@ -3,12 +3,13 @@
  * Author: Chuck1024
  */
 
-package utls
+package stat
 
 import (
 	"errors"
 	"fmt"
 	dogErr "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/utls"
 	"log"
 	"math/rand"
 	"testing"
@@ -46,7 +47,7 @@ func Test_Stat(t *testing.T) {
 
 func test_stat() {
 	cmd := "cmd.test"
-	begin := GetCurrentMicrosecond()
+	begin := utls.GetCurrentMicrosecond()
 	ret := 0
 
 	defer func(begin int64) {

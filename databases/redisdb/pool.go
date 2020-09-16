@@ -1,0 +1,500 @@
+/**
+ * Copyright 2019 redisdb Author. All rights reserved.
+ * Author: Chuck1024
+ */
+
+package redisdb
+
+import (
+	"errors"
+	log "github.com/chuck1024/gd/dlog"
+	"github.com/garyburd/redigo/redis"
+	"math/rand"
+	"net/url"
+	"strconv"
+	"time"
+)
+
+const (
+	DefaultDatabases = 0
+	DefaultTimeout   = 15 * time.Second
+	DefaultMaxIdle   = 1
+	DefaultMaxActive = 0
+)
+
+type RedisConfig struct {
+	Addrs          []string
+	MaxActive      int
+	MaxIdle        int
+	Retry          int
+	IdleTimeoutSec int //空闲连接可被回收的判断阈值, 单位: 秒
+	ConnTimeoutMs  int64
+	ReadTimeoutMs  int64
+	WriteTimeoutMs int64
+	Password       string
+}
+
+type RedisPool struct {
+	servers []string
+	p       map[string]*redis.Pool
+	retry   int
+}
+
+func RedisConfigFromURLString(rawUrl string) (*RedisConfig, error) {
+	ul, err := url.Parse(rawUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	host := make([]string, 0)
+	if ul.Host != "" {
+		host = append(host, ul.Host)
+	}
+
+	password := ""
+	if ul.User != nil {
+		if pw, set := ul.User.Password(); set {
+			password = pw
+		}
+	}
+
+	//db := DefaultDatabases
+	//path := strings.Trim(ul.Path, "/")
+	//if path != "" {
+	//	db, err = strconv.Atoi(path)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
+
+	timeout := 15
+	if ul.Query().Get("idleTimeout") != "" {
+		timeout, _ = strconv.Atoi(ul.Query().Get("idleTimeout"))
+	}
+
+	maxIdle := DefaultMaxIdle
+	if ul.Query().Get("maxIdle") != "" {
+		maxIdle, err = strconv.Atoi(ul.Query().Get("maxIdle"))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	maxActive := DefaultMaxActive
+	if ul.Query().Get("maxActive") != "" {
+		maxActive, err = strconv.Atoi(ul.Query().Get("maxActive"))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &RedisConfig{
+		Addrs:          host,
+		Password:       password,
+		MaxIdle:        maxIdle,
+		MaxActive:      maxActive,
+		IdleTimeoutSec: timeout,
+	}, nil
+}
+
+func NewPool(servers []string, password string, maxActive, maxIdle, idleTimeout int) *RedisPool {
+	return NewPoolRetry(servers, password, maxActive, maxIdle, idleTimeout, 3)
+}
+
+func NewPoolRetry(servers []string, password string, maxActive, maxIdle, idleTimeout int, retry int) *RedisPool {
+	connTimeout := 400 * time.Millisecond
+	readTimeout := 700 * time.Millisecond
+	writeTimeout := 500 * time.Millisecond
+	return NewPoolRetryTimeout(servers, password, maxActive, maxIdle, idleTimeout, retry, connTimeout, readTimeout, writeTimeout)
+}
+
+func NewPoolRetryTimeout(servers []string, password string, maxActive, maxIdle, idleTimeout int, retry int, connTimeout, readTimeout, writeTimeout time.Duration) *RedisPool {
+	pools := make(map[string]*redis.Pool)
+	finalServers := make([]string, 0, len(servers))
+	for _, tmp := range servers {
+		server := tmp
+		if server == "" {
+			log.Error("invalid codis server:servers=%v", servers)
+			continue
+		}
+		if _, ok := pools[server]; ok {
+			log.Warn("repeated server, server=%v", server)
+			continue
+		}
+		finalServers = append(finalServers, server)
+		p := &redis.Pool{
+			Wait:        false,
+			MaxActive:   maxActive,
+			MaxIdle:     maxIdle,
+			IdleTimeout: time.Duration(idleTimeout) * time.Second,
+			Dial: func() (c redis.Conn, err error) {
+				c, err = redis.DialTimeout("tcp", server, connTimeout, readTimeout, writeTimeout)
+				if err == nil {
+					if password != "" {
+						if _, err = c.Do("AUTH", password); err != nil {
+							log.Error("redis auth fail,server=%s,err=%v", server, err)
+							c.Close()
+							return nil, err
+						}
+					}
+				} else {
+					log.Warn("redis dial tcp fail,server=%s,err=%v", server, err)
+				}
+				//c.Do("SELECT", conf.Database)
+				return
+			},
+		}
+		pools[server] = p
+	}
+
+	rp := &RedisPool{
+		servers: finalServers,
+		p:       pools,
+		retry:   retry,
+	}
+	return rp
+}
+
+func NewRedisPools(cfg *RedisConfig) (*RedisPool, error) {
+	if len(cfg.Addrs) <= 0 {
+		return nil, errors.New("servers empty")
+	}
+	maxActive := cfg.MaxActive
+	if maxActive <= 0 {
+		maxActive = 500
+	}
+	maxIdle := cfg.MaxIdle
+	if maxIdle <= 0 {
+		maxIdle = 8
+	}
+	idleTimeout := cfg.IdleTimeoutSec
+	if idleTimeout <= 0 {
+		idleTimeout = 300
+	}
+	retry := cfg.Retry
+	if retry <= 0 {
+		retry = 3
+	}
+	connTimeout := time.Duration(cfg.ConnTimeoutMs) * time.Millisecond
+	if connTimeout <= 0 {
+		connTimeout = 400 * time.Millisecond
+	}
+	readTimeout := time.Duration(cfg.ReadTimeoutMs) * time.Millisecond
+	if readTimeout <= 0 {
+		readTimeout = 700 * time.Millisecond
+	}
+	writeTimeout := time.Duration(cfg.WriteTimeoutMs) * time.Millisecond
+	if writeTimeout <= 0 {
+		writeTimeout = 500 * time.Millisecond
+	}
+
+	cfg4Log := *cfg
+	cfg4Log.MaxActive = maxActive
+	cfg4Log.MaxIdle = maxIdle
+	cfg4Log.IdleTimeoutSec = idleTimeout
+	cfg4Log.Retry = retry
+	cfg4Log.ConnTimeoutMs = int64(connTimeout / time.Millisecond)
+	cfg4Log.ReadTimeoutMs = int64(readTimeout / time.Millisecond)
+	cfg4Log.WriteTimeoutMs = int64(writeTimeout / time.Millisecond)
+
+	p := NewPoolRetryTimeout(cfg.Addrs, cfg.Password, maxActive, maxIdle, idleTimeout, retry, connTimeout, readTimeout, writeTimeout)
+	log.Info("start redis pool,server=%v,cfg=%v", p.servers, &cfg4Log)
+	return p, nil
+}
+
+func (p *RedisPool) Do(commandName string, args ...interface{}) (reply interface{}, err error) {
+	turn := 0
+	//retry with a new server
+	usedIps := make([]string, 0)
+	for {
+		turn++
+		func() {
+			conn, server, e := p.getConn(usedIps)
+			defer func() {
+				if conn != nil {
+					ce := conn.Close()
+					if ce != nil {
+						log.Warn("close conn fail,err=%v", ce)
+					}
+				}
+			}()
+			usedIps = append(usedIps, server)
+			if e != nil {
+				err = e
+				return
+			}
+
+			reply, err = p.do(conn, turn, commandName, args...)
+		}()
+
+		if err == nil {
+			return
+		} else {
+			if turn >= p.retry {
+				break
+			}
+		}
+	}
+	return
+}
+
+func (p *RedisPool) ActiveCount() int {
+	return p.p[p.servers[0]].ActiveCount()
+}
+
+func (p *RedisPool) Close() {
+	var e error
+	for k, v := range p.p {
+		if v != nil {
+			err := v.Close()
+			if err != nil {
+				if e == nil {
+					e = err
+				}
+				log.Error("redis pool close fail,servers=%v,err=%v,k=%v", p.servers, err, k)
+			}
+		}
+	}
+	if e == nil {
+		log.Info("redis pool close ok,servers=%v", p.servers)
+	}
+}
+
+func (p *RedisPool) do(conn redis.Conn, turn int, commandName string, args ...interface{}) (reply interface{}, err error) {
+	reply, err = conn.Do(commandName, args...)
+	if err != nil {
+		log.Warn("redis do cmd fail,turn=%d,cmd=%s,args=%v,err=%v", turn, commandName, args, err)
+	}
+	return
+}
+
+type BatchReq struct {
+	Key  string
+	Args interface{}
+}
+
+type BatchReply struct {
+	Req   *BatchReq
+	Reply interface{}
+	Err   error
+}
+
+func (p *RedisPool) BatchDo(commandname string, req []*BatchReq) (reply []*BatchReply) {
+	var back []*BatchReply
+	var errReply []*BatchReply
+	turn := 0
+	for {
+		turn++
+		back, errReply, req = p.batchDo(turn, commandname, req)
+		reply = append(reply, back...)
+		if len(req) == 0 {
+			return
+		} else {
+			if turn >= p.retry {
+				reply = append(reply, errReply...)
+				break
+			}
+		}
+
+	}
+	return
+
+}
+
+func (p *RedisPool) batchDo(turn int, commandname string, req []*BatchReq) (reply, errReply []*BatchReply, rest []*BatchReq) {
+	c := make(chan BatchReply, len(req))
+	poolSize := 5
+	if len(req) >= 100 {
+		poolSize = 10
+	}
+	timeout := 500
+	fixedPoolTimeout := &FixedGoroutinePoolTimeout{Size: int64(poolSize), Timeout: time.Duration(timeout) * time.Millisecond}
+	fixedPoolTimeout.Start()
+	for _, v := range req {
+		tmp := v
+		errTimeout := fixedPoolTimeout.Execute(func() {
+			var err error
+			var ret interface{}
+			if tmp.Args != nil {
+				ret, err = p.Do(commandname, redis.Args{tmp.Key}.AddFlat(tmp.Args)...)
+			} else {
+				ret, err = p.Do(commandname, redis.Args{tmp.Key}...)
+			}
+			c <- BatchReply{tmp, ret, err}
+		})
+		if errTimeout != nil {
+			c <- BatchReply{tmp, nil, errTimeout}
+		}
+	}
+	fixedPoolTimeout.Close()
+	close(c)
+	for v := range c {
+		tem := v
+		if v.Err != nil {
+			log.Warn("redis do cmd fail,turn=%d,cmd=%s,args=%v,err=%v", turn, commandname, v.Req.Args, v.Err)
+			rest = append(rest, tem.Req)
+			errReply = append(errReply, &tem)
+		} else {
+			reply = append(reply, &tem)
+		}
+	}
+	return
+}
+
+func (p *RedisPool) getConn(usedIps []string) (redis.Conn, string, error) {
+	perm := rand.Perm(len(p.servers))
+	for _, idx := range perm {
+
+		server := p.servers[idx]
+		if stringInSlice(usedIps, server) {
+			continue
+		}
+
+		conn := p.p[server].Get()
+		return conn, server, nil
+	}
+	return nil, "", nil
+}
+
+/**
+Redis get
+return string if exist
+       err = redis.ErrNil if not exist
+*/
+func (p RedisPool) Get(key string) (ret string, errRet error) {
+	return redis.String(p.Do("GET", key))
+}
+
+func (p RedisPool) Set(key, value string) (err error) {
+	_, err = p.Do("SET", key, value)
+	return
+}
+
+func (p RedisPool) Del(key string) (err error) {
+	_, err = p.Do("DEL", key)
+	return
+}
+
+func (p RedisPool) HGetAll(key string) (ret map[string]string, err error) {
+	return redis.StringMap(redis.Values(p.Do("HGETALL", key)))
+}
+
+func (p RedisPool) HScan(key string, count int64) (ret map[string]string, err error) {
+	res, err := redis.Values(p.Do("HSCAN", key, 0, "COUNT", count))
+	if err != nil {
+		return nil, err
+	}
+	if len(res) < 2 {
+		return map[string]string{}, nil
+	}
+	return redis.StringMap(res[1], nil)
+}
+
+func (p RedisPool) HGet(key string, field string) (string, error) {
+	return redis.String(p.Do("HGET", key, field))
+}
+
+func (p RedisPool) HDel(key, field string) (err error) {
+	_, err = p.Do("HDEL", key, field)
+	return
+}
+
+func (p RedisPool) HSet(key string, field string, value string) (err error) {
+	_, err = p.Do("HSET", key, field, value)
+	return
+}
+
+func (p RedisPool) HMGet(key string, values []string) ([]string, error) {
+	return redis.Strings(p.Do("HMGET", redis.Args{key}.AddFlat(values)...))
+
+}
+
+func (p RedisPool) HMDel(key string, values []string) (int64, error) {
+	return redis.Int64(p.Do("HDEL", redis.Args{key}.AddFlat(values)...))
+
+}
+
+func (p RedisPool) IncrBy(key string, val int64) (int64, error) {
+	return redis.Int64(p.Do("INCRBY", key, val))
+}
+
+func (p RedisPool) HIncrBy(key, field string, val int64) (int64, error) {
+	return redis.Int64(p.Do("HINCRBY", key, field, val))
+}
+
+func (p RedisPool) Incr(key string) (int, error) {
+	return redis.Int(p.Do("INCR", key))
+}
+
+func (p RedisPool) Expire(key string, time int) (int, error) {
+	return redis.Int(p.Do("EXPIRE", key, time))
+}
+
+func (p RedisPool) SetNX(key, value string, expire int) (interface{}, error) {
+	return p.Do("SET", key, value, "EX", expire, "NX")
+}
+
+func (p RedisPool) MGet(keys []string) (ret []interface{}, errRet error) {
+	iArray := make([]interface{}, 0, len(keys))
+	for _, v := range keys {
+		iArray = append(iArray, v)
+	}
+	return redis.Values(p.Do("MGET", iArray...))
+}
+
+func (p RedisPool) SetEx(key string, expire int64, value string) (err error) {
+	_, err = p.Do("SETEX", key, expire, value)
+	return
+}
+
+func (p RedisPool) SAdd(key string, vals []string) error {
+	var args []interface{}
+	args = append(args, key)
+	for _, v := range vals {
+		args = append(args, v)
+	}
+	_, err := p.Do("SADD", args...)
+	return err
+}
+
+func (p RedisPool) ZAdd(key string, score int64, val string) error {
+	_, err := p.Do("ZADD", key, score, val)
+	return err
+}
+
+func (p RedisPool) ZRemByScore(key string, start string, end string) error {
+	_, err := p.Do("ZREMRANGEBYSCORE", key, start, end)
+	return err
+}
+
+func (p RedisPool) ZRange(key string, start int64, end int64) ([]string, error) {
+	return redis.Strings(p.Do("ZRANGE", key, start, end))
+}
+
+func (p RedisPool) Exists(key string) (bool, error) {
+	return redis.Bool(p.Do("EXISTS", key))
+}
+
+func (p RedisPool) SPop(key string) (string, error) {
+	return redis.String(p.Do("SPOP", key))
+}
+
+func (p RedisPool) LIndex(key string, index int64) (string, error) {
+	return redis.String(p.Do("LINDEX", key, index))
+}
+
+func (p RedisPool) LPop(key string) (string, error) {
+	return redis.String(p.Do("LPOP", key))
+}
+
+func (p RedisPool) RPush(key, val string) (int64, error) {
+	return redis.Int64(p.Do("RPUSH", key, val))
+}
+
+func (p RedisPool) LPush(key string, val string) (int64, error) {
+	return redis.Int64(p.Do("LPUSH", key, val))
+}
+
+func (p RedisPool) HLen(key string) (int64, error) {
+	return redis.Int64(p.Do("HLEN", key))
+}

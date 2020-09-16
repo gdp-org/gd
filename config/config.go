@@ -6,7 +6,7 @@
 package config
 
 import (
-	"github.com/chuck1024/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"gopkg.in/ini.v1"
 	"sync"
 )
