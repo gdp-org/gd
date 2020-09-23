@@ -253,3 +253,7 @@ func TraceId() string {
 	h.Write([]byte(strconv.FormatInt(int64(rand.Int31()), 10)))
 	return hex.EncodeToString(h.Sum([]byte("godog")))
 }
+
+func FatalWithSmsAlert(errMsg string) {
+	fmt.Fprintln(os.Stderr, "fatal", errMsg)
+}
