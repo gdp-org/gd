@@ -7,7 +7,6 @@ package pc
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	js "github.com/bitly/go-simplejson"
 	"github.com/chuck1024/gd/dlog"
@@ -318,7 +317,7 @@ func report() {
 }
 
 func sendPcReport(send interface{}) {
-	paramsBytes, err := json.Marshal(send)
+	paramsBytes, err := utls.Marshal(send)
 	if err != nil {
 		dlog.Error("make json fail,send=%v,err=%s", send, err)
 		return
