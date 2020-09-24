@@ -14,23 +14,24 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-const default_char_set = "utf8mb4"
+const defaultCharSet = "utf8mb4"
 
 func (c *MysqlClient) initObjForMysqldb(dbConfPath string) error {
-	//init mysql for mipush
 	dbConfRealPath := dbConfPath
 	if dbConfRealPath == "" {
 		return errors.New("dbConf not set in g_cfg")
 	}
+
 	if !strings.HasSuffix(dbConfRealPath, ".ini") {
 		return errors.New("dbConf not an ini file")
 	}
+
 	dbConf, err := ini.Load(dbConfRealPath)
 	if err != nil {
 		return err
 	}
-	err = c.initDbs(dbConf)
-	if err != nil {
+
+	if err = c.initDbs(dbConf); err != nil {
 		return err
 	}
 	return nil
@@ -39,19 +40,19 @@ func (c *MysqlClient) initObjForMysqldb(dbConfPath string) error {
 func (c *MysqlClient) initDbs(f *ini.File) error {
 	m := f.Section("Mysql")
 	s := f.Section("MysqlSlave")
-	var err error
-	master_ip := m.Key("master_ip").String()
-	master_port := m.Key("master_port").String()
-	user_write := m.Key("user_write").String()
-	pass_write := m.Key("pass_write").String()
 
-	user_read := m.Key("user_read").String()
-	pass_read := m.Key("pass_read").String()
+	masterIp := m.Key("master_ip").String()
+	masterPort := m.Key("master_port").String()
+	userWrite := m.Key("user_write").String()
+	passWrite := m.Key("pass_write").String()
+
+	userRead := m.Key("user_read").String()
+	passRead := m.Key("pass_read").String()
 
 	db := m.Key("db").String()
 	masterProxy, _ := m.Key("master_is_proxy").Bool()
-	slave_ip := s.Key("slave_ip").String()
-	slave_port := s.Key("slave_port").String()
+	slaveIp := s.Key("slave_ip").String()
+	slavePort := s.Key("slave_port").String()
 	slaveProxy, _ := s.Key("slave_is_proxy").Bool()
 
 	timeout := f.Section("").Key("timeout").String()
@@ -60,6 +61,7 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 	} else if !strings.HasSuffix(timeout, "s") {
 		timeout += "s"
 	}
+
 	connTimeout := f.Section("").Key("connTimeout").String()
 	if connTimeout == "" {
 		connTimeout = "1s"
@@ -67,11 +69,11 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 		connTimeout += "s"
 	}
 
-	maxOpen, err := f.Section("").Key("maxopen").Int()
+	maxOpen, err := f.Section("").Key("max_open").Int()
 	if err != nil {
 		maxOpen = 100
 	}
-	maxIdle, err := f.Section("").Key("maxidle").Int()
+	maxIdle, err := f.Section("").Key("max_idle").Int()
 	if err != nil {
 		maxIdle = 1
 	}
@@ -81,14 +83,14 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 		enableSqlSafeUpdates = false
 	}
 
-	masterIps := strings.Split(master_ip, ",")
-	connMasters := []string{}
-	for _, masterIp := range masterIps {
-		if masterIp == "" {
+	masterIps := strings.Split(masterIp, ",")
+	connMasters := make([]string, 0)
+	for _, masterIpVal := range masterIps {
+		if masterIpVal == "" {
 			continue
 		}
 
-		connMaster := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", user_write, pass_write, masterIp, master_port, db, connTimeout, timeout, timeout)
+		connMaster := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userWrite, passWrite, masterIp, masterPort, db, connTimeout, timeout, timeout)
 		if enableSqlSafeUpdates {
 			connMaster = connMaster + "&sql_safe_updates=1"
 		}
@@ -96,13 +98,13 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 		connMasters = append(connMasters, connMaster)
 	}
 
-	slaveIps := strings.Split(slave_ip, ",")
-	connSlaves := []string{}
-	for _, slaveIp := range slaveIps {
-		if slaveIp == "" {
+	slaveIps := strings.Split(slaveIp, ",")
+	connSlaves := make([]string, 0)
+	for _, slaveIpVal := range slaveIps {
+		if slaveIpVal == "" {
 			continue
 		}
-		connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", user_read, pass_read, slaveIp, slave_port, db, connTimeout, timeout, timeout))
+		connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
 	}
 
 	ctxSuffix := f.Section("").Key("ctxSuffix").String()
@@ -128,13 +130,12 @@ type DbConnectConf struct {
 	User                 string
 	Pass                 string
 	CharSet              string // default utf8mb4
-	ClientFoundRows      bool   //对于update操作,若更改的字段值跟原来值相同,当clientFoundRows为false时,sql执行结果会返回0;当clientFoundRows为true,sql执行结果返回1
+	ClientFoundRows      bool   // 对于update操作,若更改的字段值跟原来值相同,当clientFoundRows为false时,sql执行结果会返回0;当clientFoundRows为true,sql执行结果返回1
 	IsProxy              bool
 	EnableSqlSafeUpdates bool   // (safe update mode)，该模式不允许没有带WHERE条件的更新语句
 }
 
 func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
-	var err error
 	if dbConf == nil {
 		return errors.New("dbConf is nil")
 	}
@@ -144,6 +145,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 	if dbConf.DbName == "" {
 		return errors.New("dbName is nil")
 	}
+
 	connTimeout := dbConf.ConnTime
 	if connTimeout == "" {
 		connTimeout = "200ms"
@@ -164,27 +166,32 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 	if maxIdle <= 0 {
 		maxIdle = 1
 	}
+
 	connMasters, err := c.getReadWriteConnectString(dbConf.Master, connTimeout, readTimeout, writeTimeout, dbConf.DbName)
 	if err != nil {
 		return err
 	}
+
 	if len(connMasters) == 0 {
 		return errors.New("no valid master ip found")
 	}
+
 	connSlave, err := c.getReadWriteConnectString(dbConf.Slave, connTimeout, readTimeout, writeTimeout, dbConf.DbName)
 	if err != nil {
 		return err
 	}
-	slaveisproxy := false
+
+	slaveIsProxy := false
 	if dbConf.Slave != nil {
-		slaveisproxy = dbConf.Slave.IsProxy
+		slaveIsProxy = dbConf.Slave.IsProxy
 	}
 
 	to, err := time.ParseDuration(readTimeout)
 	if err != nil {
 		return fmt.Errorf("init mysqldb invalid duration %v", readTimeout)
 	}
-	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbConf.CtxSuffix, to, dbConf.Master.IsProxy, slaveisproxy)
+
+	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbConf.CtxSuffix, to, dbConf.Master.IsProxy, slaveIsProxy)
 }
 
 func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTimeout int64, dbname string) ([]string, error) {
@@ -193,9 +200,10 @@ func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTime
 	}
 
 	if conf.CharSet == "" {
-		conf.CharSet = default_char_set
+		conf.CharSet = defaultCharSet
 	}
-	constrs := make([]string, 0, len(conf.Addrs))
+
+	conStrs := make([]string, 0, len(conf.Addrs))
 	for _, host := range conf.Addrs {
 		if host != "" {
 			var constr string
@@ -211,10 +219,10 @@ func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTime
 				constr = constr + "&sql_safe_updates=1"
 			}
 
-			constrs = append(constrs, constr)
+			conStrs = append(conStrs, constr)
 		}
 	}
-	return constrs, nil
+	return conStrs, nil
 }
 
 func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout, readTimeout, writeTimeout string, dbname string) ([]string, error) {
@@ -223,8 +231,9 @@ func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout
 	}
 
 	if conf.CharSet == "" {
-		conf.CharSet = default_char_set
+		conf.CharSet = defaultCharSet
 	}
+
 	constrs := make([]string, 0, len(conf.Addrs))
 	for _, host := range conf.Addrs {
 		if host != "" {
@@ -245,7 +254,5 @@ func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout
 		}
 	}
 
-	//log.Debug("connstr %v", constrs)
 	return constrs, nil
 }
-

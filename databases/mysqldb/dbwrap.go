@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"errors"
 	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/pc"
 	"reflect"
 	"strings"
 	"time"
@@ -106,16 +107,26 @@ func (db *DbWrap) Query(query string, args ...interface{}) (rs *sql.Rows, err er
 			break
 		}
 	}
+
+	if err != nil {
+		pc.Incr(db.pcDbReadAllFail(), 1)
+	}
 	return
 }
 
 func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err error) {
 	st := time.Now()
+	pcKey := db.pcDbRead()
+
 	defer func() {
 		cost := time.Now().Sub(st)
+		pc.Cost(pcKey, cost)
 		if err == nil && cost > time.Duration(1)*time.Second {
-			costMs := cost / time.Millisecond
-			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, costMs, db.host, err)
+			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, cost/time.Millisecond, db.host, err)
+		}
+
+		if err != nil {
+			pc.CostFail(pcKey, 1)
 		}
 	}()
 
@@ -142,11 +153,16 @@ func (db *DbWrap) Exec(query string, args ...interface{}) (r sql.Result, err err
 func (db *DbWrap) ExecContext(ctx context.Context, query string, args ...interface{}) (r sql.Result, err error) {
 	targetDb := db
 	st := time.Now()
+	pcKey := db.pcDbWrite()
 	defer func() {
 		cost := time.Now().Sub(st)
+		pc.Cost(pcKey, cost)
 		if err == nil && cost > time.Duration(1)*time.Second {
-			costMs := cost / time.Millisecond
-			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, costMs, targetDb.host, err)
+			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, cost/time.Millisecond, targetDb.host, err)
+		}
+
+		if err != nil {
+			pc.CostFail(pcKey, 1)
 		}
 	}()
 
@@ -163,12 +179,17 @@ type TransactionExec func(ctx context.Context, tx *sql.Tx) (sql.Result, error)
 
 func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result, err error) {
 	targetDb := db
+	pcKey := db.pcDbTransaction()
 	st := time.Now()
 	defer func() {
 		cost := time.Now().Sub(st)
+		pc.Cost(pcKey, cost)
 		if err == nil && cost > time.Duration(1)*time.Second {
-			costMs := cost / time.Millisecond
-			log.Debug("MYSQL_SLOW_QUERY", "transaction=%v,cost=%d,host=%s", getFunctionName(transactionExec), costMs, targetDb.host)
+			log.Debug("MYSQL_SLOW_QUERY", "transaction=%v,cost=%d,host=%s", getFunctionName(transactionExec), cost / time.Millisecond, targetDb.host)
+		}
+
+		if err != nil {
+			pc.CostFail(pcKey, 1)
 		}
 	}()
 

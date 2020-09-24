@@ -6,6 +6,8 @@
 package utls
 
 import (
+	"net"
+	"net/url"
 	"time"
 )
 
@@ -110,4 +112,23 @@ func Sleep(millisecond int64) {
 
 func Duration(d int64) time.Duration {
 	return time.Duration(d)
+}
+
+func IsTimeoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch err := err.(type) {
+	case *url.Error:
+		if err, ok := err.Err.(net.Error); ok && err.Timeout() {
+			return true
+		}
+	case net.Error:
+		if err.Timeout() {
+			return true
+		}
+	default:
+	}
+
+	return false
 }
