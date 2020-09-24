@@ -27,24 +27,27 @@ const (
 	defaultShardCount    = 1024
 	DefaultSendCountOnce = 35
 
-	GoProjectsGoroutineNum  = "go_projects_goroutine_num"
+	defaultWorkerCount      = 512000
+	defaultCostHandlerCount = 2
+
+	GoProjectsGoroutineNum = "go_projects_goroutine_num"
 )
 
 var (
-	closeOnce sync.Once
-	initOnce sync.Once
-	stop = make(chan bool)
-	kMap cMap.ConcurrentMap
-	updaterLock sync.RWMutex
-	_updater updater
+	closeOnce         sync.Once
+	initOnce          sync.Once
+	stop              = make(chan bool)
+	kMap              cMap.ConcurrentMap
+	updaterLock       sync.RWMutex
+	_updater          updater
 	suffixDeciderLock sync.RWMutex
-	suffixDecider DecideSuffix
-	costTimerC chan *costTimer
-	perfCounterC chan *pcReq
-	mRegistry = metrics.NewRegistry()
-	closed int32 = 0
+	suffixDecider     DecideSuffix
+	costTimerC        chan *costTimer
+	perfCounterC      chan *pcReq
+	mRegistry               = metrics.NewRegistry()
+	closed            int32 = 0
 
-	target = "http://127.0.0.1:1988/v1/push" // falcon-agent api
+	falconAgentUrl = "http://127.0.0.1:1988/v1/push"
 )
 
 type DecideSuffix func(key string) string
@@ -60,6 +63,11 @@ type costTimer struct {
 	Cost time.Duration
 }
 
+func init() {
+	cMap.SHARD_COUNT = defaultShardCount
+	kMap = cMap.New()
+}
+
 func Init() {
 	InitPerfCounter("", nil, []string{})
 }
@@ -69,20 +77,26 @@ func InitPerfCounter(tar string, upd updater, initKeys []string) {
 		return ""
 	}
 	initOnce.Do(func() {
-		initPerfCounter(tar, upd, initKeys, decideSuffix)
+		initPerfCounter(tar, upd, initKeys, decideSuffix, defaultWorkerCount, defaultCostHandlerCount)
 	})
 	SetSuffixDecider(decideSuffix)
 	SetUpdater(upd)
 }
 
-func initPerfCounter(tar string, upd updater, initKeys []string, decideSuffix DecideSuffix) {
-	workerCount := 400000
-	costHandlerCount := 2
+func initPerfCounter(tar string, upd updater, initKeys []string, decideSuffix DecideSuffix, workerCount, costHandlerCount int) {
+	if workerCount < defaultWorkerCount {
+		workerCount = defaultWorkerCount
+	}
+
+	if costHandlerCount <= defaultCostHandlerCount {
+		costHandlerCount = defaultCostHandlerCount
+	}
 
 	costTimerC = make(chan *costTimer, workerCount)
 	perfCounterC = make(chan *pcReq, workerCount)
+
 	if tar != "" {
-		target = tar
+		falconAgentUrl = tar
 	}
 
 	updaterLock.Lock()
@@ -319,20 +333,22 @@ func report() {
 func sendPcReport(send interface{}) {
 	paramsBytes, err := utls.Marshal(send)
 	if err != nil {
-		dlog.Error("make json fail,send=%v,err=%s", send, err)
+		dlog.Error("json marshal fail,send=%v,err=%s", send, err)
 		return
 	}
-	paramsStr := string(paramsBytes)
 
-	contentReader := bytes.NewReader(paramsBytes)
-	req, _ := http.NewRequest("POST", target, contentReader)
+	req, _ := http.NewRequest("POST", falconAgentUrl, bytes.NewReader(paramsBytes))
 	req.Header.Set("Content-Type", "application/json")
+
 	client := &http.Client{}
+
 	pcReportSt := time.Now()
 	resp, err := client.Do(req)
 	pcReportCost := time.Now().Sub(pcReportSt) / time.Millisecond
-	bodyStr := ""
-	httpStatus := 0
+
+	var bodyStr string
+	var httpStatus int
+
 	if resp != nil {
 		httpStatus = resp.StatusCode
 		body := make([]byte, resp.ContentLength)
@@ -342,10 +358,11 @@ func sendPcReport(send interface{}) {
 			bodyStr = string(body[:n])
 		}
 	}
+
 	if err != nil {
-		dlog.Error("report perfCounter fail,params=%s,status=%d,body=%s,err=%s,reportCost=%d", paramsStr, httpStatus, bodyStr, err, pcReportCost)
+		dlog.Error("report perfCounter fail,params=%s,status=%d,body=%s,err=%s,reportCost=%d", string(paramsBytes), httpStatus, bodyStr, err, pcReportCost)
 	} else {
-		dlog.Debug("report perfCounter ok,params=%s,status=%d,body=%s,reportCost=%d", paramsStr, httpStatus, bodyStr, pcReportCost)
+		dlog.Debug("report perfCounter ok,params=%s,status=%d,body=%s,reportCost=%d", string(paramsBytes), httpStatus, bodyStr, pcReportCost)
 	}
 }
 
@@ -353,7 +370,6 @@ func ClosePerfCounter() {
 	closeOnce.Do(func() {
 		atomic.AddInt32(&closed, 1)
 		close(stop)
-		//go func() { gpool.Close() }() //cause data race
 	})
 }
 
