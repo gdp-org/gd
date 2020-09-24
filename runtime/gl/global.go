@@ -119,7 +119,7 @@ func GetCurrentGlData() map[string]interface{} {
 	}
 
 	for k, v := range gl {
-		kStr := fmt.Sprintf("%v", k)
+		kStr := fmt.Sprintf( "%v", k)
 		if kStr == ClientIp || kStr == Tag || kStr == LogId {
 			continue
 		}

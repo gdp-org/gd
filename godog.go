@@ -12,6 +12,7 @@ import (
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/runtime/helper"
+	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
 	"gopkg.in/ini.v1"
@@ -83,6 +84,9 @@ func (e *Engine) Run() error {
 		return err
 	}
 
+	pc.Init()
+	defer pc.ClosePerfCounter()
+
 	// init stat
 	enable := e.Config("Log", "stat").MustBool(false)
 	if enable {
@@ -95,6 +99,7 @@ func (e *Engine) Run() error {
 	if httpPort == 0 {
 		dlog.Info("Hasn't http server port")
 	} else {
+		pc.SetRunPort(httpPort)
 		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
 		if err = e.HttpServer.Run(); err != nil {
 			dlog.Error("Http server occur error in running application, error = %s", err.Error())

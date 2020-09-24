@@ -32,10 +32,10 @@ require (
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
-	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6 // indirect
+	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/prometheus/client_golang v1.7.1 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4 // indirect
