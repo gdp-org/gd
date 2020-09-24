@@ -1,3 +1,7 @@
+/**
+ * Copyright 2020 gd Author. All rights reserved.
+ * Author: Chuck1024
+ */
 package gr
 
 import (
