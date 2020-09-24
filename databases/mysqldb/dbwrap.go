@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 mysqldb Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -20,7 +20,15 @@ import (
 )
 
 const (
-	default_db_retry = 1
+	defaultDbRetry = 1
+
+	PcMysqlReadFail     = "mysql_read_fail"
+	PcMysqlReadAllFail  = "mysql_read_all_fail"
+	PcMysqlWriteAllFail = "mysql_write_all_fail"
+	PcMysqlWriteFail    = "mysql_write_fail"
+	PcMysqlRead         = "mysql_read"
+	PcMysqlWrite        = "mysql_write"
+	PcMysqlTransaction  = "mysql_transaction"
 )
 
 type DbWrap struct {
@@ -34,7 +42,7 @@ type DbWrap struct {
 }
 
 func NewDbWrapped(host string, db *sql.DB, mysqlClient *MysqlClient, timeout time.Duration) *DbWrap {
-	return NewDbWrappedRetry(host, db, mysqlClient, timeout, default_db_retry)
+	return NewDbWrappedRetry(host, db, mysqlClient, timeout, defaultDbRetry)
 }
 
 func NewDbWrappedRetry(host string, db *sql.DB, mysqlClient *MysqlClient, timeout time.Duration, retry int) *DbWrap {
@@ -53,6 +61,22 @@ func NewDbWrappedRetryProxy(host string, db *sql.DB, mysqlClient *MysqlClient, t
 		retry:       retry,
 	}
 	return w
+}
+
+func (db *DbWrap) pcDbReadAllFail() string {
+	return PcMysqlReadAllFail + ",db=" + db.host
+}
+
+func (db *DbWrap) pcDbRead() string {
+	return PcMysqlRead + ",db=" + db.host
+}
+
+func (db *DbWrap) pcDbWrite() string {
+	return PcMysqlWrite + ",db=" + db.host
+}
+
+func (db *DbWrap) pcDbTransaction() string {
+	return PcMysqlTransaction + ",db=" + db.host
 }
 
 func (db *DbWrap) Query(query string, args ...interface{}) (rs *sql.Rows, err error) {
@@ -86,7 +110,6 @@ func (db *DbWrap) Query(query string, args ...interface{}) (rs *sql.Rows, err er
 }
 
 func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err error) {
-
 	st := time.Now()
 	defer func() {
 		cost := time.Now().Sub(st)
@@ -96,15 +119,14 @@ func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err 
 		}
 	}()
 
-	contxt, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	rs, err = db.DB.QueryContext(contxt, query, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	rs, err = db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		if cancel != nil {
 			defer cancel()
 		}
-	} else {
-		//no worries, cancel will be called when rs.Close
 	}
+
 	return
 }
 
@@ -117,7 +139,7 @@ func (db *DbWrap) Exec(query string, args ...interface{}) (r sql.Result, err err
 	return db.ExecContext(nil, query, args...)
 }
 
-func (db *DbWrap) ExecContext(contxt context.Context, query string, args ...interface{}) (r sql.Result, err error) {
+func (db *DbWrap) ExecContext(ctx context.Context, query string, args ...interface{}) (r sql.Result, err error) {
 	targetDb := db
 	st := time.Now()
 	defer func() {
@@ -128,16 +150,16 @@ func (db *DbWrap) ExecContext(contxt context.Context, query string, args ...inte
 		}
 	}()
 
-	if contxt == nil {
+	if ctx == nil {
 		ct, cancel := context.WithTimeout(context.Background(), db.Timeout)
-		contxt = ct
+		ctx = ct
 		defer cancel()
 	}
-	r, err = targetDb.DB.ExecContext(contxt, query, args...)
+	r, err = targetDb.DB.ExecContext(ctx, query, args...)
 	return
 }
 
-type TransactionExec func(contxt context.Context, tx *sql.Tx) (sql.Result, error)
+type TransactionExec func(ctx context.Context, tx *sql.Tx) (sql.Result, error)
 
 func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result, err error) {
 	targetDb := db
@@ -150,11 +172,11 @@ func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result
 		}
 	}()
 
-	contxt, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
 
 	var tx *sql.Tx
-	tx, err = targetDb.DB.BeginTx(contxt, nil)
+	tx, err = targetDb.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return
 	}
@@ -165,7 +187,7 @@ func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result
 			tx.Rollback()
 		}
 	}()
-	r, err = transactionExec(contxt, tx)
+	r, err = transactionExec(ctx, tx)
 
 	return
 }

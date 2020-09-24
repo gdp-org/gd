@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 mysqldb Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/pc"
 	"gopkg.in/ini.v1"
 	"math/rand"
 	"reflect"
@@ -22,6 +23,8 @@ import (
 
 const (
 	defaultDbConf = "db.ini"
+
+	PcTransactionInsertDup = "transaction_insert_dup"
 )
 
 type MysqlClient struct {
@@ -36,12 +39,6 @@ type MysqlClient struct {
 	closeOnce sync.Once
 }
 
-/**
-try init db with configs:
-	1、try struct config
-	2、try loaded ini.File
-	3、try ini file path
-*/
 func (c *MysqlClient) Start() error {
 	var err error
 	c.startOnce.Do(func() {
@@ -75,23 +72,22 @@ func (c *MysqlClient) GetReadDbRandom() (*DbWrap, error) {
 }
 
 func (c *MysqlClient) getReadDbRandomly() (*DbWrap, error) {
-	_db_read := c.getReadDbs()
-	max := len(_db_read)
-	if max <= 0 {
+	dbRead := c.getReadDbs()
+
+	if len(dbRead) <= 0 {
 		return nil, fmt.Errorf("no read db found")
 	}
-	readDbIdx := rand.Intn(max)
-	readDb := _db_read[readDbIdx]
+
+	readDb := dbRead[rand.Intn(len(dbRead))]
 	return readDb, nil
 }
 
 func (c *MysqlClient) getWriteDbs() *DbWrap {
-	max := len(c.dbWrite)
-	if max <= 1 {
+	if len(c.dbWrite) <= 1 {
 		return c.dbWrite[0]
 	}
 
-	idx := rand.Intn(max)
+	idx := rand.Intn(len(c.dbWrite))
 	return c.dbWrite[idx]
 }
 
@@ -111,19 +107,22 @@ func getHostFromConnStr(connStr string) (string, error) {
 		err := fmt.Errorf("not find host in db conn str:%s,fi=%d,ei=%d", connStr, fi, ei)
 		return "", err
 	}
+
 	host := connStr[fi:ei]
 	if host == "" || host == ":" {
 		return "", fmt.Errorf("host not found %s", connStr)
 	}
+
 	log.Debug("find host in db conn str:%s for %s", host, connStr)
 	return host, nil
 }
 
 func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []string, maxOpen int, maxIdle int, ctxSuffix string, timeout time.Duration, masterProxy, slaveProxy bool) error {
-	//log.Debug("open master=%v,slave=%v", connMasters, connSlaves)
+	log.Debug("open master=%v,slave=%v", connMasters, connSlaves)
 	if len(connMasters) <= 0 {
 		return fmt.Errorf("masters empty,master=%v,slave=%v", connMasters, connSlaves)
 	}
+
 	var dbWrites []*DbWrap
 	for _, connMaster := range connMasters {
 		db, err := sql.Open("mysql", connMaster)
@@ -136,7 +135,7 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 		if err != nil {
 			return err
 		}
-		dbw := NewDbWrappedRetryProxy(hst, db, c, timeout, default_db_retry, masterProxy)
+		dbw := NewDbWrappedRetryProxy(hst, db, c, timeout, defaultDbRetry, masterProxy)
 		dbw.ctxSuffix = ctxSuffix
 		dbWrites = append(dbWrites, dbw)
 	}
@@ -145,41 +144,42 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 	if connSlaves == nil || len(connSlaves) <= 0 {
 		log.Info("read slaves empty, use master for read")
 		c.dbRead = c.dbWrite
-	} else {
-		_db_read := make([]*DbWrap, len(connSlaves))
-		for idx, rs := range connSlaves {
-			//log.Info("open slave db %s", rs)
-			d, err := sql.Open("mysql", rs)
-			if err != nil {
-				return err
-			}
-			hst, err := getHostFromConnStr(rs)
-			if err != nil {
-				return err
-			}
-			dbr := NewDbWrappedRetryProxy(hst, d, c, timeout, default_db_retry, slaveProxy)
-			dbr.SetMaxOpenConns(maxOpen)
-			dbr.SetMaxIdleConns(maxIdle)
-			dbr.ctxSuffix = ctxSuffix
-			_db_read[idx] = dbr
-		}
-		c.dbRead = _db_read
+		return nil
 	}
+
+	dbRead := make([]*DbWrap, len(connSlaves))
+	for idx, rs := range connSlaves {
+		d, err := sql.Open("mysql", rs)
+		if err != nil {
+			return err
+		}
+		hst, err := getHostFromConnStr(rs)
+		if err != nil {
+			return err
+		}
+		dbr := NewDbWrappedRetryProxy(hst, d, c, timeout, defaultDbRetry, slaveProxy)
+		dbr.SetMaxOpenConns(maxOpen)
+		dbr.SetMaxIdleConns(maxIdle)
+		dbr.ctxSuffix = ctxSuffix
+		dbRead[idx] = dbr
+	}
+	c.dbRead = dbRead
 
 	return nil
 }
 
 func (c *MysqlClient) closeMainDbs() {
-	_db_read := c.dbRead
-	_db_write := c.dbWrite
-	for _, dbw := range _db_write {
+	dbRead := c.dbRead
+	dbWrite := c.dbWrite
+	for _, dbw := range dbWrite {
 		err := dbw.Close()
 		if err != nil {
 			log.Warn("write close err, %v", err)
 		}
 	}
-	if _db_read != nil {
-		for _, r := range _db_read {
+
+	if dbRead != nil {
+		for _, r := range dbRead {
 			err := r.Close()
 			if err != nil {
 				log.Warn("read close err, %v", err)
@@ -201,12 +201,11 @@ func (c *MysqlClient) GetCount(query string, args ...interface{}) (int64, error)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
-		} else {
-			return 0, err
 		}
-	} else {
-		return total, nil
+		return 0, err
 	}
+
+	return total, nil
 }
 
 func (c *MysqlClient) queryList(query string, args ...interface{}) (*sql.Rows, error) {
@@ -238,8 +237,8 @@ func (c *MysqlClient) queryList(query string, args ...interface{}) (*sql.Rows, e
 			} else {
 				errMsg := err.Error()
 				if strings.Contains(errMsg, "getsockopt") {
-					errt := reflect.TypeOf(err)
-					log.Error("SOCKOPT_FAIL", "query err,type=%v,err=%v", errt, err)
+					errT := reflect.TypeOf(err)
+					log.Error("SOCKOPT_FAIL", "query err,type=%v,err=%v", errT, err)
 					continue
 				}
 			}
@@ -282,8 +281,8 @@ func (c *MysqlClient) queryRow(query string, args ...interface{}) (*Row, error) 
 			} else {
 				errMsg := err.Error()
 				if strings.Contains(errMsg, "getsockopt") {
-					errt := reflect.TypeOf(err)
-					log.Error("SOCKOPT_FAIL", "query err,type=%v,err=%v", errt, err)
+					errT := reflect.TypeOf(err)
+					log.Error("SOCKOPT_FAIL", "query err,type=%v,err=%v", errT, err)
 					continue
 				}
 			}
@@ -320,12 +319,10 @@ func (c *MysqlClient) Query(dataType interface{}, query string, args ...interfac
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
-		} else {
-			return nil, err
 		}
-	} else {
-		return dataObj, nil
+		return nil, err
 	}
+	return dataObj, nil
 }
 
 func (c *MysqlClient) QueryList(dataType interface{}, query string, args ...interface{}) ([]interface{}, error) {
@@ -420,6 +417,7 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 		}
 		dests = append(dests, f.Interface())
 	}
+
 	fieldsNames := strings.Join(fieldNamesArray, ",")
 	lpk := len(primaryKeys)
 	pki := 0
@@ -436,10 +434,10 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 	result, err := writeDb.Exec("update `"+tableName+"` set "+fieldsNames+" where "+whereFields, dests...)
 	if err != nil {
 		return err
-	} else {
-		log.Debug("update table=%s,data=%v,ret=%v,err=%v", tableName, d, result, err)
-		return nil
 	}
+
+	log.Debug("update table=%s,data=%v,ret=%v,err=%v", tableName, d, result, err)
+	return nil
 }
 
 // d must be a struct pointer
@@ -530,13 +528,14 @@ func (c *MysqlClient) addEscapeAutoIncr(tableName string, d interface{}, ondupUp
 		}
 		sqlStr = sqlStr + " ON DUPLICATE KEY UPDATE " + setStr
 	}
+
 	result, err := writeDb.Exec(sqlStr, dests...)
 	if err != nil {
 		return nil, err
-	} else {
-		log.Debug("insert table=%s, data=%v,ret=%v,err=%v", tableName, d, result, err)
-		return result, nil
 	}
+
+	log.Debug("insert table=%s, data=%v,ret=%v,err=%v", tableName, d, result, err)
+	return result, nil
 }
 
 func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, primaryKeys []string, updateFields []string, useSqlOnDup bool) (int64, error) {
@@ -634,7 +633,7 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 					//1062 is duplicate entry error
 					if mysqlError.Number == 1062 {
 						log.Debug("InsertOrUpdateOnDup no use SqlOnDup, occur duplicate entry error, error:%v", mysqlError)
-
+						pc.Incr(PcTransactionInsertDup, 1)
 						uRows, err = c.Execute(updateSql, updateSqlFieldValues...)
 					}
 				}
@@ -646,7 +645,7 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 }
 
 /*
-	codition value supports limit kinds of slice:[]int64,[]string,[]interface
+	condition value supports limit kinds of slice:[]int64,[]string,[]interface
 */
 func (c *MysqlClient) Delete(tableName string, condition map[string]interface{}) (int64, error) {
 	escapedName := MysqlEscapeString(tableName)

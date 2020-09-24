@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 mysqldb Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -11,10 +11,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	easyerrors "github.com/go-errors/errors"
+	"github.com/chuck1024/gd/utls"
 	"net"
 	"net/url"
-	"os"
 	"reflect"
 	"strings"
 
@@ -54,7 +53,7 @@ func GetFieldsName(v interface{}) (res string, errRet error) {
 }
 
 func GetFieldsNameArray(v interface{}) (res []string, errRet error) {
-	WithRecover(
+	utls.WithRecover(
 		func() {
 			res, errRet = _getFieldsNameArray(v)
 		},
@@ -74,7 +73,7 @@ func _getFieldsNameArray(v interface{}) (res []string, errRet error) {
 		errRet = fmt.Errorf("input cannot be nil")
 		return
 	}
-	// we need to get the struct value if it is a pointer
+	
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -88,11 +87,11 @@ func _getFieldsNameArray(v interface{}) (res []string, errRet error) {
 		tf := typ.Field(i)
 		mysqlFieldName := tf.Tag.Get("mysqlField")
 		if mysqlFieldName == "" {
-			pbtags := strings.Split(tf.Tag.Get("protobuf"), ",")
-			for _, pbtag := range pbtags {
-				nametag := strings.Split(pbtag, "=")
-				if len(nametag) > 1 && nametag[0] == "name" && nametag[1] != "" {
-					mysqlFieldName = nametag[1]
+			pbTags := strings.Split(tf.Tag.Get("protobuf"), ",")
+			for _, pbTag := range pbTags {
+				nameTag := strings.Split(pbTag, "=")
+				if len(nameTag) > 1 && nameTag[0] == "name" && nameTag[1] != "" {
+					mysqlFieldName = nameTag[1]
 					break
 				}
 			}
@@ -145,37 +144,38 @@ func GetFields(v interface{}) (res []interface{}, errRet error) {
 
 func buildWhereSql(data map[string]interface{}) (string, []interface{}) {
 	placeholder := make([]string, 0, len(data))
-	valholder := []interface{}{}
+	valHolder := make([]interface{}, 0)
+
 	for idx, v := range data {
 		k := MysqlEscapeString(idx)
 		switch val := v.(type) {
 		case []interface{}:
-			valholder = append(valholder, val...)
+			valHolder = append(valHolder, val...)
 			str := fmt.Sprintf(" `%s` in %s ", k, makeSqlPlaceHolderForIn(val))
 			placeholder = append(placeholder, str)
 		case []int64:
-			temvarholder := make([]interface{}, 0, len(val))
+			temvarHolder := make([]interface{}, 0, len(val))
 			for _, v := range val {
-				temvarholder = append(temvarholder, v)
+				temvarHolder = append(temvarHolder, v)
 			}
-			valholder = append(valholder, temvarholder...)
-			str := fmt.Sprintf(" `%s` in %s ", k, makeSqlPlaceHolderForIn(temvarholder))
+			valHolder = append(valHolder, temvarHolder...)
+			str := fmt.Sprintf(" `%s` in %s ", k, makeSqlPlaceHolderForIn(temvarHolder))
 			placeholder = append(placeholder, str)
 		case []string:
-			temvarholder := make([]interface{}, 0, len(val))
+			temvarHolder := make([]interface{}, 0, len(val))
 			for _, v := range val {
-				temvarholder = append(temvarholder, v)
+				temvarHolder = append(temvarHolder, v)
 			}
-			valholder = append(valholder, temvarholder...)
-			str := fmt.Sprintf(" `%s` in %s ", k, makeSqlPlaceHolderForIn(temvarholder))
+			valHolder = append(valHolder, temvarHolder...)
+			str := fmt.Sprintf(" `%s` in %s ", k, makeSqlPlaceHolderForIn(temvarHolder))
 			placeholder = append(placeholder, str)
 		default:
-			valholder = append(valholder, val)
+			valHolder = append(valHolder, val)
 			str := fmt.Sprintf(" `%s` = ? ", k)
 			placeholder = append(placeholder, str)
 		}
 	}
-	return strings.Join(placeholder, "AND"), valholder
+	return strings.Join(placeholder, "AND"), valHolder
 }
 
 func makeSqlPlaceHolderForIn(vals []interface{}) string {
@@ -193,7 +193,7 @@ func makeSqlPlaceHolderForIn(vals []interface{}) string {
 type SqlCondition struct {
 	tableprefix string
 	conds       []*condition
-	order       []*orderby
+	order       []*orderBy
 	offset      int64
 	limit       int64
 }
@@ -204,7 +204,7 @@ type condition struct {
 	value   interface{}
 }
 
-type orderby struct {
+type orderBy struct {
 	key  string
 	desc bool
 }
@@ -212,13 +212,13 @@ type orderby struct {
 func NewSqlCondition() *SqlCondition {
 	return &SqlCondition{
 		conds: []*condition{},
-		order: []*orderby{},
+		order: []*orderBy{},
 		limit: 300,
 	}
 }
 
-func (c *SqlCondition) WithTablePrefix(tableprefix string) *SqlCondition {
-	c.tableprefix = MysqlEscapeString(tableprefix)
+func (c *SqlCondition) WithTablePrefix(tablePrefix string) *SqlCondition {
+	c.tableprefix = MysqlEscapeString(tablePrefix)
 	return c
 }
 
@@ -244,7 +244,7 @@ func (c *SqlCondition) WithOrder(key string, isdesc bool) *SqlCondition {
 	key = strings.Trim(key, " ")
 	key = "`" + key + "`"
 	if key != "" {
-		c.order = append(c.order, &orderby{
+		c.order = append(c.order, &orderBy{
 			key:  MysqlEscapeString(key),
 			desc: isdesc,
 		})
@@ -267,10 +267,10 @@ func (c *SqlCondition) WithOffset(offset int64) *SqlCondition {
 }
 
 /*
-	Valid SqlCondition,use before buildsql
+	Valid SqlCondition,use before buildSql
 */
-func (c *SqlCondition) Valid(isget bool) error {
-	if !isget {
+func (c *SqlCondition) Valid(isGet bool) error {
+	if !isGet {
 		if len(c.conds) == 0 {
 			return errors.New("cant alter all table record once")
 		}
@@ -284,8 +284,8 @@ func (c *SqlCondition) Valid(isget bool) error {
 
 /*
 	returns:
-	@sqlstr string      contains all contents after(include) WHERE
-    @vars   []interface	varsholder
+	@sqlStr string      contains all contents after(include) WHERE
+    @vars   []interface	varsHolder
 */
 func (c *SqlCondition) BuildWhereSql() (string, []interface{}) {
 	_, str, vars := c.BuildShardWhereSql("")
@@ -295,41 +295,40 @@ func (c *SqlCondition) BuildWhereSql() (string, []interface{}) {
 /*
 	Need to call WithTablePrefix() first
 	returns:
-	@tablename	string	tablename
-	@sqlstr string      contains all contents after(include) WHERE
-    @vars	[]interface	varsholder
+	@tableName	string	tableName
+	@sqlStr string      contains all contents after(include) WHERE
+    @vars	[]interface	varsHolder
 */
-func (c *SqlCondition) BuildShardWhereSql(shardkey string) (string, string, []interface{}) {
-	//build table name
-	tablename := MysqlEscapeString(c.tableprefix + shardkey)
-	//build conditon str
-	valholder := []interface{}{}
+func (c *SqlCondition) BuildShardWhereSql(shardKey string) (string, string, []interface{}) {
+	tableName := MysqlEscapeString(c.tableprefix + shardKey)
+	valHolder := make([]interface{}, 0)
 	placeholder := make([]string, 0, len(c.conds))
+
 	for _, v := range c.conds {
 		k := v.key
 		switch val := v.value.(type) {
 		case []interface{}:
-			valholder = append(valholder, val...)
+			valHolder = append(valHolder, val...)
 			str := fmt.Sprintf(" `%s` IN %s", k, makeSqlPlaceHolderForIn(val))
 			placeholder = append(placeholder, str)
 		case []int64:
-			temvarholder := make([]interface{}, 0, len(val))
+			temvarHolder := make([]interface{}, 0, len(val))
 			for _, v := range val {
-				temvarholder = append(temvarholder, v)
+				temvarHolder = append(temvarHolder, v)
 			}
-			valholder = append(valholder, temvarholder...)
-			str := fmt.Sprintf(" `%s` IN %s", k, makeSqlPlaceHolderForIn(temvarholder))
+			valHolder = append(valHolder, temvarHolder...)
+			str := fmt.Sprintf(" `%s` IN %s", k, makeSqlPlaceHolderForIn(temvarHolder))
 			placeholder = append(placeholder, str)
 		case []string:
-			temvarholder := make([]interface{}, 0, len(val))
+			temvarHolder := make([]interface{}, 0, len(val))
 			for _, v := range val {
-				temvarholder = append(temvarholder, v)
+				temvarHolder = append(temvarHolder, v)
 			}
-			valholder = append(valholder, temvarholder...)
-			str := fmt.Sprintf(" `%s` IN %s", k, makeSqlPlaceHolderForIn(temvarholder))
+			valHolder = append(valHolder, temvarHolder...)
+			str := fmt.Sprintf(" `%s` IN %s", k, makeSqlPlaceHolderForIn(temvarHolder))
 			placeholder = append(placeholder, str)
 		default:
-			valholder = append(valholder, val)
+			valHolder = append(valHolder, val)
 			if v.compare == "" {
 				v.compare = "="
 			}
@@ -337,11 +336,11 @@ func (c *SqlCondition) BuildShardWhereSql(shardkey string) (string, string, []in
 			placeholder = append(placeholder, str)
 		}
 	}
-	condstr := strings.Join(placeholder, " AND")
+	condStr := strings.Join(placeholder, " AND")
 	//build order by
 	if len(c.order) != 0 {
-		orderholder := make([]string, 0, len(c.order))
-		condstr = condstr + " ORDER BY "
+		orderHolder := make([]string, 0, len(c.order))
+		condStr = condStr + " ORDER BY "
 		for _, v := range c.order {
 			buffer := bytes.NewBufferString(v.key)
 			if v.desc {
@@ -349,23 +348,25 @@ func (c *SqlCondition) BuildShardWhereSql(shardkey string) (string, string, []in
 			} else {
 				buffer.WriteString(" ASC")
 			}
-			orderholder = append(orderholder, buffer.String())
+			orderHolder = append(orderHolder, buffer.String())
 		}
-		condstr = condstr + strings.Join(orderholder, ",")
+		condStr = condStr + strings.Join(orderHolder, ",")
 	}
+
 	//build limit
 	if c.limit > 0 {
-		condstr = condstr + " LIMIT ?"
+		condStr = condStr + " LIMIT ?"
 		if c.offset > 0 {
-			condstr = condstr + ",?"
-			valholder = append(valholder, interface{}(c.offset))
+			condStr = condStr + ",?"
+			valHolder = append(valHolder, interface{}(c.offset))
 		}
-		valholder = append(valholder, interface{}(c.limit))
+		valHolder = append(valHolder, interface{}(c.limit))
 	}
-	if condstr != "" && !strings.HasPrefix(condstr, " LIMIT ?") {
-		condstr = " WHERE" + condstr
+
+	if condStr != "" && !strings.HasPrefix(condStr, " LIMIT ?") {
+		condStr = " WHERE" + condStr
 	}
-	return tablename, condstr, valholder
+	return tableName, condStr, valHolder
 }
 
 func IsTimeoutError(err error) bool {
@@ -385,24 +386,6 @@ func IsTimeoutError(err error) bool {
 	}
 
 	return false
-}
-
-func WithRecover(fn func(), errHandler func(interface{})) (err interface{}) {
-	defer func() {
-		if err = recover(); err != nil {
-			wraped := easyerrors.Wrap(err, 2)
-			stacktrace := wraped.ErrorStack()
-			//string that starts with "panic_recovered: " in stderr will trigger
-			//xbox sms GO_CORE alert
-			fmt.Fprintln(os.Stderr, "panic_recovered:", stacktrace)
-			if errHandler != nil {
-				errHandler(err)
-			}
-		}
-	}()
-
-	fn()
-	return
 }
 
 func MysqlEscapeString(source string) string {
@@ -443,28 +426,24 @@ func MysqlEscapeString(source string) string {
 	return string(desc[0:j])
 }
 
-// GetDatastructFields, 获取 datastructs 包中的 fields，并以 slice 形式返回
-// data 参数为要获取 field 的实例指针
 func GetDataStructFields(data interface{}) ([]string, error) {
 	typeOf := reflect.TypeOf(data).Elem()
 	numField := typeOf.NumField()
 	fieldSlice := make([]string, 0, numField)
 	for i := 0; i < numField; i++ {
-		tfield := typeOf.Field(i)
-		if len(tfield.PkgPath) > 0 {
-			return nil, fmt.Errorf("field %s is not public", tfield.Name)
+		tField := typeOf.Field(i)
+		if len(tField.PkgPath) > 0 {
+			return nil, fmt.Errorf("field %s is not public", tField.Name)
 		}
-		mysqlFieldName := tfield.Tag.Get("mysqlField")
+		mysqlFieldName := tField.Tag.Get("mysqlField")
 		if len(mysqlFieldName) == 0 {
-			return nil, fmt.Errorf("field %s has no mysqlField tag", tfield.Name)
+			return nil, fmt.Errorf("field %s has no mysqlField tag", tField.Name)
 		}
 		fieldSlice = append(fieldSlice, "`"+mysqlFieldName+"`")
 	}
 	return fieldSlice, nil
 }
 
-// GetDatastructValues, 获取 datastructs 包中的 values, 并以 slice 形式返回
-// data 参数为要获取 field 的实例指针
 func GetDataStructValues(data interface{}) []driver.Value {
 	valueOf := reflect.ValueOf(data).Elem()
 	numField := reflect.TypeOf(data).Elem().NumField()
@@ -475,28 +454,26 @@ func GetDataStructValues(data interface{}) []driver.Value {
 	return valueSlice
 }
 
-// GetDatastructDests, 获取 datastructs 包中的存放空间，以 slice 形式返回
-// data 参数为要获取存放空间的实例指针
 func GetDataStructDests(data interface{}) ([]interface{}, error) {
 	typeOf := reflect.TypeOf(data).Elem()
 	valueOf := reflect.ValueOf(data).Elem()
 	numField := valueOf.NumField()
 	dests := make([]interface{}, 0, numField)
 	for i := 0; i < numField; i++ {
-		tfield := typeOf.Field(i)
-		if len(tfield.PkgPath) > 0 {
-			return nil, fmt.Errorf("field %s is not public", tfield.Name)
+		tField := typeOf.Field(i)
+		if len(tField.PkgPath) > 0 {
+			return nil, fmt.Errorf("field %s is not public", tField.Name)
 		}
-		mysqlFieldName := tfield.Tag.Get("mysqlField")
+		mysqlFieldName := tField.Tag.Get("mysqlField")
 		if len(mysqlFieldName) == 0 {
-			return nil, fmt.Errorf("field %s has no mysqlField tag", tfield.Name)
+			return nil, fmt.Errorf("field %s has no mysqlField tag", tField.Name)
 		}
 
-		vfield := valueOf.Field(i)
-		if vfield.CanAddr() {
-			dests = append(dests, vfield.Addr().Interface())
+		vField := valueOf.Field(i)
+		if vField.CanAddr() {
+			dests = append(dests, vField.Addr().Interface())
 		} else {
-			return nil, fmt.Errorf("%v can not be addressed", vfield)
+			return nil, fmt.Errorf("%v can not be addressed", vField)
 		}
 	}
 	return dests, nil
