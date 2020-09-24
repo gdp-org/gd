@@ -107,9 +107,9 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 		connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
 	}
 
-	ctxSuffix := f.Section("").Key("ctxSuffix").String()
+	glSuffix := f.Section("").Key("glSuffix").String()
 	to, _ := time.ParseDuration(timeout)
-	return c.initMainDbsMaxOpen(connMasters, connSlaves, maxOpen, maxIdle, ctxSuffix, to, masterProxy, slaveProxy)
+	return c.initMainDbsMaxOpen(connMasters, connSlaves, maxOpen, maxIdle, glSuffix, to, masterProxy, slaveProxy)
 }
 
 type CommonDbConf struct {
@@ -120,7 +120,7 @@ type CommonDbConf struct {
 	MaxOpen     int    // connect pool
 	MaxIdle     int    // max idle connect
 	MaxLifeTime int64  // connect life time
-	CtxSuffix   string
+	glSuffix    string
 	Master      *DbConnectConf
 	Slave       *DbConnectConf
 }
@@ -132,7 +132,7 @@ type DbConnectConf struct {
 	CharSet              string // default utf8mb4
 	ClientFoundRows      bool   // 对于update操作,若更改的字段值跟原来值相同,当clientFoundRows为false时,sql执行结果会返回0;当clientFoundRows为true,sql执行结果返回1
 	IsProxy              bool
-	EnableSqlSafeUpdates bool   // (safe update mode)，该模式不允许没有带WHERE条件的更新语句
+	EnableSqlSafeUpdates bool // (safe update mode)，该模式不允许没有带WHERE条件的更新语句
 }
 
 func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
@@ -191,7 +191,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 		return fmt.Errorf("init mysqldb invalid duration %v", readTimeout)
 	}
 
-	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbConf.CtxSuffix, to, dbConf.Master.IsProxy, slaveIsProxy)
+	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbConf.glSuffix, to, dbConf.Master.IsProxy, slaveIsProxy)
 }
 
 func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTimeout int64, dbname string) ([]string, error) {

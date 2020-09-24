@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	l              = sync.Mutex{}
-	logConfigFile  = "conf/log.xml"
-	defaultLogDir  = "log"
-	defaultFormat  = "%L	%D %T	%l	%I	%G	%M	%S"
+	l             = sync.Mutex{}
+	logConfigFile = "conf/log.xml"
+	defaultLogDir = "log"
+	defaultFormat = "%L	%D %T	%l	%I	%G	%M	%S"
 )
 
 type xmlLoggerConfig struct {

@@ -117,7 +117,7 @@ func getHostFromConnStr(connStr string) (string, error) {
 	return host, nil
 }
 
-func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []string, maxOpen int, maxIdle int, ctxSuffix string, timeout time.Duration, masterProxy, slaveProxy bool) error {
+func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []string, maxOpen int, maxIdle int, glSuffix string, timeout time.Duration, masterProxy, slaveProxy bool) error {
 	log.Debug("open master=%v,slave=%v", connMasters, connSlaves)
 	if len(connMasters) <= 0 {
 		return fmt.Errorf("masters empty,master=%v,slave=%v", connMasters, connSlaves)
@@ -136,7 +136,7 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 			return err
 		}
 		dbw := NewDbWrappedRetryProxy(hst, db, c, timeout, defaultDbRetry, masterProxy)
-		dbw.ctxSuffix = ctxSuffix
+		dbw.glSuffix = glSuffix
 		dbWrites = append(dbWrites, dbw)
 	}
 	c.dbWrite = dbWrites
@@ -160,7 +160,7 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 		dbr := NewDbWrappedRetryProxy(hst, d, c, timeout, defaultDbRetry, slaveProxy)
 		dbr.SetMaxOpenConns(maxOpen)
 		dbr.SetMaxIdleConns(maxIdle)
-		dbr.ctxSuffix = ctxSuffix
+		dbr.glSuffix = glSuffix
 		dbRead[idx] = dbr
 	}
 	c.dbRead = dbRead

@@ -306,4 +306,3 @@ func TestCondtion(t *testing.T) {
 		})
 	})
 }
-

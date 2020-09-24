@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 redisdb Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -11,6 +11,10 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gr"
+	"github.com/chuck1024/gd/runtime/pc"
+	"github.com/chuck1024/gd/utls"
 	"github.com/go-redis/redis"
 	"io"
 	"strings"
@@ -18,7 +22,27 @@ import (
 	"time"
 )
 
+const (
+	MaxGoroutinePoolSize = 5
+
+	MGetCostMax                 = 60
+	MSetCostMax                 = 60
+	MDelCostMax                 = 60
+	RedisClusterCommonCostMax   = 20
+	RedisClusterCmdNormal       = "redis_cluster_cmd_normal"
+	RedisClusterCmd             = "redis_cluster_cmd_%v"
+	RedisClusterCmdSlowCount    = "redis_cluster_%v_slow_count"
+	RedisClusterNormalSlowCount = "redis_cluster_common_slow_count"
+
+	glRedisClusterCall     = "redisCluster_call"
+	glRedisClusterCost     = "redisCluster_cost"
+	glRedisClusterCallFail = "redisCluster_call_fail"
+)
+
 type RedisClusterConf struct {
+	//cluster name
+	ClusterName string
+
 	//server address
 	Addrs []string
 
@@ -43,8 +67,6 @@ type RedisClusterConf struct {
 	MaxRedirects int
 }
 
-const MAX_GOROUTINE_POOL_SIZE = 5
-
 var ErrNil = errors.New("redis: nil returned")
 
 type RedisClusterCustomError string
@@ -52,6 +74,7 @@ type RedisClusterCustomError string
 func (e RedisClusterCustomError) Error() string { return string(e) }
 
 type RedisCluster struct {
+	clusterName   string
 	clusterClient *redis.ClusterClient
 	stop          chan bool
 }
@@ -143,6 +166,7 @@ func NewRedisCluster(clusterConf *RedisClusterConf) (*RedisCluster, error) {
 	}
 
 	ret := &RedisCluster{
+		clusterName:   clusterConf.ClusterName,
 		clusterClient: clusterClient,
 	}
 
@@ -170,9 +194,59 @@ func (r *RedisCluster) Close() error {
 	return nil
 }
 
+func reportPerf(clusterName string, cmdName string, sTime time.Time, err error, key interface{}) {
+	cost := time.Now().Sub(sTime)
+
+	if cmdName == "MGet" || cmdName == "MSet" || cmdName == "MDel" {
+		var slow bool
+		if cmdName == "MGet" && cost/time.Millisecond > MGetCostMax {
+			slow = true
+		} else if cmdName == "MSet" && cost/time.Millisecond > MSetCostMax {
+			slow = true
+		} else if cmdName == "MDel" && cost/time.Millisecond > MDelCostMax {
+			slow = true
+		}
+		if slow {
+			pc.Incr(fmt.Sprintf(RedisClusterCmdSlowCount, strings.ToLower(cmdName)), 1)
+			if cost/time.Millisecond > 200 {
+				log.Warn("redisCluster slow, cluster:%s, cmd:%v, key:%v, cost:%v", clusterName, cmdName, key, cost)
+			}
+		}
+		pcKey := fmt.Sprintf(RedisClusterCmd, strings.ToLower(cmdName))
+		pc.Cost(fmt.Sprintf("rediscluster,name=%s,cmd=%s", clusterName, pcKey), cost)
+	} else {
+		if cost/time.Millisecond > RedisClusterCommonCostMax {
+			pc.Incr(RedisClusterNormalSlowCount, 1)
+			if cost/time.Millisecond > 100 {
+				log.Warn("redisCluster slow, cluster:%s, cmd:%v, key:%v, cost:%v", clusterName, cmdName, key, cost)
+			}
+		}
+		pc.Cost(fmt.Sprintf("redisCluster,name=%s,cmd=%s", clusterName, RedisClusterCmdNormal), cost)
+	}
+
+	gl.Incr(glRedisClusterCall, 1)
+	gl.IncrCost(glRedisClusterCost, cost)
+
+	if log.IsEnabledFor(log.DEBUG) {
+		log.Debug("RedisCluster call, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost / time.Millisecond, err)
+	}
+
+	if err != nil && err != redis.Nil && err != ErrNil {
+		if strings.Index(err.Error(), "WRONGTYPE Operation") != -1 {
+			log.Info("RedisCluster call fail, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost / time.Millisecond, err)
+		} else {
+			pc.CostFail(fmt.Sprintf("rediscluster,name=%s", clusterName), 1)
+			gl.Incr(glRedisClusterCallFail, 1)
+			log.Warn("RedisCluster call fail, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost/time.Millisecond, err)
+		}
+	}
+
+	return
+}
+
 /**
 1. 若key存在且成功, 返回(string,nil)
-2. 若key不存在且成功, 返回("",rediscluster.ErrNil)
+2. 若key不存在且成功, 返回("",redisCluster.ErrNil)
 3. 若异常, 返回("",error)
 */
 func (r *RedisCluster) Get(key string) (string, error) {
@@ -181,6 +255,12 @@ func (r *RedisCluster) Get(key string) (string, error) {
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Get", st, err, key)
+	}()
 
 	ret, err := clusterClient.Get(key).Result()
 	if err == redis.Nil {
@@ -202,6 +282,12 @@ func (r *RedisCluster) Set(key string, value string, expire time.Duration) (stri
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Set", st, err, key)
+	}()
+
 	ret, err := clusterClient.Set(key, value, expire).Result()
 	return ret, err
 }
@@ -219,6 +305,12 @@ func (r *RedisCluster) SetNX(key string, value string, expire time.Duration) (bo
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "SetNX", st, err, key)
+	}()
+
 	isNew, err := clusterClient.SetNX(key, value, expire).Result()
 	return isNew, err
 }
@@ -233,6 +325,12 @@ func (r *RedisCluster) Del(key string) (int64, error) {
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Del", st, err, key)
+	}()
 
 	ret, err := clusterClient.Del(key).Result()
 	return ret, err
@@ -254,6 +352,12 @@ func (r *RedisCluster) MGet(keys []string) ([]interface{}, error) {
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MGet", st, err, keys)
+	}()
 
 	retMap := make(map[string]interface{}, len(keys))
 	errMsg := make([]error, 0, len(keys))
@@ -287,13 +391,13 @@ func (r *RedisCluster) MGet(keys []string) ([]interface{}, error) {
 
 	if len(errMsg) != 0 {
 		//part fail
-		log.Warn("rediscluster MGet error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MGet error, errMsg:%v", errMsg)
 	}
 	ret := make([]interface{}, 0, len(keys))
 	for _, key := range keys {
 		ret = append(ret, retMap[key])
 	}
-	log.Debug("rediscluster MGet in:%v, out:%v", keys, ret)
+	log.Debug("redisCluster MGet in:%v, out:%v", keys, ret)
 	return ret, nil
 
 }
@@ -315,14 +419,20 @@ func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MGet2", st, err, keys)
+	}()
+
 	nodeAndKeyMap := r.getNodeAndKeyMap(keys)
 	poolSize := len(nodeAndKeyMap)
-	if poolSize > MAX_GOROUTINE_POOL_SIZE {
-		poolSize = MAX_GOROUTINE_POOL_SIZE
+	if poolSize > MaxGoroutinePoolSize {
+		poolSize = MaxGoroutinePoolSize
 	}
 
-	fixPool := &FixedGoroutinePool{Size: int64(poolSize)}
-	err := fixPool.Start()
+	fixPool := &gr.FixedGoroutinePool{Size: int64(poolSize)}
+	err = fixPool.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +484,7 @@ func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
 	wg.Wait()
 	fixPool.Close()
 	if len(errMsg) != 0 {
-		log.Warn("rediscluster MGet error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MGet error, errMsg:%v", errMsg)
 		err = errMsg[0]
 		return nil, errMsg[0]
 	}
@@ -382,7 +492,7 @@ func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
 	for _, key := range keys {
 		ret = append(ret, retMap[key])
 	}
-	log.Debug("rediscluster MGet in:%v, out:%v", keys, ret)
+	log.Debug("redisCluster MGet in:%v, out:%v", keys, ret)
 	return ret, nil
 
 }
@@ -393,6 +503,12 @@ func (r *RedisCluster) MSet(kvs map[string]string, expire time.Duration) (map[st
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MSet", st, err, kvs)
+	}()
 
 	keys := make([]string, 0, len(kvs))
 	retMap := make(map[string]bool, len(kvs))
@@ -421,7 +537,7 @@ func (r *RedisCluster) MSet(kvs map[string]string, expire time.Duration) (map[st
 	}
 
 	if len(errMsg) != 0 {
-		log.Warn("rediscluster MSet error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MSet error, errMsg:%v", errMsg)
 	}
 
 	ret := make(map[string]bool, len(keys))
@@ -429,7 +545,7 @@ func (r *RedisCluster) MSet(kvs map[string]string, expire time.Duration) (map[st
 		ret[key] = retMap[key]
 	}
 
-	log.Debug("rediscluster MSet in:%v, out:%v", kvs, ret)
+	log.Debug("redisCluster MSet in:%v, out:%v", kvs, ret)
 	return ret, err
 }
 
@@ -450,18 +566,24 @@ func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[s
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MSet2", st, err, kvs)
+	}()
+
 	keys := make([]string, 0, len(kvs))
 	for k, _ := range kvs {
 		keys = append(keys, k)
 	}
 	nodeAndKeyMap := r.getNodeAndKeyMap(keys)
 	poolSize := len(nodeAndKeyMap)
-	if poolSize > MAX_GOROUTINE_POOL_SIZE {
-		poolSize = MAX_GOROUTINE_POOL_SIZE
+	if poolSize > MaxGoroutinePoolSize {
+		poolSize = MaxGoroutinePoolSize
 	}
 
-	fixPool := &FixedGoroutinePool{Size: int64(poolSize)}
-	err := fixPool.Start()
+	fixPool := &gr.FixedGoroutinePool{Size: int64(poolSize)}
+	err = fixPool.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +631,7 @@ func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[s
 
 	//var errMsgItem error
 	if len(errMsg) != 0 {
-		log.Warn("rediscluster MSet error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MSet error, errMsg:%v", errMsg)
 		err = errMsg[0]
 		if len(errMsg) == len(keys) {
 			return nil, err
@@ -521,7 +643,7 @@ func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[s
 		ret[key] = retMap[key]
 	}
 
-	log.Debug("rediscluster MSet in:%v, out:%v", kvs, ret)
+	log.Debug("redisCluster MSet in:%v, out:%v", kvs, ret)
 	return ret, err
 }
 
@@ -531,6 +653,12 @@ func (r *RedisCluster) MDel(keys []string) (map[string]bool, error) {
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MDel", st, err, keys)
+	}()
 
 	retMap := make(map[string]bool, len(keys))
 	errMsg := make([]error, 0, len(keys))
@@ -562,9 +690,9 @@ func (r *RedisCluster) MDel(keys []string) (map[string]bool, error) {
 
 	if len(errMsg) != 0 {
 		//part fail
-		log.Warn("rediscluster MDel error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MDel error, errMsg:%v", errMsg)
 	}
-	log.Debug("rediscluster MDel in:%v, out:%v", keys, retMap)
+	log.Debug("redisCluster MDel in:%v, out:%v", keys, retMap)
 	return retMap, nil
 }
 
@@ -583,14 +711,20 @@ func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "MDel2", st, err, keys)
+	}()
+
 	nodeAndKeyMap := r.getNodeAndKeyMap(keys)
 	poolSize := len(nodeAndKeyMap)
-	if poolSize > MAX_GOROUTINE_POOL_SIZE {
-		poolSize = MAX_GOROUTINE_POOL_SIZE
+	if poolSize > MaxGoroutinePoolSize {
+		poolSize = MaxGoroutinePoolSize
 	}
 
-	fixPool := &FixedGoroutinePool{Size: int64(poolSize)}
-	err := fixPool.Start()
+	fixPool := &gr.FixedGoroutinePool{Size: int64(poolSize)}
+	err = fixPool.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -638,7 +772,7 @@ func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
 
 	//var errMsgItem error
 	if len(errMsg) != 0 {
-		log.Warn("rediscluster MDel error, errMsg:%v", errMsg)
+		log.Warn("redisCluster MDel error, errMsg:%v", errMsg)
 		err = errMsg[0]
 		if len(errMsg) == len(keys) {
 			return nil, err
@@ -650,53 +784,18 @@ func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
 		ret[key] = retMap[key]
 	}
 
-	log.Debug("rediscluster MDel in:%v, out:%v", keys, ret)
+	log.Debug("redisCluster MDel in:%v, out:%v", keys, ret)
 	return ret, err
 }
 
-/**
-将key按node分类，如果分类失败将所有key置为同一类
-*/
 func (r *RedisCluster) getNodeAndKeyMap(keys []string) map[string][]string {
 	nodeAndKeyMap := make(map[string][]string)
-	//slotsNode, err := r.getClusterSlots()
-	//if err != nil || len(slotsNode) == 0 {
-	//	log.Warn("get cluster slots err, err:%v, slotsNode:%v", err, slotsNode)
-	//	nodeAndKeyMap["NoSlotsInfo"] = keys
-	//} else {
-	//	for _, key := range keys {
-	//		node, err := getNodeBySlot(slot(key), slotsNode)
-	//		if err != nil {
-	//			log.Warn("get node by slot err, err:", err)
-	//			nodeAndKeyMap["NoSlotsInfo"] = keys
-	//			break
-	//		} else {
-	//			if _, ok := nodeAndKeyMap[node.Addr]; !ok {
-	//				nodeAndKeyMap[node.Addr] = make([]string, 0)
-	//			}
-	//			nodeAndKeyMap[node.Addr] = append(nodeAndKeyMap[node.Addr], key)
-	//		}
-	//
-	//	}
-	//}
-
 	return nodeAndKeyMap
-}
-
-func getNodeBySlot(slot int, slotNodes []redis.ClusterSlot) (*redis.ClusterNode, error) {
-	for _, slotNode := range slotNodes {
-		if slot <= slotNode.End && slot >= slotNode.Start {
-			if len(slotNode.Nodes) != 0 {
-				return &slotNode.Nodes[0], nil
-			}
-		}
-	}
-	return nil, RedisClusterCustomError(fmt.Sprintf("slot no node?? slot=%v", slot))
 }
 
 /**
 1. 异常, 返回 ("",error)
-2. 正常, 但key不存在或者field不存在, 返回 ("",rediscluster.ErrNil)
+2. 正常, 但key不存在或者field不存在, 返回 ("",redisCluster.ErrNil)
 3. 正常, 且key存在, filed存在, 返回 (string, nil)
 */
 func (r *RedisCluster) HGet(key string, field string) (string, error) {
@@ -705,6 +804,12 @@ func (r *RedisCluster) HGet(key string, field string) (string, error) {
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HGet", st, err, key)
+	}()
 
 	ret, err := clusterClient.HGet(key, field).Result()
 	if err == redis.Nil {
@@ -733,6 +838,12 @@ func (r *RedisCluster) HMGet(key string, fields []string) ([]interface{}, error)
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HMGet", st, err, key)
+	}()
+
 	if fields == nil || len(fields) == 0 {
 		return make([]interface{}, 0), nil
 	}
@@ -756,6 +867,12 @@ func (r *RedisCluster) HScan(key string, count int64) (map[string]string, error)
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HScan", st, err, key)
+	}()
+
 	ret, _, err := clusterClient.HScan(key, 0, "", count).Result()
 	if len(ret)%2 != 0 {
 		return nil, fmt.Errorf("hscan return invalid")
@@ -778,6 +895,12 @@ func (r *RedisCluster) HGetAll(key string) (map[string]string, error) {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HGetAll", st, err, key)
+	}()
+
 	ret, err := clusterClient.HGetAll(key).Result()
 	return ret, err
 }
@@ -792,6 +915,12 @@ func (r *RedisCluster) HSet(key string, field string, value string) (bool, error
 	if clusterClient == nil {
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HSet", st, err, key)
+	}()
 
 	ret, err := clusterClient.HSet(key, field, value).Result()
 	return ret, err
@@ -808,6 +937,12 @@ func (r *RedisCluster) HSetNx(key string, field string, value string) (bool, err
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HSetNx", st, err, key)
+	}()
+
 	ret, err := clusterClient.HSetNX(key, field, value).Result()
 	return ret, err
 }
@@ -823,6 +958,12 @@ func (r *RedisCluster) HMSet(key string, fields map[string]string) (bool, error)
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HMSet", st, err, key)
+	}()
+
 	if fields == nil || len(fields) == 0 {
 		return true, nil
 	}
@@ -832,7 +973,7 @@ func (r *RedisCluster) HMSet(key string, fields map[string]string) (bool, error)
 		tmpFields[fieldName] = fieldValue
 	}
 
-	_, err := clusterClient.HMSet(key, tmpFields).Result()
+	_, err = clusterClient.HMSet(key, tmpFields).Result()
 	if err != nil {
 		return false, err
 	} else {
@@ -852,6 +993,12 @@ func (r *RedisCluster) HMDel(key string, fields []string) (int64, error) {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HMDel", st, err, key)
+	}()
+
 	return clusterClient.HDel(key, fields...).Result()
 }
 
@@ -866,6 +1013,13 @@ func (r *RedisCluster) Expire(key string, expiration time.Duration) (bool, error
 	if clusterClient == nil {
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Expire", st, err, key)
+	}()
+
 	return clusterClient.Expire(key, expiration).Result()
 }
 
@@ -880,6 +1034,13 @@ func (r *RedisCluster) PExpire(key string, expiration time.Duration) (bool, erro
 	if clusterClient == nil {
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "PExpire", st, err, key)
+	}()
+
 	return clusterClient.PExpire(key, expiration).Result()
 }
 
@@ -894,6 +1055,13 @@ func (r *RedisCluster) PTtl(key string) (time.Duration, error) {
 	if clusterClient == nil {
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "PTtl", st, err, key)
+	}()
+
 	return clusterClient.PTTL(key).Result()
 }
 
@@ -908,6 +1076,12 @@ func (r *RedisCluster) HIncrBy(key string, field string, value int64) (int64, er
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HIncrBy", st, err, key)
+	}()
+
 	ret, err := clusterClient.HIncrBy(key, field, value).Result()
 	return ret, err
 }
@@ -918,6 +1092,12 @@ func (r *RedisCluster) IncrBy(key string, value int64) (int64, error) {
 	if clusterClient == nil {
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "IncrBy", st, err, key)
+	}()
 
 	ret, err := clusterClient.IncrBy(key, value).Result()
 	return ret, err
@@ -938,18 +1118,29 @@ func (r *RedisCluster) Eval(script string, keys []string, args []interface{}) (i
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
 
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Eval", st, err, keys)
+	}()
+
 	ret, err = clusterClient.Eval(script, keys, args...).Result()
 	return ret, err
 }
 
-func (r *RedisCluster) EvalSha(scriptsha string, keys []string, args []interface{}) (interface{}, error) {
+func (r *RedisCluster) EvalSha(scriptSha string, keys []string, args []interface{}) (interface{}, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
 
-	ret, err := clusterClient.EvalSha(scriptsha, keys, args...).Result()
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "IncrBy", st, err, keys)
+	}()
+
+	ret, err := clusterClient.EvalSha(scriptSha, keys, args...).Result()
 	return ret, err
 }
 
@@ -965,6 +1156,13 @@ func (r *RedisCluster) ZAdd(key string, members []redis.Z) (int64, error) {
 	if clusterClient == nil {
 		return -1, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZAdd", st, err, key)
+	}()
+
 	return clusterClient.ZAdd(key, members...).Result()
 }
 
@@ -980,6 +1178,12 @@ func (r *RedisCluster) ZRangeByScoreWithScores(key string, min, max string, offs
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRangeByScoreWithScores", st, err, key)
+	}()
+
 	opt := redis.ZRangeBy{
 		Count:  limit,
 		Max:    max,
@@ -994,7 +1198,7 @@ func (r *RedisCluster) ZRangeByScoreWithScores(key string, min, max string, offs
 	for _, item := range result {
 		ret = append(ret, &ZSetResult{
 			Score:  item.Score,
-			Member: MustString(item.Member, ""),
+			Member: utls.MustString(item.Member, ""),
 		})
 	}
 	return ret, nil
@@ -1006,6 +1210,13 @@ func (r *RedisCluster) ZRevRangeByScoreWithScores(key string, min, max string, o
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRevRangeByScoreWithScores", st, err, key)
+	}()
+
 	opt := redis.ZRangeBy{
 		Count:  limit,
 		Max:    max,
@@ -1021,7 +1232,7 @@ func (r *RedisCluster) ZRevRangeByScoreWithScores(key string, min, max string, o
 	for _, item := range result {
 		ret = append(ret, &ZSetResult{
 			Score:  item.Score,
-			Member: MustString(item.Member, ""),
+			Member: utls.MustString(item.Member, ""),
 		})
 	}
 	return ret, nil
@@ -1033,6 +1244,13 @@ func (r *RedisCluster) ZRange(key string, start, stop int64) ([]string, error) {
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRange", st, err, key)
+	}()
+
 	return clusterClient.ZRange(key, start, stop).Result()
 }
 
@@ -1042,6 +1260,13 @@ func (r *RedisCluster) ZRemRangeByRank(key string, start, stop int64) (int64, er
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRemRangeByRank", st, err, key)
+	}()
+
 	return clusterClient.ZRemRangeByRank(key, start, stop).Result()
 }
 
@@ -1049,8 +1274,14 @@ func (r *RedisCluster) ZRemRangeByScore(key string, min, max string) (int64, err
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
-
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRemRangeByScore", st, err, key)
+	}()
+
 	return clusterClient.ZRemRangeByScore(key, min, max).Result()
 }
 
@@ -1060,6 +1291,13 @@ func (r *RedisCluster) ZRem(key string, members ...interface{}) (int64, error) {
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRem", st, err, key)
+	}()
+
 	return clusterClient.ZRem(key, members...).Result()
 }
 
@@ -1069,6 +1307,13 @@ func (r *RedisCluster) ZRevRange(key string, start, stop int64) ([]string, error
 	if clusterClient == nil {
 		return nil, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "ZRevRange", st, err, key)
+	}()
+
 	return clusterClient.ZRevRange(key, start, stop).Result()
 }
 
@@ -1078,6 +1323,13 @@ func (r *RedisCluster) SetBit(key string, offset int64, value int) (int64, error
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "SetBit", st, err, key)
+	}()
+
 	return clusterClient.SetBit(key, offset, value).Result()
 }
 
@@ -1088,9 +1340,15 @@ func (r *RedisCluster) Exist(key string) (bool, error) {
 		return false, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "Exist", st, err, key)
+	}()
+
 	var ret bool
 	var existRet int64
-	existRet, err := clusterClient.Exists(key).Result()
+	existRet, err = clusterClient.Exists(key).Result()
 	if err != nil {
 		ret = false
 	} else if existRet > 0 {
@@ -1108,6 +1366,12 @@ func (r *RedisCluster) SAdd(key string, members []interface{}) (int64, error) {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "SAdd", st, err, key)
+	}()
+
 	return clusterClient.SAdd(key, members...).Result()
 
 }
@@ -1118,6 +1382,12 @@ func (r *RedisCluster) SPop(key string) (string, error) {
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "SPop", st, err, key)
+	}()
+
 	return clusterClient.SPop(key).Result()
 }
 
@@ -1126,6 +1396,12 @@ func (r *RedisCluster) LPop(key string) (string, error) {
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "LPop", st, err, key)
+	}()
 
 	return clusterClient.LPop(key).Result()
 }
@@ -1136,6 +1412,12 @@ func (r *RedisCluster) LIndex(key string, index int64) (string, error) {
 		return "", RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "LIndex", st, err, key)
+	}()
+
 	return clusterClient.LIndex(key, index).Result()
 }
 
@@ -1144,6 +1426,12 @@ func (r *RedisCluster) LPush(key string, value string) (int64, error) {
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "LPush", st, err, key)
+	}()
 
 	return clusterClient.LPush(key, value).Result()
 }
@@ -1154,6 +1442,12 @@ func (r *RedisCluster) RPush(key string, value string) (int64, error) {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
 
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "RPush", st, err, key)
+	}()
+
 	return clusterClient.RPush(key, value).Result()
 }
 
@@ -1163,6 +1457,12 @@ func (r *RedisCluster) HLen(key string) (int64, error) {
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
 	}
+
+	var err error
+	st := time.Now()
+	defer func() {
+		reportPerf(r.clusterName, "HLen", st, err, key)
+	}()
 
 	return clusterClient.HLen(key).Result()
 }

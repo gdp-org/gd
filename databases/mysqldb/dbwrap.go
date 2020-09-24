@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"errors"
 	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/runtime/pc"
 	"reflect"
 	"strings"
@@ -30,6 +31,16 @@ const (
 	PcMysqlRead         = "mysql_read"
 	PcMysqlWrite        = "mysql_write"
 	PcMysqlTransaction  = "mysql_transaction"
+
+	glDBReadCost             = "db_read_cost"
+	glDBWriteCost            = "db_write_cost"
+	glDBTransactionCost      = "db_transaction_cost"
+	glDBReadCount            = "db_read_count"
+	glDBWriteCount           = "db_write_count"
+	glDBTransactionCount     = "db_transaction_count"
+	glDBReadFailCount        = "db_read_fail_count"
+	glDBWriteFailCount       = "db_write_fail_count"
+	glDBTransactionFailCount = "db_transaction_fail_count"
 )
 
 type DbWrap struct {
@@ -37,7 +48,7 @@ type DbWrap struct {
 	mysqlClient *MysqlClient
 	host        string
 	*sql.DB
-	ctxSuffix string
+	glSuffix string
 
 	retry int
 }
@@ -78,6 +89,78 @@ func (db *DbWrap) pcDbWrite() string {
 
 func (db *DbWrap) pcDbTransaction() string {
 	return PcMysqlTransaction + ",db=" + db.host
+}
+
+func (db *DbWrap) glDbReadFail() string {
+	if db.glSuffix == "" {
+		return glDBReadFailCount
+	} else {
+		return glDBReadFailCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbReadCount() string {
+	if db.glSuffix == "" {
+		return glDBReadCount
+	} else {
+		return glDBReadCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbReadCost() string {
+	if db.glSuffix == "" {
+		return glDBReadCost
+	} else {
+		return glDBReadCost + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbWriteFail() string {
+	if db.glSuffix == "" {
+		return glDBWriteFailCount
+	} else {
+		return glDBWriteFailCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbTransactionFail() string {
+	if db.glSuffix == "" {
+		return glDBTransactionFailCount
+	} else {
+		return glDBTransactionFailCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbWriteCount() string {
+	if db.glSuffix == "" {
+		return glDBWriteCount
+	} else {
+		return glDBWriteCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbTransactionCount() string {
+	if db.glSuffix == "" {
+		return glDBTransactionCount
+	} else {
+		return glDBTransactionCount + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbWriteCost() string {
+	if db.glSuffix == "" {
+		return glDBWriteCost
+	} else {
+		return glDBWriteCost + "_" + db.glSuffix
+	}
+}
+
+func (db *DbWrap) glDbTransactionCost() string {
+	if db.glSuffix == "" {
+		return glDBTransactionCost
+	} else {
+		return glDBTransactionCost + "_" + db.glSuffix
+	}
 }
 
 func (db *DbWrap) Query(query string, args ...interface{}) (rs *sql.Rows, err error) {
@@ -121,15 +204,18 @@ func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err 
 	defer func() {
 		cost := time.Now().Sub(st)
 		pc.Cost(pcKey, cost)
+		gl.Incr(db.glDbReadCost(), int64(cost/time.Millisecond))
 		if err == nil && cost > time.Duration(1)*time.Second {
 			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, cost/time.Millisecond, db.host, err)
 		}
 
 		if err != nil {
 			pc.CostFail(pcKey, 1)
+			gl.Incr(db.glDbReadFail(), 1)
 		}
 	}()
 
+	gl.Incr(db.glDbReadCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	rs, err = db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -157,15 +243,18 @@ func (db *DbWrap) ExecContext(ctx context.Context, query string, args ...interfa
 	defer func() {
 		cost := time.Now().Sub(st)
 		pc.Cost(pcKey, cost)
+		gl.Incr(db.glDbWriteCost(), int64(cost/time.Millisecond))
 		if err == nil && cost > time.Duration(1)*time.Second {
 			log.Debug("MYSQL_SLOW_QUERY", "query=%s,cost=%d,host=%s,err=%v", query, cost/time.Millisecond, targetDb.host, err)
 		}
 
 		if err != nil {
+			gl.Incr(db.glDbWriteFail(), 1)
 			pc.CostFail(pcKey, 1)
 		}
 	}()
 
+	gl.Incr(db.glDbWriteCount(), 1)
 	if ctx == nil {
 		ct, cancel := context.WithTimeout(context.Background(), db.Timeout)
 		ctx = ct
@@ -184,15 +273,18 @@ func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result
 	defer func() {
 		cost := time.Now().Sub(st)
 		pc.Cost(pcKey, cost)
+		gl.Incr(db.glDbTransactionCost(), int64(cost/time.Millisecond))
 		if err == nil && cost > time.Duration(1)*time.Second {
-			log.Debug("MYSQL_SLOW_QUERY", "transaction=%v,cost=%d,host=%s", getFunctionName(transactionExec), cost / time.Millisecond, targetDb.host)
+			log.Debug("MYSQL_SLOW_QUERY", "transaction=%v,cost=%d,host=%s", getFunctionName(transactionExec), cost/time.Millisecond, targetDb.host)
 		}
 
 		if err != nil {
 			pc.CostFail(pcKey, 1)
+			gl.Incr(db.glDbTransactionFail(), 1)
 		}
 	}()
 
+	gl.Incr(db.glDbTransactionCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
 
@@ -237,20 +329,6 @@ func (r *Row) Scan(dest ...interface{}) error {
 	if r.err != nil {
 		return r.err
 	}
-
-	// TODO(bradfitz): for now we need to defensively clone all
-	// []byte that the driver returned (not permitting
-	// *RawBytes in Rows.Scan), since we're about to close
-	// the Rows in our defer, when we return from this function.
-	// the contract with the driver.Next(...) interface is that it
-	// can return slices into read-only temporary memory that's
-	// only valid until the next Scan/Close.  But the TODO is that
-	// for a lot of drivers, this copy will be unnecessary.  We
-	// should provide an optional interface for drivers to
-	// implement to say, "don't worry, the []bytes that I return
-	// from Next will not be modified again." (for instance, if
-	// they were obtained from the network anyway) But for now we
-	// don't care.
 	defer r.rows.Close()
 	for _, dp := range dest {
 		if _, ok := dp.(*sql.RawBytes); ok {

@@ -19,7 +19,6 @@ func Bts2Str(bts []byte) string {
 	return *(*string)(unsafe.Pointer(s))
 }
 
-//TODO://解决参数类型不对的问题,以及％.2f类似问题
 func SafeSprintf(format string, args ...interface{}) string {
 	strCount := strings.Count(format, "%s")
 	intCount := strings.Count(format, "%d")

@@ -62,3 +62,15 @@ func Int64ArrayToString(list []int64, sep string) string {
 	}
 	return strings.Join(ret, sep)
 }
+
+func StringInSlice(a []string, s string) bool {
+	if a == nil || len(a) == 0 {
+		return false
+	}
+	for _, v := range a {
+		if s == v {
+			return true
+		}
+	}
+	return false
+}

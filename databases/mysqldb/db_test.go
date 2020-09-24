@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-
 	log "github.com/chuck1024/gd/dlog"
 
 	"time"
@@ -427,4 +426,3 @@ func genRandomProduct() *Product {
 		ConnectType:   int64(randomdata.Number(10)),
 	}
 }
-

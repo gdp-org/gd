@@ -8,6 +8,7 @@ package gl
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 var _gl = newGoroutineLocal()
@@ -99,13 +100,14 @@ func Set(key interface{}, val interface{}) {
 	cc[key] = val
 }
 
-func CurrentGlData() map[string]interface{} {
+func GetCurrentGlData() map[string]interface{} {
 	ret := make(map[string]interface{})
 	gid, ok := getGoId()
 	if !ok {
 		ret["info"] = "no id"
 		return ret
 	}
+
 	gl, ok := _gl.getGl()
 	if !ok || gl == nil {
 		ret["info"] = "no gl"
@@ -124,4 +126,62 @@ func CurrentGlData() map[string]interface{} {
 		ret[kStr] = v
 	}
 	return ret
+}
+
+func IncrCost(key interface{}, cost time.Duration) int64 {
+	return Incr(key, int64(cost/time.Millisecond))
+}
+
+func IncrCostKey(key string, cost time.Duration) int64 {
+	return Incr(key+"_cost", int64(cost/time.Millisecond))
+}
+
+func IncrCountKey(key string, val int64) int64 {
+	return Incr(key+"_count", val)
+}
+
+func IncrFailKey(key string, val int64) int64 {
+	return Incr(key+"_fail", val)
+}
+
+func Incr(key interface{}, count int64) int64 {
+	cc, ok := _gl.getGl()
+	if !ok {
+		return -1
+	}
+
+	v, ok := cc[key]
+	if !ok {
+		cc[key] = count
+		return 0
+	}
+	vc, ok := v.(int64)
+	if !ok {
+		cc[key] = count
+		return 0
+	}
+
+	cc[key] = vc + count
+	return vc
+}
+
+func Decr(key interface{}, count int64) int64 {
+	cc, ok := _gl.getGl()
+	if !ok {
+		return -1
+	}
+
+	v, ok := cc[key]
+	if !ok {
+		cc[key] = 0 - count
+		return 0
+	}
+	vc, ok := v.(int64)
+	if !ok {
+		cc[key] = 0 - count
+		return 0
+	}
+
+	cc[key] = vc - count
+	return vc
 }

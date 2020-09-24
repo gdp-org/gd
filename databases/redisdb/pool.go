@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 redisdb Author. All rights reserved.
+ * Copyright 2019 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
@@ -7,11 +7,17 @@ package redisdb
 
 import (
 	"errors"
+	"fmt"
 	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gr"
+	"github.com/chuck1024/gd/runtime/pc"
+	"github.com/chuck1024/gd/utls"
 	"github.com/garyburd/redigo/redis"
 	"math/rand"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,6 +26,16 @@ const (
 	DefaultTimeout   = 15 * time.Second
 	DefaultMaxIdle   = 1
 	DefaultMaxActive = 0
+
+	RedisPoolCommonCostMax   = 20
+	RedisPoolCmdNormal       = "redis_pool_cmd_normal"
+	RedisPoolCmd             = "redis_pool_cmd_%v"
+	RedisPoolCmdSlowCount    = "redis_pool_%v_slow_count"
+	RedisPoolNormalSlowCount = "redis_pool_common_slow_count"
+
+	glRedisPoolCall     = "redisPool_call"
+	glRedisPoolCost     = "redisPool_cost"
+	glRedisPoolCallFail = "redisPool_call_fail"
 )
 
 type RedisConfig struct {
@@ -57,15 +73,6 @@ func RedisConfigFromURLString(rawUrl string) (*RedisConfig, error) {
 			password = pw
 		}
 	}
-
-	//db := DefaultDatabases
-	//path := strings.Trim(ul.Path, "/")
-	//if path != "" {
-	//	db, err = strconv.Atoi(path)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
 
 	timeout := 15
 	if ul.Query().Get("idleTimeout") != "" {
@@ -203,6 +210,30 @@ func NewRedisPools(cfg *RedisConfig) (*RedisPool, error) {
 }
 
 func (p *RedisPool) Do(commandName string, args ...interface{}) (reply interface{}, err error) {
+	sTime := time.Now()
+	defer func() {
+		cost := time.Now().Sub(sTime)
+		pcKey := fmt.Sprintf(RedisPoolCmd, strings.ToLower(commandName))
+		pc.Cost(fmt.Sprintf("reidsPool,name=%v,cmd=%s", p.servers, pcKey), cost)
+		pc.Cost(fmt.Sprintf("reidsPool,name=%v,cmd=%s", p.servers, pcKey), cost)
+
+		gl.Incr(glRedisPoolCall, 1)
+		gl.IncrCost(glRedisPoolCost, cost)
+
+		if cost/time.Millisecond > RedisPoolCommonCostMax {
+			pc.Incr(RedisPoolNormalSlowCount, 1)
+			if cost/time.Millisecond > 100 {
+				log.Warn("redisPool slow, pool:%v, cmd:%v, key:%v, cost:%v", p.servers, commandName, args[0], cost)
+			}
+			pc.Cost(fmt.Sprintf("reidsPool,name=%s,cmd=%s", p.servers, RedisPoolCmdNormal), cost)
+		}
+
+		if err != nil && err != redis.ErrNil && err != ErrNil {
+			pc.CostFail(fmt.Sprintf("rediscluster,name=%v", p.servers), 1)
+			gl.Incr(glRedisPoolCallFail, 1)
+		}
+	}()
+
 	turn := 0
 	//retry with a new server
 	usedIps := make([]string, 0)
@@ -279,13 +310,13 @@ type BatchReply struct {
 	Err   error
 }
 
-func (p *RedisPool) BatchDo(commandname string, req []*BatchReq) (reply []*BatchReply) {
+func (p *RedisPool) BatchDo(commandName string, req []*BatchReq) (reply []*BatchReply) {
 	var back []*BatchReply
 	var errReply []*BatchReply
 	turn := 0
 	for {
 		turn++
-		back, errReply, req = p.batchDo(turn, commandname, req)
+		back, errReply, req = p.batchDo(turn, commandName, req)
 		reply = append(reply, back...)
 		if len(req) == 0 {
 			return
@@ -301,14 +332,14 @@ func (p *RedisPool) BatchDo(commandname string, req []*BatchReq) (reply []*Batch
 
 }
 
-func (p *RedisPool) batchDo(turn int, commandname string, req []*BatchReq) (reply, errReply []*BatchReply, rest []*BatchReq) {
+func (p *RedisPool) batchDo(turn int, commandName string, req []*BatchReq) (reply, errReply []*BatchReply, rest []*BatchReq) {
 	c := make(chan BatchReply, len(req))
 	poolSize := 5
 	if len(req) >= 100 {
 		poolSize = 10
 	}
 	timeout := 500
-	fixedPoolTimeout := &FixedGoroutinePoolTimeout{Size: int64(poolSize), Timeout: time.Duration(timeout) * time.Millisecond}
+	fixedPoolTimeout := &gr.FixedGoroutinePoolTimeout{Size: int64(poolSize), Timeout: time.Duration(timeout) * time.Millisecond}
 	fixedPoolTimeout.Start()
 	for _, v := range req {
 		tmp := v
@@ -316,9 +347,9 @@ func (p *RedisPool) batchDo(turn int, commandname string, req []*BatchReq) (repl
 			var err error
 			var ret interface{}
 			if tmp.Args != nil {
-				ret, err = p.Do(commandname, redis.Args{tmp.Key}.AddFlat(tmp.Args)...)
+				ret, err = p.Do(commandName, redis.Args{tmp.Key}.AddFlat(tmp.Args)...)
 			} else {
-				ret, err = p.Do(commandname, redis.Args{tmp.Key}...)
+				ret, err = p.Do(commandName, redis.Args{tmp.Key}...)
 			}
 			c <- BatchReply{tmp, ret, err}
 		})
@@ -331,7 +362,7 @@ func (p *RedisPool) batchDo(turn int, commandname string, req []*BatchReq) (repl
 	for v := range c {
 		tem := v
 		if v.Err != nil {
-			log.Warn("redis do cmd fail,turn=%d,cmd=%s,args=%v,err=%v", turn, commandname, v.Req.Args, v.Err)
+			log.Warn("redis do cmd fail,turn=%d,cmd=%s,args=%v,err=%v", turn, commandName, v.Req.Args, v.Err)
 			rest = append(rest, tem.Req)
 			errReply = append(errReply, &tem)
 		} else {
@@ -346,7 +377,7 @@ func (p *RedisPool) getConn(usedIps []string) (redis.Conn, string, error) {
 	for _, idx := range perm {
 
 		server := p.servers[idx]
-		if stringInSlice(usedIps, server) {
+		if utls.StringInSlice(usedIps, server) {
 			continue
 		}
 

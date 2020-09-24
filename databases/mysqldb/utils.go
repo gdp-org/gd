@@ -73,7 +73,7 @@ func _getFieldsNameArray(v interface{}) (res []string, errRet error) {
 		errRet = fmt.Errorf("input cannot be nil")
 		return
 	}
-	
+
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
