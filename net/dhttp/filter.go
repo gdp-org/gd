@@ -125,12 +125,15 @@ func Logger() gin.HandlerFunc {
 			message["ret"] = retStr
 		}
 
+		glData := gl.GetCurrentGlData()
+		message["gl"] = glData
+
 		mj, jsonErr := utls.Marshal(message)
 		if jsonErr != nil {
 			dlog.Error("json marshal occur error:%v", jsonErr)
 		}
 
-		if cost > 500 {
+		if cost > 50 {
 			dlog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s", path, string(mj)))
 			return
 		}
