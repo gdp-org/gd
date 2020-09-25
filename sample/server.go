@@ -51,7 +51,7 @@ func Register(e *gd.Engine) {
 			dhttp.GlFilter(),
 			dhttp.StatFilter(),
 			dhttp.GroupFilter(),
-			dhttp.Logger(),
+			dhttp.Logger("sample"),
 		)
 
 		e.HttpServer.POST(r, "test", HandlerHttpTest)

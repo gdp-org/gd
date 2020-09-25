@@ -11,10 +11,12 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -42,9 +44,10 @@ func GlFilter() gin.HandlerFunc {
 }
 
 // example: log middle handle
-func Logger() gin.HandlerFunc {
+func Logger(pk  string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
+		costKey := pk
 
 		// traceId
 		traceId := c.Query("traceId")
@@ -70,6 +73,9 @@ func Logger() gin.HandlerFunc {
 		}
 
 		costDu := time.Now().Sub(st)
+		pathPcKey := fmt.Sprintf("%s,uri=path,path=%s", costKey, path)
+		pc.Cost(pathPcKey, costDu)
+		pc.Cost(pk, costDu)
 		cost := costDu / time.Millisecond
 
 		data, ok := c.Get(Data)
@@ -88,6 +94,10 @@ func Logger() gin.HandlerFunc {
 		ret, _ := c.Get(Ret)
 		httpStatusInterface, _ := c.Get(Code)
 		httpStatus := httpStatusInterface.(int)
+
+		if httpStatus != http.StatusOK {
+			pc.Incr(fmt.Sprintf("%s,httpcode=%d", costKey, httpStatus), 1)
+		}
 
 		handleErr, _ := c.Get(Err)
 		errStr := ""
