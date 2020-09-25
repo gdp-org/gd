@@ -307,7 +307,7 @@ func report() {
 
 		v := atomic.SwapInt64(pv, 0)
 		j := js.New()
-		j.Set("metric", "miio.ot")
+		j.Set("metric", "gd")
 		j.Set("endpoint", finalHostName)
 		j.Set("timestamp", ct)
 		j.Set("step", 60)
