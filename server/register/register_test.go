@@ -11,15 +11,15 @@ import (
 	"time"
 )
 
-func TestEtcd(t *testing.T) {
-	var r register.DogRegister
-	r = &register.EtcdRegister{}
-	r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging", "github", "gd")
-
-	r.Run("127.0.0.1", 10240, 10)
-	time.Sleep(3 * time.Second)
-	r.Close()
-}
+//func TestEtcd(t *testing.T) {
+//	var r register.DogRegister
+//	r = &register.EtcdRegister{}
+//	r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging", "github", "gd")
+//
+//	r.Run("127.0.0.1", 10240, 10)
+//	time.Sleep(3 * time.Second)
+//	r.Close()
+//}
 
 func TestZk(t *testing.T) {
 	var r register.DogRegister

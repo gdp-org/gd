@@ -6,7 +6,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/etcd-io/etcd v3.3.25+incompatible
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-gonic/gin v1.5.0
