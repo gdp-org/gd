@@ -16,3 +16,4 @@ sample/self.go
 *.out
 sample/log/
 sample/prof/
+go.sum
