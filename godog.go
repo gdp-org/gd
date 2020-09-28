@@ -61,7 +61,8 @@ func (e *Engine) Run() error {
 	e.Signal()
 
 	// dump when error occurs
-	file, err := utls.Dump(e.Config("Log", "logDir").String(), e.Config("Server", "serverName").String())
+	logDir := e.Config("Log", "logDir").String()
+	file, err := utls.Dump(logDir, e.Config("Server", "serverName").String())
 	if err != nil {
 		dlog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
@@ -84,35 +85,46 @@ func (e *Engine) Run() error {
 		return err
 	}
 
-	pc.Init()
-	defer pc.ClosePerfCounter()
-
-	// init stat
-	enable := e.Config("Log", "stat").MustBool(false)
-	if enable {
-		statInterval := e.Config("Log", "statInterval").MustInt64(5)
-		stat.StatMgrInstance().Init(e.Config("Log", "logDir").String()+"/stat.log", time.Second*time.Duration(statInterval))
+	// init falcon
+	falconEnable := e.Config("Statistics", "falcon").MustBool(false)
+	if falconEnable {
+		pc.Init()
+		defer pc.ClosePerfCounter()
 	}
 
-	// http run
+	// init stat
+	statEnable := e.Config("Statistics", "stat").MustBool(false)
+	if statEnable {
+		statInterval := e.Config("Statistics", "statInterval").MustInt64(5)
+		statFile := "stat.log"
+		if logDir != "" {
+			statFile = logDir + "/stat.log"
+		}
+		stat.StatMgrInstance().Init(statFile, time.Second*time.Duration(statInterval))
+	}
+
+	// http server
 	httpPort := e.Config("Server", "httpPort").MustInt()
-	if httpPort == 0 {
-		dlog.Info("Hasn't http server port")
-	} else {
-		pc.SetRunPort(httpPort)
+	if httpPort > 0 {
+		dlog.Info("http server try listen port:%d", httpPort)
+
 		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
 		if err = e.HttpServer.Run(); err != nil {
 			dlog.Error("Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
 		defer e.HttpServer.Stop()
+
+		if falconEnable {
+			pc.SetRunPort(httpPort)
+		}
 	}
 
 	// rpc server
 	rpcPort := e.Config("Server", "rcpPort").MustInt()
-	if rpcPort == 0 {
-		dlog.Info("Hasn't rpc server port")
-	} else {
+	if rpcPort > 0 {
+		dlog.Info("rpc server try listen port:%d", rpcPort)
+
 		if err = e.RpcServer.Run(rpcPort); err != nil {
 			dlog.Error("rpc server occur error in running application, error = %s", err.Error())
 			return err
@@ -120,11 +132,11 @@ func (e *Engine) Run() error {
 		defer e.RpcServer.Stop()
 	}
 
-	// health port
+	// health
 	healthPort := e.Config("Process", "healthPort").MustInt()
-	if healthPort == 0 {
-		dlog.Info("Hasn't health server port")
-	} else {
+	if healthPort > 0 {
+		dlog.Info("health server try listen port:%d", healthPort)
+
 		host := fmt.Sprintf(":%d", healthPort)
 		health := &helper.Helper{Host: host}
 		if err := health.Start(); err != nil {

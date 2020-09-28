@@ -83,9 +83,9 @@ What's more, your configuration file must have the necessary parameters, like th
 
 ```ini
 [Log]
-enable       = true
-level        = "DEBUG"
-logDir       = "log"
+enable     = true
+level      = "DEBUG"
+logDir     = "log"
 
 [Process]
 maxCPU     = 2
@@ -205,9 +205,9 @@ server:
 package main
 
 import (
-	"github.com/chuck1024/dlog"
 	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/gin-gonic/gin"
@@ -249,7 +249,7 @@ func Register(e *gd.Engine) {
 		r.Use(
 			dhttp.GlFilter(),
 			dhttp.GroupFilter(),
-			dhttp.Logger(),
+			dhttp.Logger("sample"),
 		)
 
 		e.HttpServer.POST(r, "test", HandlerHttpTest)
@@ -295,8 +295,8 @@ package main
 
 import (
     "fmt"
-    "github.com/chuck1024/dlog"
     "github.com/chuck1024/gd"
+    "github.com/chuck1024/gd/dlog"
     "github.com/chuck1024/gd/server/discovery"
     "time"
 )
@@ -306,7 +306,7 @@ func main() {
     c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
     // discovery 
     var r discovery.DogDiscovery
-    r = &discovery.EtcdDiscovery{}
+    r = &discovery.ZkDiscovery{}
     r.NewDiscovery([]string{"localhost:2379"})
     r.Watch("/root/github/gd/stagging/pool")
     r.Run()
