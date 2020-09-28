@@ -228,12 +228,12 @@ func reportPerf(clusterName string, cmdName string, sTime time.Time, err error, 
 	gl.IncrCost(glRedisClusterCost, cost)
 
 	if log.IsEnabledFor(log.DEBUG) {
-		log.Debug("RedisCluster call, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost / time.Millisecond, err)
+		log.Debug("RedisCluster call, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost/time.Millisecond, err)
 	}
 
 	if err != nil && err != redis.Nil && err != ErrNil {
 		if strings.Index(err.Error(), "WRONGTYPE Operation") != -1 {
-			log.Info("RedisCluster call fail, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost / time.Millisecond, err)
+			log.Info("RedisCluster call fail, cluster=%s, cmd=%s, key=%v, cost=%d ms, err=%v", clusterName, cmdName, key, cost/time.Millisecond, err)
 		} else {
 			pc.CostFail(fmt.Sprintf("rediscluster,name=%s", clusterName), 1)
 			gl.Incr(glRedisClusterCallFail, 1)

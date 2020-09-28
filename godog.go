@@ -36,7 +36,7 @@ func Default() *Engine {
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 
-	enable := e.Config("Log", "enable").MustBool(true)
+	enable := e.Config("Log", "enable").MustBool(false)
 	if enable {
 		port := e.Config("Server", "httpPort").MustInt()
 		if port == 0 {
@@ -177,6 +177,10 @@ func (e *Engine) initCPUAndMemory() error {
 
 func (e *Engine) Config(name, key string) *ini.Key {
 	return e.conf.Section(name).Key(key)
+}
+
+func (e *Engine) SetConfig(name, key, value string) {
+	e.conf.Section(name).Key(key).SetValue(value)
 }
 
 func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {

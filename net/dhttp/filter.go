@@ -44,7 +44,7 @@ func GlFilter() gin.HandlerFunc {
 }
 
 // example: log middle handle
-func Logger(pk  string) gin.HandlerFunc {
+func Logger(pk string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
 		costKey := pk

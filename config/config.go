@@ -29,8 +29,8 @@ func Config() *Conf {
 	if !ok {
 		tmp, err := ini.Load(defaultConfigName)
 		if err != nil {
-			dlog.Crash("Config ini load occur error:%v", err)
-			return nil
+			dlog.Warn("Config ini load conf/conf.ini occur error:%v", err)
+			return &Conf{ini: ini.Empty()}
 		}
 		setFile(defaultConfigName, tmp)
 		cfg = tmp

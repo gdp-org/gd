@@ -22,11 +22,11 @@ Start with cloning gd:
 ---
 ## Introduction
 
-gd is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
+Godog is a basic framework implemented by golang, which is aiming at helping developers setup feature-rich server quickly.
 
-The framework contains `config module`,`error module`,`net module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
+The framework contains `config module`,`databases module`,`error module`,`dlog module`,`net module`,`runtime module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
->* [gin](https://github.com/gin-gonic/gin) [etcd](https://github.com/etcd-io/etcd) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library. 
+>* [gin](https://github.com/gin-gonic/gin) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library and more third-party library in go.mod. 
 >* Authors are [**Gin-Gonic**](https://gin-gonic.com/),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 
 ---
@@ -36,44 +36,43 @@ The framework contains `config module`,`error module`,`net module` and `server m
 package main
 
 import (
-    "github.com/bitly/go-simplejson"
-    "github.com/chuck1024/dlog"
-    "github.com/chuck1024/gd"
-    "github.com/gin-gonic/gin"
-    "net/http"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/net/dhttp"
+	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
-func HandlerHttpTest(c *gin.Context, req *simplejson.Json) (code int, message string, err error, ret string) {
-    dlog.Debug("httpServerTest req:%v", req)
-    ret = "ok!!!"
-    return http.StatusOK, "ok", nil, ret
+func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err error, ret string) {
+	dlog.Debug("httpServerTest req:%v", req)
+	ret = "ok!!!"
+	return http.StatusOK, "ok", nil, ret
 }
 
 func main() {
-    d := gd.Default()
-    d.HttpServer.SetInit(func(g *gin.Engine) error {
-    	r := g.Group("")
-    	r.Use(
-    		dhttp.GlFilter(),
-    		dhttp.GroupFilter(),
-    		dhttp.Logger(),
-    	)
-    
-    	d.HttpServer.POST(r, "test", HandlerHttpTest)
-    
-    	if err := d.HttpServer.CheckHandle(); err != nil {
-    		return err
-    	}
-    
-    	return nil
-    })
-    
-    d.Config.BaseConfig.Server.HttpPort = 10240
-    err := d.Run()
-    if err != nil {
-        dlog.Error("Error occurs, error = %s", err.Error())
-        return
-    }
+	d := gd.Default()
+	d.HttpServer.SetInit(func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			dhttp.GlFilter(),
+			dhttp.GroupFilter(),
+			dhttp.Logger("quick-start"),
+		)
+
+		d.HttpServer.GET(r, "test", HandlerHttp)
+
+		if err := d.HttpServer.CheckHandle(); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	d.SetConfig("Server","httpPort","10240")
+
+	if err := d.Run(); err != nil {
+		dlog.Error("Error occurs, error = %s", err.Error())
+		return
+	}
 }
 ```
 
@@ -84,9 +83,9 @@ What's more, your configuration file must have the necessary parameters, like th
 
 ```ini
 [Log]
-log    = "conf/log.xml"
-level  = "DEBUG"
-logDir = "log"
+enable       = true
+level        = "DEBUG"
+logDir       = "log"
 
 [Process]
 maxCPU     = 2
