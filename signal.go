@@ -6,7 +6,6 @@
 package gd
 
 import (
-	"github.com/chuck1024/gd/dlog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,7 +27,7 @@ func (e *Engine) Signal() {
 		for {
 			select {
 			case sig := <-Shutdown:
-				dlog.Info("receive signal: %v, to stop server...", sig)
+				Info("receive signal: %v, to stop server...", sig)
 				if e.RpcServer.GetAddr() != "" {
 					e.RpcServer.Stop()
 				}
@@ -37,5 +36,5 @@ func (e *Engine) Signal() {
 			}
 		}
 	}()
-	dlog.Info("register signal ok")
+	Info("register signal ok")
 }
