@@ -37,14 +37,13 @@ package main
 
 import (
 	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err error, ret string) {
-	dlog.Debug("httpServerTest req:%v", req)
+	gd.Debug("httpServerTest req:%v", req)
 	ret = "ok!!!"
 	return http.StatusOK, "ok", nil, ret
 }
@@ -67,10 +66,10 @@ func main() {
 		return nil
 	})
 
-	d.SetConfig("Server","httpPort","10240")
+	gd.SetConfig("Server", "httpPort", "10240")
 
 	if err := d.Run(); err != nil {
-		dlog.Error("Error occurs, error = %s", err.Error())
+		gd.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
@@ -207,7 +206,6 @@ package main
 import (
 	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/gin-gonic/gin"
@@ -223,7 +221,7 @@ type TestResp struct {
 }
 
 func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
-	dlog.Debug("httpServerTest req:%v", req)
+	gd.Debug("httpServerTest req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -233,7 +231,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	dlog.Debug("rpc sever req:%v", req)
+	gd.Debug("rpc sever req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",
@@ -248,6 +246,7 @@ func Register(e *gd.Engine) {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),
+			dhttp.StatFilter(),
 			dhttp.GroupFilter(),
 			dhttp.Logger("sample"),
 		)
@@ -264,7 +263,7 @@ func Register(e *gd.Engine) {
 	// Rpc
 	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
 	if err := e.RpcServer.DogRpcRegister(); err != nil {
-		dlog.Error("DogRpcRegister occur error:%s", err)
+		gd.Error("DogRpcRegister occur error:%s", err)
 		return
 	}
 	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
@@ -277,14 +276,13 @@ func main() {
 
 	err := d.Run()
 	if err != nil {
-		dlog.Error("Error occurs, error = %s", err.Error())
+		gd.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
 
 // you can use command to test http service.
 // curl -X POST http://127.0.0.1:10240/test -H "Content-Type: application/json" --data '{"Data":"test"}'
-
 ```
 >* You can find it in "sample/service.go"
 >* use `control+c` to stop process
