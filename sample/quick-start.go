@@ -37,7 +37,7 @@ func main() {
 		return nil
 	})
 
-	d.SetConfig("Server", "httpPort", "10240")
+	gd.SetConfig("Server", "httpPort", "10240")
 
 	if err := d.Run(); err != nil {
 		dlog.Error("Error occurs, error = %s", err.Error())

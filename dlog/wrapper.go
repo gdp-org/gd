@@ -6,7 +6,6 @@
 package dlog
 
 import (
-	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/runtime/gl"
 	"os"
@@ -23,10 +22,6 @@ func init() {
 
 // Wrapper for (*Logger).LoadConfiguration
 func LoadConfiguration(filename string) {
-	Global.LoadConfiguration(filename)
-}
-
-func LoadConfigurationWithScribe(filename string, host string, port int) {
 	Global.LoadConfiguration(filename)
 }
 
@@ -294,7 +289,7 @@ func InfoT(tag string, arg0 interface{}, args ...interface{}) {
 // Utility for warn log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Warn
-func Warn(arg0 interface{}, args ...interface{}) error {
+func Warn(arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = WARNING
 	)
@@ -304,21 +299,17 @@ func Warn(arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
 }
 
-func WarnT(tag string, arg0 interface{}, args ...interface{}) error {
+func WarnT(tag string, arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = WARNING
 	)
@@ -327,24 +318,20 @@ func WarnT(tag string, arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
 }
 
 // Utility for error log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Error
-func Error(arg0 interface{}, args ...interface{}) error {
+func Error(arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = ERROR
 	)
@@ -354,21 +341,17 @@ func Error(arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
 }
 
-func ErrorT(tag string, arg0 interface{}, args ...interface{}) error {
+func ErrorT(tag string, arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = ERROR
 	)
@@ -377,24 +360,20 @@ func ErrorT(tag string, arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
 }
 
 // Utility for critical log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Critical
-func Critical(arg0 interface{}, args ...interface{}) error {
+func Critical(arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = CRITICAL
 	)
@@ -404,21 +383,17 @@ func Critical(arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
 }
 
-func CriticalT(tag string, arg0 interface{}, args ...interface{}) error {
+func CriticalT(tag string, arg0 interface{}, args ...interface{}) {
 	const (
 		lvl = CRITICAL
 	)
@@ -427,18 +402,15 @@ func CriticalT(tag string, arg0 interface{}, args ...interface{}) error {
 	case string:
 		// Use the string as a format string
 		Global.intLogfTag(tag, clientIp, logId, lvl, first, args...)
-		return errors.New(fmt.Sprintf(first, args...))
 	case func() string:
 		// Log the closure (no other arguments used)
 		str := first()
 		Global.intLogfTag(tag, clientIp, logId, lvl, "%s", str)
-		return errors.New(str)
 	default:
 		// Build a format string so that it will be similar to Sprint
 		Global.intLogfTag(tag, clientIp, logId, lvl, fmt.Sprint(first)+strings.Repeat(" %v", len(args)), args...)
-		return errors.New(fmt.Sprint(first) + fmt.Sprintf(strings.Repeat(" %v", len(args)), args...))
 	}
-	return nil
+
 }
 
 var batchGLKeys = []interface{}{

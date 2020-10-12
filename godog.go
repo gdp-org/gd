@@ -7,47 +7,43 @@ package gd
 
 import (
 	"fmt"
-	"github.com/chuck1024/gd/config"
-	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/runtime/helper"
 	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
-	"gopkg.in/ini.v1"
 	"runtime"
 	"syscall"
 	"time"
 )
 
 type Engine struct {
-	conf       *config.Conf
 	HttpServer *dhttp.HttpServer
 	RpcServer  *dogrpc.RpcServer
 }
 
 func Default() *Engine {
 	e := &Engine{
-		conf: config.Config(),
 		HttpServer: &dhttp.HttpServer{
 			NoGinLog: true,
 		},
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 
-	enable := e.Config("Log", "enable").MustBool(false)
+	enable := Config("Log", "enable").MustBool(false)
 	if enable {
-		port := e.Config("Server", "httpPort").MustInt()
+		port := Config("Server", "httpPort").MustInt()
 		if port == 0 {
-			port = e.Config("Server", "rcpPort").MustInt()
+			port = Config("Server", "rcpPort").MustInt()
 		}
 
-		if err := RestoreLogConfig("", e.Config("Server", "serverName").String(),
-			port, e.Config("Log", "level").String(), e.Config("Log", "logDir").String()); err != nil {
+		if err := restoreLogConfig("", Config("Server", "serverName").String(),
+			port, Config("Log", "level").String(), Config("Log", "logDir").String()); err != nil {
 
 		}
-		dlog.LoadConfiguration(logConfigFile)
+
+		LoadConfiguration(logConfigFile)
 	}
 
 	return e
@@ -55,47 +51,47 @@ func Default() *Engine {
 
 // Engine Run
 func (e *Engine) Run() error {
-	dlog.Info("- - - - - - - - - - - - - - - - - - -")
-	dlog.Info("process start")
+	Info("- - - - - - - - - - - - - - - - - - -")
+	Info("process start")
 	// register signal
 	e.Signal()
 
 	// dump when error occurs
-	logDir := e.Config("Log", "logDir").String()
-	file, err := utls.Dump(logDir, e.Config("Server", "serverName").String())
+	logDir := Config("Log", "logDir").String()
+	file, err := utls.Dump(logDir, Config("Server", "serverName").String())
 	if err != nil {
-		dlog.Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+		Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
 	}
 
 	// output exit info
 	defer func() {
-		dlog.Info("server stop...code: %d", runtime.NumGoroutine())
+		Info("server stop...code: %d", runtime.NumGoroutine())
 		time.Sleep(time.Second)
-		dlog.Info("server stop...ok")
-		dlog.Info("- - - - - - - - - - - - - - - - - - -")
+		Info("server stop...ok")
+		Info("- - - - - - - - - - - - - - - - - - -")
 		if err := utls.ReviewDumpPanic(file); err != nil {
-			dlog.Error("Failed to review dump dumpPanic file, error = %s", err.Error())
+			Error("Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
 	}()
 
 	// init cpu and memory
 	err = e.initCPUAndMemory()
 	if err != nil {
-		dlog.Error("Cannot init CPU and memory module, error = %s", err.Error())
+		Error("Cannot init CPU and memory module, error = %s", err.Error())
 		return err
 	}
 
 	// init falcon
-	falconEnable := e.Config("Statistics", "falcon").MustBool(false)
+	falconEnable := Config("Statistics", "falcon").MustBool(false)
 	if falconEnable {
 		pc.Init()
 		defer pc.ClosePerfCounter()
 	}
 
 	// init stat
-	statEnable := e.Config("Statistics", "stat").MustBool(false)
+	statEnable := Config("Statistics", "stat").MustBool(false)
 	if statEnable {
-		statInterval := e.Config("Statistics", "statInterval").MustInt64(5)
+		statInterval := Config("Statistics", "statInterval").MustInt64(5)
 		statFile := "stat.log"
 		if logDir != "" {
 			statFile = logDir + "/stat.log"
@@ -104,13 +100,13 @@ func (e *Engine) Run() error {
 	}
 
 	// http server
-	httpPort := e.Config("Server", "httpPort").MustInt()
+	httpPort := Config("Server", "httpPort").MustInt()
 	if httpPort > 0 {
-		dlog.Info("http server try listen port:%d", httpPort)
+		Info("http server try listen port:%d", httpPort)
 
 		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
 		if err = e.HttpServer.Run(); err != nil {
-			dlog.Error("Http server occur error in running application, error = %s", err.Error())
+			Error("Http server occur error in running application, error = %s", err.Error())
 			return err
 		}
 		defer e.HttpServer.Stop()
@@ -121,26 +117,26 @@ func (e *Engine) Run() error {
 	}
 
 	// rpc server
-	rpcPort := e.Config("Server", "rcpPort").MustInt()
+	rpcPort := Config("Server", "rcpPort").MustInt()
 	if rpcPort > 0 {
-		dlog.Info("rpc server try listen port:%d", rpcPort)
+		Info("rpc server try listen port:%d", rpcPort)
 
 		if err = e.RpcServer.Run(rpcPort); err != nil {
-			dlog.Error("rpc server occur error in running application, error = %s", err.Error())
+			Error("rpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
 		defer e.RpcServer.Stop()
 	}
 
 	// health
-	healthPort := e.Config("Process", "healthPort").MustInt()
+	healthPort := Config("Process", "healthPort").MustInt()
 	if healthPort > 0 {
-		dlog.Info("health server try listen port:%d", healthPort)
+		Info("health server try listen port:%d", healthPort)
 
 		host := fmt.Sprintf(":%d", healthPort)
 		health := &helper.Helper{Host: host}
 		if err := health.Start(); err != nil {
-			dlog.Error("start health failed on %s\n", host)
+			Error("start health failed on %s\n", host)
 			return err
 		}
 		defer health.Close()
@@ -151,7 +147,7 @@ func (e *Engine) Run() error {
 }
 
 func (e *Engine) initCPUAndMemory() error {
-	maxCPU := e.Config("Process", "maxCPU").MustInt()
+	maxCPU := Config("Process", "maxCPU").MustInt()
 	numCpus := runtime.NumCPU()
 	if maxCPU <= 0 {
 		if numCpus > 3 {
@@ -164,35 +160,27 @@ func (e *Engine) initCPUAndMemory() error {
 	}
 	runtime.GOMAXPROCS(maxCPU)
 
-	if e.Config("Process", "maxMemory").String() != "" {
-		maxMemory, err := utls.ParseMemorySize(e.Config("Process", "maxMemory").String())
+	if Config("Process", "maxMemory").String() != "" {
+		maxMemory, err := utls.ParseMemorySize(Config("Process", "maxMemory").String())
 		if err != nil {
-			dlog.Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", e.Config("Process", "maxMemory").String(), err.Error()))
+			Crash(fmt.Sprintf("conf field illgeal, max_memory:%s, error:%s", Config("Process", "maxMemory").String(), err.Error()))
 		}
 
 		var rlimit syscall.Rlimit
 		syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
-		dlog.Info("old rlimit mem:%v", rlimit)
+		Info("old rlimit mem:%v", rlimit)
 		rlimit.Cur = uint64(maxMemory)
 		rlimit.Max = uint64(maxMemory)
 		err = syscall.Setrlimit(syscall.RLIMIT_AS, &rlimit)
 		if err != nil {
-			dlog.Crash(fmt.Sprintf("syscall Setrlimit fail, rlimit:%v, error:%s", rlimit, err.Error()))
+			Crash(fmt.Sprintf("syscall Setrlimit fail, rlimit:%v, error:%s", rlimit, err.Error()))
 		} else {
 			syscall.Getrlimit(syscall.RLIMIT_AS, &rlimit)
-			dlog.Info("new rlimit mem:%v", rlimit)
+			Info("new rlimit mem:%v", rlimit)
 		}
 	}
 
 	return nil
-}
-
-func (e *Engine) Config(name, key string) *ini.Key {
-	return e.conf.Section(name).Key(key)
-}
-
-func (e *Engine) SetConfig(name, key, value string) {
-	e.conf.Section(name).Key(key).SetValue(value)
 }
 
 func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {
@@ -211,7 +199,7 @@ func NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
 		Domain:  Domain,
 	}
 	if err := client.Start(); err != nil {
-		dlog.Error("http client start occur error:%s", err.Error())
+		Error("http client start occur error:%s", err.Error())
 		return nil
 	}
 	return client
