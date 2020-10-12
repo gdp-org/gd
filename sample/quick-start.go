@@ -7,14 +7,13 @@ package main
 
 import (
 	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err error, ret string) {
-	dlog.Debug("httpServerTest req:%v", req)
+	gd.Debug("httpServerTest req:%v", req)
 	ret = "ok!!!"
 	return http.StatusOK, "ok", nil, ret
 }
@@ -40,7 +39,7 @@ func main() {
 	gd.SetConfig("Server", "httpPort", "10240")
 
 	if err := d.Run(); err != nil {
-		dlog.Error("Error occurs, error = %s", err.Error())
+		gd.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 }
