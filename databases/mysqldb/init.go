@@ -16,7 +16,7 @@ import (
 
 const defaultCharSet = "utf8mb4"
 
-func (c *MysqlClient) initObjForMysqldb(dbConfPath string) error {
+func (c *MysqlClient) initObjForMysqlDb(dbConfPath string) error {
 	dbConfRealPath := dbConfPath
 	if dbConfRealPath == "" {
 		return errors.New("dbConf not set in g_cfg")
@@ -55,30 +55,30 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 	slavePort := s.Key("slave_port").String()
 	slaveProxy, _ := s.Key("slave_is_proxy").Bool()
 
-	timeout := f.Section("").Key("timeout").String()
+	timeout := m.Key("timeout").String()
 	if timeout == "" {
 		timeout = "5s"
 	} else if !strings.HasSuffix(timeout, "s") {
 		timeout += "s"
 	}
 
-	connTimeout := f.Section("").Key("connTimeout").String()
+	connTimeout := m.Key("connTimeout").String()
 	if connTimeout == "" {
 		connTimeout = "1s"
 	} else if !strings.HasSuffix(timeout, "s") {
 		connTimeout += "s"
 	}
 
-	maxOpen, err := f.Section("").Key("max_open").Int()
+	maxOpen, err := m.Key("max_open").Int()
 	if err != nil {
 		maxOpen = 100
 	}
-	maxIdle, err := f.Section("").Key("max_idle").Int()
+	maxIdle, err := m.Key("max_idle").Int()
 	if err != nil {
 		maxIdle = 1
 	}
 
-	enableSqlSafeUpdates, err := f.Section("").Key("enable_sql_safe_updates").Bool()
+	enableSqlSafeUpdates, err := m.Key("enable_sql_safe_updates").Bool()
 	if err != nil {
 		enableSqlSafeUpdates = false
 	}
@@ -107,7 +107,7 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 		connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
 	}
 
-	glSuffix := f.Section("").Key("glSuffix").String()
+	glSuffix := m.Key("glSuffix").String()
 	to, _ := time.ParseDuration(timeout)
 	return c.initMainDbsMaxOpen(connMasters, connSlaves, maxOpen, maxIdle, glSuffix, to, masterProxy, slaveProxy)
 }

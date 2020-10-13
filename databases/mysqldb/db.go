@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultDbConf = "db.ini"
+	defaultDbConf = "conf/conf.ini"
 
 	PcTransactionInsertDup = "transaction_insert_dup"
 )
@@ -51,7 +51,7 @@ func (c *MysqlClient) Start() error {
 				c.DbConfPath = defaultDbConf
 			}
 
-			err = c.initObjForMysqldb(c.DbConfPath)
+			err = c.initObjForMysqlDb(c.DbConfPath)
 		}
 	})
 	return err
