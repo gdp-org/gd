@@ -16,6 +16,7 @@ import (
 	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/utls"
 	"github.com/go-redis/redis"
+	"gopkg.in/ini.v1"
 	"io"
 	"strings"
 	"sync"
@@ -79,14 +80,59 @@ type RedisCluster struct {
 	stop          chan bool
 }
 
-func NewRedisCluster(clusterConf *RedisClusterConf) (*RedisCluster, error) {
+type RedisClusterClient struct {
+	RedisConfig   *RedisClusterConf
+	RedisConf     *ini.File
+	RedisConfPath string
+	ClusterName   string
+
+	redisCluster *RedisCluster
+	startOnce    sync.Once
+	closeOnce    sync.Once
+}
+
+func (r *RedisClusterClient) Start() error {
+	var err error
+	r.startOnce.Do(func() {
+		if r.RedisConfig != nil {
+			err = r.newRedisCluster(r.RedisConfig)
+		} else if r.RedisConf != nil {
+			err = r.initRedisCluster(r.RedisConf, r.ClusterName)
+		} else {
+			if r.RedisConfPath == "" {
+				r.RedisConfPath = defaultConf
+			}
+
+			err = r.initObjForRedisCluster(r.RedisConfPath)
+		}
+	})
+	return err
+}
+
+func (r *RedisClusterClient) Close() {
+	r.closeOnce.Do(func() {
+		if r.redisCluster.stop != nil {
+			close(r.redisCluster.stop)
+		}
+
+		if r.redisCluster.clusterClient != nil {
+			err := r.redisCluster.clusterClient.Close()
+			if err != nil {
+				return
+			}
+		}
+		return
+	})
+}
+
+func (r *RedisClusterClient) newRedisCluster(clusterConf *RedisClusterConf) error {
 	if clusterConf == nil {
-		return nil, errors.New("redisClusterConf is nil")
+		return errors.New("redisClusterConf is nil")
 	}
 
 	addrs := clusterConf.Addrs
 	if addrs == nil || len(addrs) == 0 {
-		return nil, errors.New("addrs not set")
+		return errors.New("addrs not set")
 	}
 
 	//dialTimeout not allowed -1
@@ -172,26 +218,68 @@ func NewRedisCluster(clusterConf *RedisClusterConf) (*RedisCluster, error) {
 
 	ret.stop = make(chan bool)
 
-	return ret, nil
+	r.redisCluster = ret
+	return nil
 }
 
-func (r *RedisCluster) getClusterClient() *redis.ClusterClient {
-	return r.clusterClient
-}
+func (r *RedisClusterClient) initRedisCluster(f *ini.File, cn string) error {
+	c := f.Section(fmt.Sprintf("%s.%s", "Redis", cn))
+	addr := c.Key("addr").String()
+	poolSize, _ := c.Key("poolSize").Int()
+	maxRedirects, _ := c.Key("maxRedirects").Int()
+	poolTimeout, _ := c.Key("poolTimeout").Int64()
+	minIdleConns, _ := c.Key("minIdleConns").Int()
+	idleTimeout, _ := c.Key("idleTimeout").Int64()
+	idleCheckFrequency, _ := c.Key("idleCheckFrequency").Int64()
+	connTimeout, _ := c.Key("dialTimeout").Int64()
+	readTimeout, _ := c.Key("readTimeout").Int64()
+	writeTimeout, _ := c.Key("writeTimeout").Int64()
 
-func (r *RedisCluster) Close() error {
-	if r.stop != nil {
-		close(r.stop)
-	}
+	addrs := strings.Split(addr, ",")
+	err := r.newRedisCluster(&RedisClusterConf{
+		ClusterName:        cn,
+		Addrs:              addrs,
+		PoolSize:           poolSize,
+		PoolTimeout:        poolTimeout,
+		MinIdleConns:       minIdleConns,
+		IdleTimeout:        idleTimeout,
+		DialTimeout:        connTimeout,
+		ReadTimeout:        readTimeout,
+		WriteTimeout:       writeTimeout,
+		IdleCheckFrequency: idleCheckFrequency,
+		MaxRedirects:       maxRedirects,
+	})
 
-	if r.clusterClient != nil {
-		err := r.clusterClient.Close()
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (r *RedisClusterClient) initObjForRedisCluster(redisConfPath string) error {
+	redisConfRealPath := redisConfPath
+	if redisConfRealPath == "" {
+		return errors.New("redisConf not set in g_cfg")
+	}
+
+	if !strings.HasSuffix(redisConfRealPath, ".ini") {
+		return errors.New("redisConf not an ini file")
+	}
+
+	redisConf, err := ini.Load(redisConfRealPath)
+	if err != nil {
+		return err
+	}
+
+	if err = r.initRedisCluster(redisConf, r.ClusterName); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *RedisClusterClient) getClusterClient() *redis.ClusterClient {
+	return r.redisCluster.clusterClient
 }
 
 func reportPerf(clusterName string, cmdName string, sTime time.Time, err error, key interface{}) {
@@ -249,7 +337,7 @@ func reportPerf(clusterName string, cmdName string, sTime time.Time, err error, 
 2. 若key不存在且成功, 返回("",redisCluster.ErrNil)
 3. 若异常, 返回("",error)
 */
-func (r *RedisCluster) Get(key string) (string, error) {
+func (r *RedisClusterClient) Get(key string) (string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -259,7 +347,7 @@ func (r *RedisCluster) Get(key string) (string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Get", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "Get", st, err, key)
 	}()
 
 	ret, err := clusterClient.Get(key).Result()
@@ -275,7 +363,7 @@ func (r *RedisCluster) Get(key string) (string, error) {
 2. 若设置成功, 返回("ok",nil)
 3. 若异常, 返回("",error)
 */
-func (r *RedisCluster) Set(key string, value string, expire time.Duration) (string, error) {
+func (r *RedisClusterClient) Set(key string, value string, expire time.Duration) (string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -285,7 +373,7 @@ func (r *RedisCluster) Set(key string, value string, expire time.Duration) (stri
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Set", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "Set", st, err, key)
 	}()
 
 	ret, err := clusterClient.Set(key, value, expire).Result()
@@ -298,7 +386,7 @@ func (r *RedisCluster) Set(key string, value string, expire time.Duration) (stri
 3. 在 err 为空的情况下, bool=false 表示key已存在set无效, bool=true表示key不存在set成功
 https://redis.io/commands/setnx
 */
-func (r *RedisCluster) SetNX(key string, value string, expire time.Duration) (bool, error) {
+func (r *RedisClusterClient) SetNX(key string, value string, expire time.Duration) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -308,7 +396,7 @@ func (r *RedisCluster) SetNX(key string, value string, expire time.Duration) (bo
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "SetNX", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "SetNX", st, err, key)
 	}()
 
 	isNew, err := clusterClient.SetNX(key, value, expire).Result()
@@ -319,7 +407,7 @@ func (r *RedisCluster) SetNX(key string, value string, expire time.Duration) (bo
 1. 若正常, 返回 (num,nil), num为删除的key个数
 2. 若异常, 返回 (0,error)
 */
-func (r *RedisCluster) Del(key string) (int64, error) {
+func (r *RedisClusterClient) Del(key string) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -329,7 +417,7 @@ func (r *RedisCluster) Del(key string) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Del", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "Del", st, err, key)
 	}()
 
 	ret, err := clusterClient.Del(key).Result()
@@ -346,7 +434,7 @@ func (r *RedisCluster) Del(key string) (int64, error) {
 	 	"value3",		//key3的值
 	 }, nil
 */
-func (r *RedisCluster) MGet(keys []string) ([]interface{}, error) {
+func (r *RedisClusterClient) MGet(keys []string) ([]interface{}, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -356,7 +444,7 @@ func (r *RedisCluster) MGet(keys []string) ([]interface{}, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MGet", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "MGet", st, err, keys)
 	}()
 
 	retMap := make(map[string]interface{}, len(keys))
@@ -412,7 +500,7 @@ func (r *RedisCluster) MGet(keys []string) ([]interface{}, error) {
 	 	"value3",		//key3的值
 	 }, nil
 */
-func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
+func (r *RedisClusterClient) MGet2(keys []string) ([]interface{}, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -422,7 +510,7 @@ func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MGet2", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "MGet2", st, err, keys)
 	}()
 
 	nodeAndKeyMap := r.getNodeAndKeyMap(keys)
@@ -497,7 +585,7 @@ func (r *RedisCluster) MGet2(keys []string) ([]interface{}, error) {
 
 }
 
-func (r *RedisCluster) MSet(kvs map[string]string, expire time.Duration) (map[string]bool, error) {
+func (r *RedisClusterClient) MSet(kvs map[string]string, expire time.Duration) (map[string]bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -507,7 +595,7 @@ func (r *RedisCluster) MSet(kvs map[string]string, expire time.Duration) (map[st
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MSet", st, err, kvs)
+		reportPerf(r.redisCluster.clusterName, "MSet", st, err, kvs)
 	}()
 
 	keys := make([]string, 0, len(kvs))
@@ -559,7 +647,7 @@ ret!=nil, err==nil: 全部成功, ret里会包含所有key的操作结果
 
 备注: expire为0表示key不过期
 */
-func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[string]bool, error) {
+func (r *RedisClusterClient) MSet2(kvs map[string]string, expire time.Duration) (map[string]bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -569,7 +657,7 @@ func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[s
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MSet2", st, err, kvs)
+		reportPerf(r.redisCluster.clusterName, "MSet2", st, err, kvs)
 	}()
 
 	keys := make([]string, 0, len(kvs))
@@ -647,7 +735,7 @@ func (r *RedisCluster) MSet2(kvs map[string]string, expire time.Duration) (map[s
 	return ret, err
 }
 
-func (r *RedisCluster) MDel(keys []string) (map[string]bool, error) {
+func (r *RedisClusterClient) MDel(keys []string) (map[string]bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -657,7 +745,7 @@ func (r *RedisCluster) MDel(keys []string) (map[string]bool, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MDel", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "MDel", st, err, keys)
 	}()
 
 	retMap := make(map[string]bool, len(keys))
@@ -704,7 +792,7 @@ ret==nil, err!=nil: 全部失败
 ret!=nil, err!=nil: 部分失败, ret会包含所有key的操作结果
 ret!=nil, err==nil: 全部成功, ret会包含所有key的操作结果
 */
-func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
+func (r *RedisClusterClient) MDel2(keys []string) (map[string]bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -714,7 +802,7 @@ func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "MDel2", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "MDel2", st, err, keys)
 	}()
 
 	nodeAndKeyMap := r.getNodeAndKeyMap(keys)
@@ -788,7 +876,7 @@ func (r *RedisCluster) MDel2(keys []string) (map[string]bool, error) {
 	return ret, err
 }
 
-func (r *RedisCluster) getNodeAndKeyMap(keys []string) map[string][]string {
+func (r *RedisClusterClient) getNodeAndKeyMap(keys []string) map[string][]string {
 	nodeAndKeyMap := make(map[string][]string)
 	return nodeAndKeyMap
 }
@@ -798,7 +886,7 @@ func (r *RedisCluster) getNodeAndKeyMap(keys []string) map[string][]string {
 2. 正常, 但key不存在或者field不存在, 返回 ("",redisCluster.ErrNil)
 3. 正常, 且key存在, filed存在, 返回 (string, nil)
 */
-func (r *RedisCluster) HGet(key string, field string) (string, error) {
+func (r *RedisClusterClient) HGet(key string, field string) (string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -808,7 +896,7 @@ func (r *RedisCluster) HGet(key string, field string) (string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HGet", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HGet", st, err, key)
 	}()
 
 	ret, err := clusterClient.HGet(key, field).Result()
@@ -831,7 +919,7 @@ func (r *RedisCluster) HGet(key string, field string) (string, error) {
 		},nil
 	备注: 若key不存在, slice里的所有值都为nil
 */
-func (r *RedisCluster) HMGet(key string, fields []string) ([]interface{}, error) {
+func (r *RedisClusterClient) HMGet(key string, fields []string) ([]interface{}, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -841,7 +929,7 @@ func (r *RedisCluster) HMGet(key string, fields []string) ([]interface{}, error)
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HMGet", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HMGet", st, err, key)
 	}()
 
 	if fields == nil || len(fields) == 0 {
@@ -860,7 +948,7 @@ Notice: 这个函数并不能严格的限制返回count个，简单测试看起�
         Hmap redis在存储的时候如果数据比较少（看文章是512）会使用ziplist，测试了下，在ziplist存储的状态下，会都返回，count不生效
         如果数据超过512之后会使用hmap来存储，这时基本就是准确的了。所以这个函数只能保证返回 >= count
 */
-func (r *RedisCluster) HScan(key string, count int64) (map[string]string, error) {
+func (r *RedisClusterClient) HScan(key string, count int64) (map[string]string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -870,7 +958,7 @@ func (r *RedisCluster) HScan(key string, count int64) (map[string]string, error)
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HScan", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HScan", st, err, key)
 	}()
 
 	ret, _, err := clusterClient.HScan(key, 0, "", count).Result()
@@ -888,7 +976,7 @@ func (r *RedisCluster) HScan(key string, count int64) (map[string]string, error)
 1. 若异常, 返回 (nil, error)
 2. 若正常, 返回 (map[string]string, nil)
 */
-func (r *RedisCluster) HGetAll(key string) (map[string]string, error) {
+func (r *RedisClusterClient) HGetAll(key string) (map[string]string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -898,7 +986,7 @@ func (r *RedisCluster) HGetAll(key string) (map[string]string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HGetAll", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HGetAll", st, err, key)
 	}()
 
 	ret, err := clusterClient.HGetAll(key).Result()
@@ -909,7 +997,7 @@ func (r *RedisCluster) HGetAll(key string) (map[string]string, error) {
 1. 若异常, 返回 (false, error)
 2. 若正常, 返回 (bool, nil), 其中true: field在hash中不存在且新增成功; false: field已在hash中存在且更新成功.
 */
-func (r *RedisCluster) HSet(key string, field string, value string) (bool, error) {
+func (r *RedisClusterClient) HSet(key string, field string, value string) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -919,7 +1007,7 @@ func (r *RedisCluster) HSet(key string, field string, value string) (bool, error
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HSet", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HSet", st, err, key)
 	}()
 
 	ret, err := clusterClient.HSet(key, field, value).Result()
@@ -930,7 +1018,7 @@ func (r *RedisCluster) HSet(key string, field string, value string) (bool, error
 1. 若异常, 返回 (false, error)
 2. 若正常, 返回 (bool, nil), 其中true: field在hash中不存在且新增成功; false: field已在hash中存在, 不做更新.
 */
-func (r *RedisCluster) HSetNx(key string, field string, value string) (bool, error) {
+func (r *RedisClusterClient) HSetNx(key string, field string, value string) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -940,7 +1028,7 @@ func (r *RedisCluster) HSetNx(key string, field string, value string) (bool, err
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HSetNx", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HSetNx", st, err, key)
 	}()
 
 	ret, err := clusterClient.HSetNX(key, field, value).Result()
@@ -951,7 +1039,7 @@ func (r *RedisCluster) HSetNx(key string, field string, value string) (bool, err
 1. 若异常, 返回 (false, error)
 2. 若正常, 返回 (true, nil)
 */
-func (r *RedisCluster) HMSet(key string, fields map[string]string) (bool, error) {
+func (r *RedisClusterClient) HMSet(key string, fields map[string]string) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -961,7 +1049,7 @@ func (r *RedisCluster) HMSet(key string, fields map[string]string) (bool, error)
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HMSet", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HMSet", st, err, key)
 	}()
 
 	if fields == nil || len(fields) == 0 {
@@ -986,7 +1074,7 @@ func (r *RedisCluster) HMSet(key string, fields map[string]string) (bool, error)
 2. 若异常, 返回 (0,error)
 */
 
-func (r *RedisCluster) HMDel(key string, fields []string) (int64, error) {
+func (r *RedisClusterClient) HMDel(key string, fields []string) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -996,7 +1084,7 @@ func (r *RedisCluster) HMDel(key string, fields []string) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HMDel", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HMDel", st, err, key)
 	}()
 
 	return clusterClient.HDel(key, fields...).Result()
@@ -1007,7 +1095,7 @@ func (r *RedisCluster) HMDel(key string, fields []string) (int64, error) {
 2. 若异常, 返回 (false,error)
   key不存在返回(false,nil)
 */
-func (r *RedisCluster) Expire(key string, expiration time.Duration) (bool, error) {
+func (r *RedisClusterClient) Expire(key string, expiration time.Duration) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1017,7 +1105,7 @@ func (r *RedisCluster) Expire(key string, expiration time.Duration) (bool, error
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Expire", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "Expire", st, err, key)
 	}()
 
 	return clusterClient.Expire(key, expiration).Result()
@@ -1028,7 +1116,7 @@ func (r *RedisCluster) Expire(key string, expiration time.Duration) (bool, error
 2. 若异常, 返回 (false,error)
   key不存在返回(false,nil)
 */
-func (r *RedisCluster) PExpire(key string, expiration time.Duration) (bool, error) {
+func (r *RedisClusterClient) PExpire(key string, expiration time.Duration) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1038,7 +1126,7 @@ func (r *RedisCluster) PExpire(key string, expiration time.Duration) (bool, erro
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "PExpire", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "PExpire", st, err, key)
 	}()
 
 	return clusterClient.PExpire(key, expiration).Result()
@@ -1049,7 +1137,7 @@ func (r *RedisCluster) PExpire(key string, expiration time.Duration) (bool, erro
 2. 若异常, 返回 (false,error)
   key不存在返回(false,nil)
 */
-func (r *RedisCluster) PTtl(key string) (time.Duration, error) {
+func (r *RedisClusterClient) PTtl(key string) (time.Duration, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1059,7 +1147,7 @@ func (r *RedisCluster) PTtl(key string) (time.Duration, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "PTtl", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "PTtl", st, err, key)
 	}()
 
 	return clusterClient.PTTL(key).Result()
@@ -1069,7 +1157,7 @@ func (r *RedisCluster) PTtl(key string) (time.Duration, error) {
 1. 若设置成功, 返回(int64,nil)
 2. 若异常, 返回(-1,error)
 */
-func (r *RedisCluster) HIncrBy(key string, field string, value int64) (int64, error) {
+func (r *RedisClusterClient) HIncrBy(key string, field string, value int64) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1079,14 +1167,14 @@ func (r *RedisCluster) HIncrBy(key string, field string, value int64) (int64, er
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HIncrBy", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HIncrBy", st, err, key)
 	}()
 
 	ret, err := clusterClient.HIncrBy(key, field, value).Result()
 	return ret, err
 }
 
-func (r *RedisCluster) IncrBy(key string, value int64) (int64, error) {
+func (r *RedisClusterClient) IncrBy(key string, value int64) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1096,14 +1184,14 @@ func (r *RedisCluster) IncrBy(key string, value int64) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "IncrBy", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "IncrBy", st, err, key)
 	}()
 
 	ret, err := clusterClient.IncrBy(key, value).Result()
 	return ret, err
 }
 
-func (r *RedisCluster) Eval(script string, keys []string, args []interface{}) (interface{}, error) {
+func (r *RedisClusterClient) Eval(script string, keys []string, args []interface{}) (interface{}, error) {
 	sha := getScriptSha(script)
 	ret, err := r.EvalSha(sha, keys, args)
 	if err == nil {
@@ -1120,14 +1208,14 @@ func (r *RedisCluster) Eval(script string, keys []string, args []interface{}) (i
 
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Eval", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "Eval", st, err, keys)
 	}()
 
 	ret, err = clusterClient.Eval(script, keys, args...).Result()
 	return ret, err
 }
 
-func (r *RedisCluster) EvalSha(scriptSha string, keys []string, args []interface{}) (interface{}, error) {
+func (r *RedisClusterClient) EvalSha(scriptSha string, keys []string, args []interface{}) (interface{}, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1137,7 +1225,7 @@ func (r *RedisCluster) EvalSha(scriptSha string, keys []string, args []interface
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "IncrBy", st, err, keys)
+		reportPerf(r.redisCluster.clusterName, "IncrBy", st, err, keys)
 	}()
 
 	ret, err := clusterClient.EvalSha(scriptSha, keys, args...).Result()
@@ -1150,7 +1238,7 @@ func getScriptSha(script string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func (r *RedisCluster) ZAdd(key string, members []redis.Z) (int64, error) {
+func (r *RedisClusterClient) ZAdd(key string, members []redis.Z) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1160,7 +1248,7 @@ func (r *RedisCluster) ZAdd(key string, members []redis.Z) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZAdd", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZAdd", st, err, key)
 	}()
 
 	return clusterClient.ZAdd(key, members...).Result()
@@ -1171,7 +1259,7 @@ type ZSetResult struct {
 	Score  float64
 }
 
-func (r *RedisCluster) ZRangeByScoreWithScores(key string, min, max string, offset, limit int64) ([]*ZSetResult, error) {
+func (r *RedisClusterClient) ZRangeByScoreWithScores(key string, min, max string, offset, limit int64) ([]*ZSetResult, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1181,7 +1269,7 @@ func (r *RedisCluster) ZRangeByScoreWithScores(key string, min, max string, offs
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRangeByScoreWithScores", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRangeByScoreWithScores", st, err, key)
 	}()
 
 	opt := redis.ZRangeBy{
@@ -1204,7 +1292,7 @@ func (r *RedisCluster) ZRangeByScoreWithScores(key string, min, max string, offs
 	return ret, nil
 }
 
-func (r *RedisCluster) ZRevRangeByScoreWithScores(key string, min, max string, offset, limit int64) ([]*ZSetResult, error) {
+func (r *RedisClusterClient) ZRevRangeByScoreWithScores(key string, min, max string, offset, limit int64) ([]*ZSetResult, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1214,7 +1302,7 @@ func (r *RedisCluster) ZRevRangeByScoreWithScores(key string, min, max string, o
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRevRangeByScoreWithScores", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRevRangeByScoreWithScores", st, err, key)
 	}()
 
 	opt := redis.ZRangeBy{
@@ -1238,7 +1326,7 @@ func (r *RedisCluster) ZRevRangeByScoreWithScores(key string, min, max string, o
 	return ret, nil
 }
 
-func (r *RedisCluster) ZRange(key string, start, stop int64) ([]string, error) {
+func (r *RedisClusterClient) ZRange(key string, start, stop int64) ([]string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1248,13 +1336,13 @@ func (r *RedisCluster) ZRange(key string, start, stop int64) ([]string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRange", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRange", st, err, key)
 	}()
 
 	return clusterClient.ZRange(key, start, stop).Result()
 }
 
-func (r *RedisCluster) ZRemRangeByRank(key string, start, stop int64) (int64, error) {
+func (r *RedisClusterClient) ZRemRangeByRank(key string, start, stop int64) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1264,13 +1352,13 @@ func (r *RedisCluster) ZRemRangeByRank(key string, start, stop int64) (int64, er
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRemRangeByRank", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRemRangeByRank", st, err, key)
 	}()
 
 	return clusterClient.ZRemRangeByRank(key, start, stop).Result()
 }
 
-func (r *RedisCluster) ZRemRangeByScore(key string, min, max string) (int64, error) {
+func (r *RedisClusterClient) ZRemRangeByScore(key string, min, max string) (int64, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
@@ -1279,13 +1367,13 @@ func (r *RedisCluster) ZRemRangeByScore(key string, min, max string) (int64, err
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRemRangeByScore", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRemRangeByScore", st, err, key)
 	}()
 
 	return clusterClient.ZRemRangeByScore(key, min, max).Result()
 }
 
-func (r *RedisCluster) ZRem(key string, members ...interface{}) (int64, error) {
+func (r *RedisClusterClient) ZRem(key string, members ...interface{}) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1295,13 +1383,13 @@ func (r *RedisCluster) ZRem(key string, members ...interface{}) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRem", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRem", st, err, key)
 	}()
 
 	return clusterClient.ZRem(key, members...).Result()
 }
 
-func (r *RedisCluster) ZRevRange(key string, start, stop int64) ([]string, error) {
+func (r *RedisClusterClient) ZRevRange(key string, start, stop int64) ([]string, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1311,13 +1399,13 @@ func (r *RedisCluster) ZRevRange(key string, start, stop int64) ([]string, error
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "ZRevRange", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "ZRevRange", st, err, key)
 	}()
 
 	return clusterClient.ZRevRange(key, start, stop).Result()
 }
 
-func (r *RedisCluster) SetBit(key string, offset int64, value int) (int64, error) {
+func (r *RedisClusterClient) SetBit(key string, offset int64, value int) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1327,13 +1415,13 @@ func (r *RedisCluster) SetBit(key string, offset int64, value int) (int64, error
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "SetBit", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "SetBit", st, err, key)
 	}()
 
 	return clusterClient.SetBit(key, offset, value).Result()
 }
 
-func (r *RedisCluster) Exist(key string) (bool, error) {
+func (r *RedisClusterClient) Exist(key string) (bool, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1343,7 +1431,7 @@ func (r *RedisCluster) Exist(key string) (bool, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "Exist", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "Exist", st, err, key)
 	}()
 
 	var ret bool
@@ -1360,7 +1448,7 @@ func (r *RedisCluster) Exist(key string) (bool, error) {
 	return ret, err
 }
 
-func (r *RedisCluster) SAdd(key string, members []interface{}) (int64, error) {
+func (r *RedisClusterClient) SAdd(key string, members []interface{}) (int64, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
@@ -1369,14 +1457,14 @@ func (r *RedisCluster) SAdd(key string, members []interface{}) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "SAdd", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "SAdd", st, err, key)
 	}()
 
 	return clusterClient.SAdd(key, members...).Result()
 
 }
 
-func (r *RedisCluster) SPop(key string) (string, error) {
+func (r *RedisClusterClient) SPop(key string) (string, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
@@ -1385,13 +1473,13 @@ func (r *RedisCluster) SPop(key string) (string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "SPop", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "SPop", st, err, key)
 	}()
 
 	return clusterClient.SPop(key).Result()
 }
 
-func (r *RedisCluster) LPop(key string) (string, error) {
+func (r *RedisClusterClient) LPop(key string) (string, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
@@ -1400,13 +1488,13 @@ func (r *RedisCluster) LPop(key string) (string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "LPop", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "LPop", st, err, key)
 	}()
 
 	return clusterClient.LPop(key).Result()
 }
 
-func (r *RedisCluster) LIndex(key string, index int64) (string, error) {
+func (r *RedisClusterClient) LIndex(key string, index int64) (string, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return "", RedisClusterCustomError("redis cluster not init")
@@ -1415,13 +1503,13 @@ func (r *RedisCluster) LIndex(key string, index int64) (string, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "LIndex", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "LIndex", st, err, key)
 	}()
 
 	return clusterClient.LIndex(key, index).Result()
 }
 
-func (r *RedisCluster) LPush(key string, value string) (int64, error) {
+func (r *RedisClusterClient) LPush(key string, value string) (int64, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
@@ -1430,13 +1518,13 @@ func (r *RedisCluster) LPush(key string, value string) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "LPush", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "LPush", st, err, key)
 	}()
 
 	return clusterClient.LPush(key, value).Result()
 }
 
-func (r *RedisCluster) RPush(key string, value string) (int64, error) {
+func (r *RedisClusterClient) RPush(key string, value string) (int64, error) {
 	clusterClient := r.getClusterClient()
 	if clusterClient == nil {
 		return 0, RedisClusterCustomError("redis cluster not init")
@@ -1445,13 +1533,13 @@ func (r *RedisCluster) RPush(key string, value string) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "RPush", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "RPush", st, err, key)
 	}()
 
 	return clusterClient.RPush(key, value).Result()
 }
 
-func (r *RedisCluster) HLen(key string) (int64, error) {
+func (r *RedisClusterClient) HLen(key string) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1461,7 +1549,7 @@ func (r *RedisCluster) HLen(key string) (int64, error) {
 	var err error
 	st := time.Now()
 	defer func() {
-		reportPerf(r.clusterName, "HLen", st, err, key)
+		reportPerf(r.redisCluster.clusterName, "HLen", st, err, key)
 	}()
 
 	return clusterClient.HLen(key).Result()
