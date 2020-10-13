@@ -15,10 +15,16 @@ func main() {
 	t := &redisdb.RedisConfig{
 		Addrs: []string{"127.0.0.1:6379"},
 	}
-	o, err := redisdb.NewRedisPools(t)
+
+	o := &redisdb.RedisPoolClient{
+		RedisConfig: t,
+	}
+
+	err := o.Start()
 	if err != nil {
 		dlog.Debug("err:%s", err)
 	}
+
 	o.Set("test", "ok")
 	v, err := o.Get("test")
 	if err != nil {

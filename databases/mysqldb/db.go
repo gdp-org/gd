@@ -31,6 +31,7 @@ type MysqlClient struct {
 	DbConfig   *CommonDbConf
 	DbConf     *ini.File
 	DbConfPath string
+	DataBases  string
 
 	dbWrite []*DbWrap
 	dbRead  []*DbWrap
@@ -45,7 +46,7 @@ func (c *MysqlClient) Start() error {
 		if c.DbConfig != nil {
 			err = c.initDbsWithCommonConf(c.DbConfig)
 		} else if c.DbConf != nil {
-			err = c.initDbs(c.DbConf)
+			err = c.initDbs(c.DbConf, c.DataBases)
 		} else {
 			if c.DbConfPath == "" {
 				c.DbConfPath = defaultDbConf

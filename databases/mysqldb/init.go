@@ -31,28 +31,28 @@ func (c *MysqlClient) initObjForMysqlDb(dbConfPath string) error {
 		return err
 	}
 
-	if err = c.initDbs(dbConf); err != nil {
+	if err = c.initDbs(dbConf, c.DataBases); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *MysqlClient) initDbs(f *ini.File) error {
-	m := f.Section("Mysql")
-	s := f.Section("MysqlSlave")
+func (c *MysqlClient) initDbs(f *ini.File, db string) error {
+	m := f.Section(fmt.Sprintf("%s.%s", "Mysql", db))
+	s := f.Section(fmt.Sprintf("%s.%s", "MysqlSlave", db))
 
+	// master
 	masterIp := m.Key("master_ip").String()
 	masterPort := m.Key("master_port").String()
-	userWrite := m.Key("user_write").String()
-	passWrite := m.Key("pass_write").String()
-
-	userRead := m.Key("user_read").String()
-	passRead := m.Key("pass_read").String()
-
-	db := m.Key("db").String()
+	userWrite := m.Key("user").String()
+	passWrite := m.Key("password").String()
 	masterProxy, _ := m.Key("master_is_proxy").Bool()
+
+	// slave
 	slaveIp := s.Key("slave_ip").String()
 	slavePort := s.Key("slave_port").String()
+	userRead := s.Key("user").String()
+	passRead := s.Key("password").String()
 	slaveProxy, _ := s.Key("slave_is_proxy").Bool()
 
 	timeout := m.Key("timeout").String()
@@ -65,7 +65,7 @@ func (c *MysqlClient) initDbs(f *ini.File) error {
 	connTimeout := m.Key("connTimeout").String()
 	if connTimeout == "" {
 		connTimeout = "1s"
-	} else if !strings.HasSuffix(timeout, "s") {
+	} else if !strings.HasSuffix(connTimeout, "s") {
 		connTimeout += "s"
 	}
 

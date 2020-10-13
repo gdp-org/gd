@@ -52,7 +52,7 @@ type RedisClusterConf struct {
 	WriteTimeout int64
 
 	//pool config
-	//每个redis节点会起一个连接池, 该poolsize表示每个redis节点的最大连接数
+	//每个redis节点会起一个连接池, 该poolSize表示每个redis节点的最大连接数
 	PoolSize int
 	//从连接池获取可用连接的超时, 单位: 毫秒, 0表示默认值(1秒), -1表示不超时
 	PoolTimeout int64
