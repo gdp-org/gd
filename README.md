@@ -27,7 +27,7 @@ Godog is a basic framework implemented by golang, which is aiming at helping dev
 The framework contains `config module`,`databases module`,`error module`,`dlog module`,`net module`,`runtime module` and `server module`. You can select any modules according to your practice. More features will be added later. I hope anyone who is interested in this work can join it and let's enhance the system function of this framework together.
 
 >* [gin](https://github.com/gin-gonic/gin) and [zookeeper](https://github.com/samuel/go-zookeeper) are third-party library and more third-party library in go.mod. 
->* Authors are [**Gin-Gonic**](https://gin-gonic.com/),[**etcd-io**](https://github.com/etcd-io) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
+>* Authors are [**Gin-Gonic**](https://gin-gonic.com/) and [**Samuel Stauffer**](https://github.com/samuel).Thanks for them here. 
 
 ---
 ## Quick start
