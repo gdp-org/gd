@@ -6,16 +6,14 @@
 package utls
 
 import (
-	"fmt"
 	"os"
-	"strconv"
 	"syscall"
 )
 
 var (
 	dumpFlag   = os.O_CREATE | os.O_WRONLY
 	dumpMode   = os.FileMode(0777)
-	dumpPrefix = "dumpPanic."
+	dumpPrefix = "stderr_"
 )
 
 func ReviewDumpPanic(file *os.File) error {
@@ -31,10 +29,9 @@ func ReviewDumpPanic(file *os.File) error {
 }
 
 func Dump(fileDir, name string) (*os.File, error) {
-	suffix := fmt.Sprintf("-dump-%s", name)
-	filename := dumpPrefix + suffix + "." + strconv.Itoa(os.Getpid())
+	filename := dumpPrefix + name + ".log"
 	if fileDir != "" {
-		filename = fileDir + "/" + dumpPrefix + suffix + "." + strconv.Itoa(os.Getpid())
+		filename = fileDir + "/" + dumpPrefix + name + ".log"
 	}
 	file, err := os.OpenFile(filename, dumpFlag, dumpMode)
 	if err != nil {
