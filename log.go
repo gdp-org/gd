@@ -155,46 +155,46 @@ func LoadConfiguration(filename string) {
 
 // wrap log debug
 func Debug(arg0 interface{}, args ...interface{}) {
-	dlog.Debug(arg0, args)
+	dlog.Debug(arg0, args...)
 }
 
 func Crash(args ...interface{}) {
-	dlog.Crash(args)
+	dlog.Crash(args...)
 }
 
 // Logs the given message and crashes the program
 func Crashf(format string, args ...interface{}) {
-	dlog.Crashf(format, args)
+	dlog.Crashf(format, args...)
 }
 
 // Compatibility with `log`
 func Exit(args ...interface{}) {
-	dlog.Exit(args)
+	dlog.Exit(args...)
 }
 
 // Compatibility with `log`
 func Exitf(format string, args ...interface{}) {
-	dlog.Exitf(format, args)
+	dlog.Exitf(format, args...)
 }
 
 // Compatibility with `log`
 func Stderr(args ...interface{}) {
-	dlog.Stderr(args)
+	dlog.Stderr(args...)
 }
 
 // Compatibility with `log`
 func Stderrf(format string, args ...interface{}) {
-	dlog.Stderrf(format, args)
+	dlog.Stderrf(format, args...)
 }
 
 // Compatibility with `log`
 func Stdout(args ...interface{}) {
-	dlog.Stdout(args)
+	dlog.Stdout(args...)
 }
 
 // Compatibility with `log`
 func Stdoutf(format string, args ...interface{}) {
-	dlog.Stdoutf(format, args)
+	dlog.Stdoutf(format, args...)
 }
 
 func GetLevel() string {
@@ -214,7 +214,7 @@ func Log(lvl dlog.Level, source, message string) {
 // Send a formatted log message easily
 // Wrapper for (*Logger).Logf
 func Logf(lvl dlog.Level, format string, args ...interface{}) {
-	dlog.Logf(lvl, format, args)
+	dlog.Logf(lvl, format, args...)
 }
 
 // Send a closure log message
@@ -226,68 +226,68 @@ func Logc(lvl dlog.Level, closure func() string) {
 // Utility for finest log messages (see Debug() for parameter explanation)
 // Wrapper for (*Logger).Finest
 func Finest(arg0 interface{}, args ...interface{}) {
-	dlog.Finest(arg0, args)
+	dlog.Finest(arg0, args...)
 }
 
 // Utility for fine log messages (see Debug() for parameter explanation)
 // Wrapper for (*Logger).Fine
 func Fine(arg0 interface{}, args ...interface{}) {
-	dlog.Fine(arg0, args)
+	dlog.Fine(arg0, args...)
 }
 
 func DebugT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.DebugT(tag, arg0, args)
+	dlog.DebugT(tag, arg0, args...)
 }
 
 // Utility for trace log messages (see Debug() for parameter explanation)
 // Wrapper for (*Logger).Trace
 func Trace(arg0 interface{}, args ...interface{}) {
-	dlog.Trace(arg0, args)
+	dlog.Trace(arg0, args...)
 }
 
 func TraceT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.TraceT(tag, arg0, args)
+	dlog.TraceT(tag, arg0, args...)
 }
 
 // Utility for info log messages (see Debug() for parameter explanation)
 // Wrapper for (*Logger).Info
 func Info(arg0 interface{}, args ...interface{}) {
-	dlog.Info(arg0, args)
+	dlog.Info(arg0, args...)
 }
 
 func InfoT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.InfoT(tag, arg0, args)
+	dlog.InfoT(tag, arg0, args...)
 }
 
 // Utility for warn log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Warn
 func Warn(arg0 interface{}, args ...interface{}) {
-	dlog.Warn(arg0, args)
+	dlog.Warn(arg0, args...)
 }
 
 func WarnT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.WarnT(tag, arg0, args)
+	dlog.WarnT(tag, arg0, args...)
 }
 
 // Utility for error log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Error
 func Error(arg0 interface{}, args ...interface{}) {
-	dlog.Error(arg0, args)
+	dlog.Error(arg0, args...)
 }
 
 func ErrorT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.ErrorT(tag, arg0, args)
+	dlog.ErrorT(tag, arg0, args...)
 }
 
 // Utility for critical log messages (returns an error for easy function returns) (see Debug() for parameter explanation)
 // These functions will execute a closure exactly once, to build the error message for the return
 // Wrapper for (*Logger).Critical
 func Critical(arg0 interface{}, args ...interface{}) {
-	dlog.Critical(arg0, args)
+	dlog.Critical(arg0, args...)
 }
 
 func CriticalT(tag string, arg0 interface{}, args ...interface{}) {
-	dlog.CriticalT(tag, arg0, args)
+	dlog.CriticalT(tag, arg0, args...)
 }
