@@ -44,8 +44,9 @@ var (
 	suffixDecider     DecideSuffix
 	costTimerC        chan *costTimer
 	perfCounterC      chan *pcReq
-	mRegistry               = metrics.NewRegistry()
-	closed            int32 = 0
+	closed            int32
+
+	mRegistry = metrics.NewRegistry()
 
 	falconAgentUrl = "http://127.0.0.1:1988/v1/push"
 )
@@ -78,6 +79,7 @@ func InitPerfCounter(tar string, upd updater, initKeys []string) {
 	}
 	initOnce.Do(func() {
 		initPerfCounter(tar, upd, initKeys, decideSuffix, defaultWorkerCount, defaultCostHandlerCount)
+		atomic.AddInt32(&closed, 1)
 	})
 	SetSuffixDecider(decideSuffix)
 	SetUpdater(upd)
@@ -368,7 +370,7 @@ func sendPcReport(send interface{}) {
 
 func ClosePerfCounter() {
 	closeOnce.Do(func() {
-		atomic.AddInt32(&closed, 1)
+		atomic.StoreInt32(&closed, 0)
 		close(stop)
 	})
 }
@@ -389,7 +391,7 @@ func Incr(key string, val int64) {
 		Val: val,
 	}
 
-	if atomic.LoadInt32(&closed) > 0 {
+	if atomic.LoadInt32(&closed) == 0 {
 		return
 	}
 
@@ -420,7 +422,7 @@ func Cost(name string, cost time.Duration) {
 		Name: name,
 		Cost: cost,
 	}
-	if atomic.LoadInt32(&closed) > 0 {
+	if atomic.LoadInt32(&closed) == 0 {
 		return
 	}
 	select {
