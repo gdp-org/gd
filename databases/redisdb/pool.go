@@ -53,6 +53,7 @@ type RedisConfig struct {
 	ReadTimeoutMs  int64
 	WriteTimeoutMs int64
 	Password       string
+	DbNumber       int
 }
 
 type RedisPool struct {
@@ -152,12 +153,12 @@ func (p *RedisPoolClient) newRedisPools(cfg *RedisConfig) error {
 	cfg4Log.ReadTimeoutMs = int64(readTimeout / time.Millisecond)
 	cfg4Log.WriteTimeoutMs = int64(writeTimeout / time.Millisecond)
 
-	p.redisPool = newPoolRetryTimeout(cfg.Addrs, cfg.Password, maxActive, maxIdle, idleTimeout, retry, connTimeout, readTimeout, writeTimeout)
+	p.redisPool = newPoolRetryTimeout(cfg.Addrs, cfg.Password, cfg.DbNumber, maxActive, maxIdle, idleTimeout, retry, connTimeout, readTimeout, writeTimeout)
 	log.Info("start redis pool,server=%v,cfg=%v", p.redisPool.servers, &cfg4Log)
 	return nil
 }
 
-func newPoolRetryTimeout(servers []string, password string, maxActive, maxIdle, idleTimeout int, retry int, connTimeout, readTimeout, writeTimeout time.Duration) *RedisPool {
+func newPoolRetryTimeout(servers []string, password string, dbNumber, maxActive, maxIdle, idleTimeout int, retry int, connTimeout, readTimeout, writeTimeout time.Duration) *RedisPool {
 	pools := make(map[string]*redis.Pool)
 	finalServers := make([]string, 0, len(servers))
 	for _, tmp := range servers {
@@ -189,7 +190,12 @@ func newPoolRetryTimeout(servers []string, password string, maxActive, maxIdle, 
 				} else {
 					log.Warn("redis dial tcp fail,server=%s,err=%v", server, err)
 				}
-				//c.Do("SELECT", conf.Database)
+
+				if _, err = c.Do("SELECT", dbNumber); err != nil {
+					log.Error("redis select fail, server=%s,err=%v", server, err)
+					c.Close()
+					return nil, err
+				}
 				return
 			},
 		}
@@ -236,6 +242,7 @@ func (p *RedisPoolClient) initRedis(f *ini.File, pn string) error {
 	connTimeout, _ := r.Key("connTimeout").Int64()
 	readTimeout, _ := r.Key("readTimeout").Int64()
 	writeTimeout, _ := r.Key("writeTimeout").Int64()
+	dbNumber, _ := r.Key("dbNumber").Int()
 
 	addrs := strings.Split(addr, ",")
 	err := p.newRedisPools(&RedisConfig{
@@ -248,6 +255,7 @@ func (p *RedisPoolClient) initRedis(f *ini.File, pn string) error {
 		ReadTimeoutMs:  readTimeout,
 		WriteTimeoutMs: writeTimeout,
 		Password:       password,
+		DbNumber:       dbNumber,
 	})
 
 	if err != nil {
