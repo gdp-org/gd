@@ -66,6 +66,8 @@ type RedisClusterConf struct {
 
 	//当访问的key不在某节点或者某节点有异常, 会做move(redirect)操作, 该参数表示最大move操作次数, 0表示默认值(2次)
 	MaxRedirects int
+
+	Password string
 }
 
 var ErrNil = errors.New("redis: nil returned")
@@ -202,6 +204,7 @@ func (r *RedisClusterClient) newRedisCluster(clusterConf *RedisClusterConf) erro
 		MaxRedirects:       maxRedirects,
 		MinRetryBackoff:    1 * time.Millisecond,
 		MaxRetryBackoff:    10 * time.Millisecond,
+		Password:           clusterConf.Password,
 	}
 
 	clusterClient := redis.NewClusterClient(clusterOptions)
@@ -234,6 +237,7 @@ func (r *RedisClusterClient) initRedisCluster(f *ini.File, cn string) error {
 	connTimeout, _ := c.Key("dialTimeout").Int64()
 	readTimeout, _ := c.Key("readTimeout").Int64()
 	writeTimeout, _ := c.Key("writeTimeout").Int64()
+	password := c.Key("password").String()
 
 	addrs := strings.Split(addr, ",")
 	err := r.newRedisCluster(&RedisClusterConf{
@@ -248,6 +252,7 @@ func (r *RedisClusterClient) initRedisCluster(f *ini.File, cn string) error {
 		WriteTimeout:       writeTimeout,
 		IdleCheckFrequency: idleCheckFrequency,
 		MaxRedirects:       maxRedirects,
+		Password:           password,
 	})
 
 	if err != nil {
