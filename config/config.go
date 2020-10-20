@@ -24,6 +24,12 @@ func (c *Conf) Section(name string) *ini.Section {
 	return c.ini.Section(name)
 }
 
+func SetConfPath(path string) {
+	if path != "" {
+		defaultConfigName = path
+	}
+}
+
 func Config() *Conf {
 	cfg, ok := getFile(defaultConfigName)
 	if !ok {

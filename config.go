@@ -10,6 +10,11 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// set conf path
+func SetConfPath(path string) {
+	config.SetConfPath(path)
+}
+
 // get config
 func Config(name, key string) *ini.Key {
 	return config.Config().Section(name).Key(key)
