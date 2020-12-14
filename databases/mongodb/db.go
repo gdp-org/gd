@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/pc"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/ini.v1"
@@ -231,7 +233,35 @@ func (m *MongoClient) initWithMongoConfig(c *MongoConfig) error {
 	return nil
 }
 
-func (m *MongoClient) Insert(collection string, data []interface{}) ([]interface{}, error) {
+func (m *MongoClient) pcAndGl(sTime time.Time, cmd string, err error) {
+	cost := time.Now().Sub(sTime)
+	pcKey := fmt.Sprintf(MongoCmd, cmd)
+	pc.Cost(fmt.Sprintf("mongo,name=%v,cmd=%s", m.DbConfig.Hosts, pcKey), cost)
+	pc.Cost(fmt.Sprintf("mongo,name=%v,cmd=%s", m.DbConfig.Hosts, pcKey), cost)
+
+	gl.Incr(glMongoCall, 1)
+	gl.IncrCost(glMongoCost, cost)
+
+	if cost/time.Millisecond > MongoCommonCostMax {
+		pc.Incr(MongoNormalSlowCount, 1)
+		if cost/time.Millisecond > 100 {
+			dlog.Warn("mongo slow, pool:%v, cmd:%v, cost:%v", m.DbConfig.Hosts, cmd, cost)
+		}
+		pc.Cost(fmt.Sprintf("mongo,name=%s,cmd=%s",  m.DbConfig.Hosts, MongoCmdSlowCount), cost)
+	}
+
+	if err != nil {
+		pc.CostFail(fmt.Sprintf("mongo,name=%v",  m.DbConfig.Hosts), 1)
+		gl.Incr(glMongoCallFail, 1)
+	}
+}
+
+func (m *MongoClient) Insert(collection string, data []interface{}) (result []interface{}, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "insert", err)
+	}()
+
 	insertManyResult, err := m.client.Database(m.DataBase).Collection(collection).InsertMany(context.TODO(), data)
 	if err != nil {
 		dlog.Error("mongoClient Insert occur error:%v, collection:%s", err, collection)
@@ -241,7 +271,12 @@ func (m *MongoClient) Insert(collection string, data []interface{}) ([]interface
 	return insertManyResult.InsertedIDs, nil
 }
 
-func (m *MongoClient) UpdateOne(collection string, data interface{}, filter interface{}) (interface{}, error) {
+func (m *MongoClient) UpdateOne(collection string, data interface{}, filter interface{}) (result interface{}, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "updateOne", err)
+	}()
+
 	updateResult, err := m.client.Database(m.DataBase).Collection(collection).UpdateOne(context.TODO(), filter, data)
 	if err != nil {
 		dlog.Error("mongoClient UpdateOne occur error:%v, collection:%s", err, collection)
@@ -251,7 +286,12 @@ func (m *MongoClient) UpdateOne(collection string, data interface{}, filter inte
 	return updateResult.UpsertedID, nil
 }
 
-func (m *MongoClient) UpdateMany(collection string, data interface{}, filter interface{}) (interface{}, error) {
+func (m *MongoClient) UpdateMany(collection string, data interface{}, filter interface{}) (result interface{}, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "updateMany", err)
+	}()
+
 	updateResult, err := m.client.Database(m.DataBase).Collection(collection).UpdateMany(context.TODO(), filter, data)
 	if err != nil {
 		dlog.Error("mongoClient UpdateMany occur error:%v, collection:%s", err, collection)
@@ -261,7 +301,12 @@ func (m *MongoClient) UpdateMany(collection string, data interface{}, filter int
 	return updateResult.UpsertedID, nil
 }
 
-func (m *MongoClient) DeleteOne(collection string, filter interface{}) (int64, error) {
+func (m *MongoClient) DeleteOne(collection string, filter interface{}) (result int64, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "deleteOne", err)
+	}()
+
 	deleteResult, err := m.client.Database(m.DataBase).Collection(collection).DeleteOne(context.TODO(), filter)
 	if err != nil {
 		dlog.Error("mongoClient DeleteOne occur error:%v, collection:%s", err, collection)
@@ -271,7 +316,12 @@ func (m *MongoClient) DeleteOne(collection string, filter interface{}) (int64, e
 	return deleteResult.DeletedCount, nil
 }
 
-func (m *MongoClient) DeleteMany(collection string, filter interface{}) (int64, error) {
+func (m *MongoClient) DeleteMany(collection string, filter interface{}) (result int64, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "deleteMany", err)
+	}()
+
 	deleteResult, err := m.client.Database(m.DataBase).Collection(collection).DeleteMany(context.TODO(), filter)
 	if err != nil {
 		dlog.Error("mongoClient DeleteMany occur error:%v, collection:%s", err, collection)
@@ -281,25 +331,26 @@ func (m *MongoClient) DeleteMany(collection string, filter interface{}) (int64, 
 	return deleteResult.DeletedCount, nil
 }
 
-func (m *MongoClient) FindOne(dataType interface{}, collection string, filter interface{}) error {
-	result := m.client.Database(m.DataBase).Collection(collection).FindOne(context.TODO(), filter)
+func (m *MongoClient) FindOne(collection string, filter interface{}) (result *mongo.SingleResult, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "findOne", err)
+	}()
 
-	if err := result.Decode(&dataType); err != nil {
-		dlog.Error("mongoClient FindOne occur error:%v, collection:%s", err, collection)
-		return err
-	}
-	return  nil
+	result = m.client.Database(m.DataBase).Collection(collection).FindOne(context.TODO(), filter)
+	return result, nil
 }
 
-func (m *MongoClient) Find(dataType interface{}, collection string, filter interface{}, opts ...*options.FindOptions) (*mongo.Cursor, error) {
+func (m *MongoClient) Find(collection string, filter interface{}, opts ...*options.FindOptions) (result *mongo.Cursor, err error) {
+	sTime := time.Now()
+	defer func() {
+		m.pcAndGl(sTime, "find", err)
+	}()
+
 	cur, err := m.client.Database(m.DataBase).Collection(collection).Find(context.TODO(), filter, opts...)
 	if err != nil {
 		dlog.Error("mongoClient Find occur error:%v, collection:%s", err, collection)
 		return nil, err
-	}
-
-	for cur.Next(context.TODO()) {
-
 	}
 
 	return cur, nil

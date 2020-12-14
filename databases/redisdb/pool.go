@@ -285,7 +285,7 @@ func (p *RedisPoolClient) Do(commandName string, args ...interface{}) (reply int
 		}
 
 		if err != nil && err != redis.ErrNil && err != ErrNil {
-			pc.CostFail(fmt.Sprintf("rediscluster,name=%v", p.redisPool.servers), 1)
+			pc.CostFail(fmt.Sprintf("rediPool,name=%v", p.redisPool.servers), 1)
 			gl.Incr(glRedisPoolCallFail, 1)
 		}
 	}()
