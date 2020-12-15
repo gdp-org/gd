@@ -221,6 +221,7 @@ func (m *MongoClient) initWithMongoConfig(c *MongoConfig) error {
 		return err
 	}
 
+	m.DbConfig = c
 	m.client = client
 	return nil
 }
@@ -239,11 +240,11 @@ func (m *MongoClient) pcAndGl(sTime time.Time, cmd string, err error) {
 		if cost/time.Millisecond > 100 {
 			dlog.Warn("mongo slow, pool:%v, cmd:%v, cost:%v", m.DbConfig.Hosts, cmd, cost)
 		}
-		pc.Cost(fmt.Sprintf("mongo,name=%s,cmd=%s",  m.DbConfig.Hosts, MongoCmdSlowCount), cost)
+		pc.Cost(fmt.Sprintf("mongo,name=%s,cmd=%s", m.DbConfig.Hosts, MongoCmdSlowCount), cost)
 	}
 
 	if err != nil {
-		pc.CostFail(fmt.Sprintf("mongo,name=%v",  m.DbConfig.Hosts), 1)
+		pc.CostFail(fmt.Sprintf("mongo,name=%v", m.DbConfig.Hosts), 1)
 		gl.Incr(glMongoCallFail, 1)
 	}
 }

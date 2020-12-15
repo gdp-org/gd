@@ -24,7 +24,7 @@ require (
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/v2pro/plz v0.0.0-20180227161703-2d49b86ea382
-	go.mongodb.org/mongo-driver v1.4.4 // indirect
+	go.mongodb.org/mongo-driver v1.4.4
 	gopkg.in/ini.v1 v1.57.0
 	moul.io/http2curl v1.0.0 // indirect
 )

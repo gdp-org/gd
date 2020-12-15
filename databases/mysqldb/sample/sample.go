@@ -25,7 +25,7 @@ func main() {
 	var i chan struct{}
 	o := mysqldb.MysqlClient{DataBases: "test"}
 	if err := o.Start(); err != nil {
-		dlog.Debug("err:%s", err)
+		dlog.Error("err:%s", err)
 		return
 	}
 
@@ -33,11 +33,11 @@ func main() {
 	query := "select ? from test where id = ?"
 	data, err := o.Query((*TestDB)(nil), query, 2)
 	if err != nil {
-		dlog.Debug("err:%s", err)
+		dlog.Error("err:%s", err)
 		return
 	}
 	if data == nil {
-		dlog.Debug("err:%s", err)
+		dlog.Error("err:%s", err)
 		return
 	}
 	dlog.Debug("%v", data.(*TestDB))
