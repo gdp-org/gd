@@ -111,6 +111,7 @@ func main() {
 	}
 	dlog.Debug("DeleteOne result:%v", r4)
 
+	// Delete Many
 	r4, err = o.DeleteMany("test", filter)
 	if err != nil {
 		dlog.Error("DeleteMany occur error:%v", err)
