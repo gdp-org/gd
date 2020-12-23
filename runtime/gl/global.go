@@ -59,6 +59,12 @@ func Close() {
 	}
 }
 
+//Exist find out if current ctx has been init
+func Exist() bool {
+	_, ok := _gl.getGl()
+	return ok
+}
+
 func Del(key interface{}) {
 	cc, ok := _gl.getGl()
 	if !ok {

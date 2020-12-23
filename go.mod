@@ -14,6 +14,7 @@ require (
 	github.com/go-errors/errors v1.1.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/v2pro/plz v0.0.0-20180227161703-2d49b86ea382
 	go.mongodb.org/mongo-driver v1.4.4
+	google.golang.org/grpc v1.34.0
 	gopkg.in/ini.v1 v1.57.0
 	moul.io/http2curl v1.0.0 // indirect
 )
