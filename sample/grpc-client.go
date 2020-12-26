@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dgrpc"
-	pb "github.com/chuck1024/gd/net/dgrpc/sample/helloworld"
+	pb "github.com/chuck1024/gd/sample/helloworld"
 	"google.golang.org/grpc"
 	"strconv"
 	"time"
@@ -27,9 +27,9 @@ func (s *server2) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 func main() {
 	var i chan struct{}
 	bc := dgrpc.GrpcClient{
-		Target:      "127.0.0.1:10240",
+		Target:      "127.0.0.1:10242",
 		ServiceName: "gd",
-		UseTls:      true,
+		UseTls:      false,
 	}
 
 	err := bc.Start(

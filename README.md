@@ -94,7 +94,7 @@ healthPort = 9527
 [Server]
 serverName = "gd"
 httpPort   = 10240
-rcpPort    = 10241
+rpcPort    = 10241
 ```
 
 **Process.maxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  

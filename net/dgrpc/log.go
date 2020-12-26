@@ -50,6 +50,9 @@ func StreamServerLoggerInterceptor() grpc.StreamServerInterceptor {
 			gl.Set(gl.ClientIp, ip)
 		}
 
+		traceId := utls.TraceId()
+		gl.Set(gl.LogId, traceId)
+
 		gl.Set(gl.Url, info.FullMethod)
 		logData := make(map[string]interface{})
 
@@ -74,9 +77,9 @@ func StreamServerLoggerInterceptor() grpc.StreamServerInterceptor {
 		}
 
 		if ShouldFail4Code(code) {
-			log.WarnT("SESSION", "%s", logDataStr)
+			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		} else {
-			log.InfoT("SESSION", "%s", logDataStr)
+			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		}
 		return err
 	}
@@ -90,6 +93,8 @@ func UnaryServerLoggerInterceptor() grpc.UnaryServerInterceptor {
 			gl.Set(gl.ClientIp, ip)
 		}
 
+		traceId := utls.TraceId()
+		gl.Set(gl.LogId, traceId)
 		gl.Set(gl.Url, info.FullMethod)
 
 		logData := make(map[string]interface{})
@@ -118,9 +123,9 @@ func UnaryServerLoggerInterceptor() grpc.UnaryServerInterceptor {
 			return resp, err
 		}
 		if ShouldFail4Code(code) {
-			log.WarnT("SESSION", "%s", logDataStr)
+			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		} else {
-			log.InfoT("SESSION", "%s", logDataStr)
+			log.InfoT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		}
 		return resp, err
 	}

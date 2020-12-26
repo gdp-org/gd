@@ -6,11 +6,14 @@
 package main
 
 import (
+	"context"
 	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
+	pb "github.com/chuck1024/gd/sample/helloworld"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 	"net/http"
 )
 
@@ -42,6 +45,23 @@ func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *
 	return uint32(de.RpcSuccess), "ok", nil, ret
 }
 
+type reg struct {
+	handler pb.GreeterServer
+}
+
+func (r *reg) RegisterHandler(s *grpc.Server) error {
+	pb.RegisterGreeterServer(s, r.handler)
+	return nil
+}
+
+// server is used to implement hello world.GreeterServer.
+type server struct{}
+
+// SayHello implements hello world.GreeterServer
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
+}
+
 func Register(e *gd.Engine) {
 	// http
 	e.HttpServer.SetInit(func(g *gin.Engine) error {
@@ -69,6 +89,12 @@ func Register(e *gd.Engine) {
 		return
 	}
 	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
+
+	// grpc
+	rc := &reg{
+		handler: &server{},
+	}
+	e.GrpcServer.Register(rc)
 }
 
 func main() {

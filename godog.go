@@ -7,12 +7,14 @@ package gd
 
 import (
 	"fmt"
+	"github.com/chuck1024/gd/net/dgrpc"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/runtime/helper"
 	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
+	"google.golang.org/grpc"
 	"runtime"
 	"syscall"
 	"time"
@@ -21,6 +23,7 @@ import (
 type Engine struct {
 	HttpServer *dhttp.HttpServer
 	RpcServer  *dogrpc.RpcServer
+	GrpcServer *dgrpc.GrpcServer
 }
 
 func Default() *Engine {
@@ -28,19 +31,24 @@ func Default() *Engine {
 		HttpServer: &dhttp.HttpServer{
 			NoGinLog: true,
 		},
-		RpcServer: dogrpc.NewDogRpcServer(),
+		RpcServer:  dogrpc.NewDogRpcServer(),
+		GrpcServer: &dgrpc.GrpcServer{},
 	}
 
 	InitLog()
 	return e
 }
 
-func InitLog(){
+func InitLog() {
 	enable := Config("Log", "enable").MustBool(false)
 	if enable {
-		port := Config("Server", "httpPort").MustInt()
-		if port == 0 {
-			port = Config("Server", "rcpPort").MustInt()
+		var port int
+		if Config("Server", "httpPort").MustInt() > 0 {
+			port = Config("Server", "httpPort").MustInt()
+		} else if Config("Server", "rpcPort").MustInt() > 0 {
+			port = Config("Server", "rpcPort").MustInt()
+		} else if Config("Server", "grpcPort").MustInt() > 0{
+			port = Config("Server", "grpcPort").MustInt()
 		}
 
 		if err := restoreLogConfig("", Config("Server", "serverName").String(),
@@ -119,16 +127,22 @@ func (e *Engine) Run() error {
 		}
 	}
 
-	// rpc server
-	rpcPort := Config("Server", "rcpPort").MustInt()
-	if rpcPort > 0 {
-		Info("rpc server try listen port:%d", rpcPort)
+	// grpc server
+	grpcPort := Config("Server", "grpcPort").MustInt()
+	if grpcPort > 0 {
+		Info("grpc server try listen port:%d", grpcPort)
 
-		if err = e.RpcServer.Run(rpcPort); err != nil {
-			Error("rpc server occur error in running application, error = %s", err.Error())
+		e.GrpcServer.GrpcRunPort = grpcPort
+		e.GrpcServer.ServiceName = Config("Server", "serverName").String()
+		if err = e.GrpcServer.Run(); err != nil {
+			Error("Grpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
-		defer e.RpcServer.Stop()
+		defer e.GrpcServer.Stop()
+
+		if falconEnable {
+			pc.SetRunPort(grpcPort)
+		}
 	}
 
 	// health
@@ -143,6 +157,18 @@ func (e *Engine) Run() error {
 			return err
 		}
 		defer health.Close()
+	}
+
+	// rpc server
+	rpcPort := Config("Server", "rpcPort").MustInt()
+	if rpcPort > 0 {
+		Info("rpc server try listen port:%d", rpcPort)
+
+		if err = e.RpcServer.Run(rpcPort); err != nil {
+			Error("rpc server occur error in running application, error = %s", err.Error())
+			return err
+		}
+		defer e.RpcServer.Stop()
 	}
 
 	<-Running
@@ -203,6 +229,19 @@ func NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
 	}
 	if err := client.Start(); err != nil {
 		Error("http client start occur error:%s", err.Error())
+		return nil
+	}
+	return client
+}
+
+func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) *dgrpc.GrpcClient {
+	client := &dgrpc.GrpcClient{
+		Target:      target,
+		ServiceName: serviceName,
+	}
+
+	if err := client.Start(makeRawClient); err != nil {
+		Error("grpc client start occur error:%s", err.Error())
 		return nil
 	}
 	return client

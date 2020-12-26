@@ -38,6 +38,7 @@ func main(){
 	s := &dgrpc.GrpcServer{
 		GrpcRunPort:        10240,
 		RegisterHandler:    rc,
+		UseTls: true,
 	}
 	err := s.Run()
 	if err != nil {

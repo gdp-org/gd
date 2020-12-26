@@ -41,10 +41,9 @@ type GrpcClient struct {
 	rawClient          interface{}
 }
 
-func (c *GrpcClient) Start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) error {
+func (c *GrpcClient) Start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error)) error {
 	var err error
 	c.startOnce.Do(func() {
-		c.ServiceName = serviceName
 		err = c.start(makeRawClient)
 	})
 	return err
@@ -110,15 +109,15 @@ func (c *GrpcClient) DefaultClient() (*grpc.ClientConn, error) {
 	var err error
 	if c.UseTls {
 		if c.GrpcCaPemFile == "" {
-			c.GrpcCaPemFile = "conf/ca_pem.json"
+			c.GrpcCaPemFile = "conf/ca.pem"
 		}
 
 		if c.GrpcClientKeyFile == "" {
-			c.GrpcClientKeyFile = "conf/client_key.json"
+			c.GrpcClientKeyFile = "conf/client.key"
 		}
 
 		if c.GrpcClientPemFile == "" {
-			c.GrpcClientPemFile = "conf/client_pem.json"
+			c.GrpcClientPemFile = "conf/client.pem"
 		}
 
 		if c.CertServerName == "" {
@@ -188,7 +187,7 @@ func (c *GrpcClient) GetCredentialsByCA() (credentials.TransportCredentials, err
 	}
 
 	certPool := x509.NewCertPool()
-	ca, err := ioutil.ReadFile(c.CertServerName)
+	ca, err := ioutil.ReadFile(c.GrpcCaPemFile)
 	if err != nil {
 		return nil, err
 	}

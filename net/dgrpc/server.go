@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/gd/config"
 	log "github.com/chuck1024/gd/dlog"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -40,6 +39,7 @@ type GrpcServer struct {
 	closeOnce       sync.Once
 	GrpcRunPort     int
 	RegisterHandler IRegisterHandler
+	ServiceName     string
 
 	UseTls             bool
 	GrpcCertServerName string // if not, default gd
@@ -90,6 +90,10 @@ func (s *GrpcServer) startRun() error {
 	return nil
 }
 
+func (s *GrpcServer) Register(i IRegisterHandler) {
+	s.RegisterHandler = i
+}
+
 func (s *GrpcServer) Stop() {
 	s.closeOnce.Do(func() {
 		s.s.GracefulStop()
@@ -99,7 +103,7 @@ func (s *GrpcServer) Stop() {
 func (s *GrpcServer) DefaultServer() (*grpc.Server, error) {
 	ops := []InterceptorOption{
 		WithGlInterceptor(),
-		WithPerfCounterInterceptor(config.Config().Section("Server").Key("serverName").String()),
+		WithPerfCounterInterceptor(s.ServiceName),
 		WithLogInterceptor(),
 		WithRecoveryInterceptor(nil),
 	}
@@ -108,15 +112,15 @@ func (s *GrpcServer) DefaultServer() (*grpc.Server, error) {
 
 	if s.UseTls {
 		if s.GrpcCaPemFile == "" {
-			s.GrpcCaPemFile = "conf/ca_pem.json"
+			s.GrpcCaPemFile = "conf/ca.pem"
 		}
 
 		if s.GrpcServerKeyFile == "" {
-			s.GrpcServerKeyFile = "conf/server_key.json"
+			s.GrpcServerKeyFile = "conf/server.key"
 		}
 
 		if s.GrpcServerPemFile == "" {
-			s.GrpcServerPemFile = "conf/server_pem.json"
+			s.GrpcServerPemFile = "conf/server.pem"
 		}
 
 		if s.GrpcCertServerName == "" {
