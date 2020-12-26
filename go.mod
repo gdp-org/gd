@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Pallinder/go-randomdata v1.2.0
-	github.com/alecthomas/log4go v0.0.0-20180109082532-d146e6b86faa // indirect
+	github.com/alecthomas/log4go v0.0.0-20180109082532-d146e6b86faa
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200809112317-0581fc3aee2d // indirect
@@ -15,7 +15,8 @@ require (
 	github.com/go-errors/errors v1.1.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
+	github.com/golang/protobuf v1.4.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/v2pro/plz v0.0.0-20180227161703-2d49b86ea382
 	go.mongodb.org/mongo-driver v1.4.4
+	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
 	google.golang.org/grpc v1.34.0
 	gopkg.in/ini.v1 v1.57.0
 	moul.io/http2curl v1.0.0 // indirect

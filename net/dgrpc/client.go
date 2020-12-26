@@ -24,6 +24,7 @@ import (
 
 type GrpcClient struct {
 	Target             string
+	ServiceName         string
 	Timeout            int
 	MaxRetries         int
 	PerCallTimeoutInMs int
@@ -40,16 +41,17 @@ type GrpcClient struct {
 	rawClient          interface{}
 }
 
-func (c *GrpcClient) Start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error), getServiceDesc func() grpc.ServiceDesc) error {
+func (c *GrpcClient) Start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) error {
 	var err error
 	c.startOnce.Do(func() {
-		err = c.start(makeRawClient, getServiceDesc)
+		c.ServiceName = serviceName
+		err = c.start(makeRawClient)
 	})
 	return err
 }
 
-func (c *GrpcClient) start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error), getServiceDesc func() grpc.ServiceDesc) (err error) {
-	c.connect, err = c.DefaultClient(getServiceDesc())
+func (c *GrpcClient) start(makeRawClient func(conn *grpc.ClientConn) (interface{}, error)) (err error) {
+	c.connect, err = c.DefaultClient()
 	if err != nil {
 		return err
 	}
@@ -75,10 +77,10 @@ func (c *GrpcClient) GetRawClient() interface{} {
 	return c.rawClient
 }
 
-func (c *GrpcClient) DefaultClient(serviceDesc grpc.ServiceDesc) (*grpc.ClientConn, error) {
+func (c *GrpcClient) DefaultClient() (*grpc.ClientConn, error) {
 	ops := []InterceptorOption{
 		WithGlInterceptor(),
-		WithPerfCounterInterceptor(serviceDesc.ServiceName),
+		WithPerfCounterInterceptor(c.ServiceName),
 	}
 
 	if c.Timeout > 0 {
@@ -108,15 +110,15 @@ func (c *GrpcClient) DefaultClient(serviceDesc grpc.ServiceDesc) (*grpc.ClientCo
 	var err error
 	if c.UseTls {
 		if c.GrpcCaPemFile == "" {
-			c.GrpcCaPemFile = "ca_pem.json"
+			c.GrpcCaPemFile = "conf/ca_pem.json"
 		}
 
 		if c.GrpcClientKeyFile == "" {
-			c.GrpcClientKeyFile = "client_key.json"
+			c.GrpcClientKeyFile = "conf/client_key.json"
 		}
 
 		if c.GrpcClientPemFile == "" {
-			c.GrpcClientPemFile = "miot-grpc_client_pem.json"
+			c.GrpcClientPemFile = "conf/client_pem.json"
 		}
 
 		if c.CertServerName == "" {
@@ -154,13 +156,13 @@ func (c *GrpcClient) DefaultClient(serviceDesc grpc.ServiceDesc) (*grpc.ClientCo
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("grpc dail fail,target=%v,err=%v", serviceDesc.ServiceName, err)
+		return nil, fmt.Errorf("grpc dail fail,target=%v,err=%v", c.ServiceName, err)
 	}
 
 	if c.WaitReady {
 		err := c.WaitClientReady(to, cc)
 		if err != nil {
-			return nil, fmt.Errorf("wait client ready fail,target=%v,err=%v", serviceDesc.ServiceName, err)
+			return nil, fmt.Errorf("wait client ready fail,target=%v,err=%v", c.ServiceName, err)
 		}
 	}
 	return cc, nil

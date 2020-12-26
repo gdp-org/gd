@@ -108,15 +108,15 @@ func (s *GrpcServer) DefaultServer() (*grpc.Server, error) {
 
 	if s.UseTls {
 		if s.GrpcCaPemFile == "" {
-			s.GrpcCaPemFile = "ca_pem.json"
+			s.GrpcCaPemFile = "conf/ca_pem.json"
 		}
 
 		if s.GrpcServerKeyFile == "" {
-			s.GrpcServerKeyFile = "server_key.json"
+			s.GrpcServerKeyFile = "conf/server_key.json"
 		}
 
 		if s.GrpcServerPemFile == "" {
-			s.GrpcServerPemFile = "server_pem.json"
+			s.GrpcServerPemFile = "conf/server_pem.json"
 		}
 
 		if s.GrpcCertServerName == "" {
