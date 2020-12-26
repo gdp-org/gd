@@ -8,8 +8,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/net/dgrpc"
 	pb "github.com/chuck1024/gd/sample/helloworld"
 	"google.golang.org/grpc"
 	"strconv"
@@ -26,23 +26,10 @@ func (s *server2) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 
 func main() {
 	var i chan struct{}
-	bc := dgrpc.GrpcClient{
-		Target:      "127.0.0.1:10242",
-		ServiceName: "gd",
-		UseTls:      false,
-	}
-
-	err := bc.Start(
-		func(conn *grpc.ClientConn) (interface{}, error) {
-			rawClient := pb.NewGreeterClient(conn)
-			return rawClient, nil
-		},
-	)
-
-	if err != nil {
-		dlog.Error("grpc client start occur error:%v", err)
-		return
-	}
+	bc := gd.NewGrpcClient("127.0.0.1:10242",func(conn *grpc.ClientConn) (interface{}, error) {
+		rawClient := pb.NewGreeterClient(conn)
+		return rawClient, nil
+	},"gd")
 	defer bc.Stop()
 
 	c := bc.GetRawClient().(pb.GreeterClient)
