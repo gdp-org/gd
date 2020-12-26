@@ -9,4 +9,5 @@ const (
 	ClientIp = "glClientIp"
 	Tag      = "glTag"
 	LogId    = "glLogId"
+	Url      = "glUrl"
 )

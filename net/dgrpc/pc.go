@@ -20,7 +20,7 @@ var (
 	metaTraceId = "_traceId"
 )
 
-//to ensure traceid in all context
+//to ensure traceId in all context
 //a simple tracing like opentracing
 func ensureTraceId(context context.Context) context.Context {
 	traceId := ""

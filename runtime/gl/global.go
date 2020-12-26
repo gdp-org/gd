@@ -7,7 +7,10 @@ package gl
 
 import (
 	"fmt"
+	js "github.com/bitly/go-simplejson"
 	"os"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -126,12 +129,56 @@ func GetCurrentGlData() map[string]interface{} {
 
 	for k, v := range gl {
 		kStr := fmt.Sprintf("%v", k)
-		if kStr == ClientIp || kStr == Tag || kStr == LogId {
+		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url {
 			continue
 		}
 		ret[kStr] = v
 	}
 	return ret
+}
+
+func JsonCurrentCtx() *js.Json {
+	retJ := js.New()
+	gid, ok := getGoId()
+	if !ok {
+		retJ.Set("_info", "no id")
+		return retJ
+	}
+	ctx, ok := _gl.getGl()
+	if !ok || ctx == nil {
+		retJ.Set("_info", "no ctx")
+		return retJ
+	}
+
+	if log != nil {
+		log.Debug("json ctx %s:%v", gid, ctx)
+	}
+
+	for k, v := range ctx {
+		kStr := fmt.Sprintf("%v", k)
+		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url {
+			continue
+		}
+		if isPtrOrInterface(v) {
+			if strings.HasPrefix(kStr, "_tk_") {
+				retJ.Set("_tk_", "@#")
+			} else {
+				retJ.Set(kStr, "@#")
+			}
+		} else {
+			retJ.Set(kStr, v)
+		}
+	}
+	return retJ
+}
+
+func isPtrOrInterface(v interface{}) bool {
+	if v == nil {
+		return true
+	}
+	t := reflect.TypeOf(v)
+	k := t.Kind()
+	return k == reflect.Ptr || k == reflect.Interface
 }
 
 func IncrCost(key interface{}, cost time.Duration) int64 {

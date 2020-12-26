@@ -112,6 +112,7 @@ type LogRecord struct {
 	Tag   string // The tag
 	Ip    string // clientIp
 	LogId string // logId
+	Url   string // url
 }
 
 /****** LogWriter ******/
@@ -275,6 +276,62 @@ func (log Logger) intLogfTag(tag, clientIp, logId string, lvl Level, format stri
 		Tag:     tag,
 		Ip:      clientIp,
 		LogId:   logId,
+	}
+
+	found := false
+	// Dispatch the logs
+	for _, filt := range log {
+		if lvl < filt.Level {
+			continue
+		}
+
+		if !found {
+			_, ok := filt.LogWriter.(*FileLogWriter)
+			if ok {
+				found = true
+			}
+		}
+
+		filt.LogWrite(rec)
+	}
+}
+
+func (log Logger) IntLogfTagUrl(tag, clientIp, logId, url string, lvl Level, format string, args ...interface{}) {
+	skip := true
+
+	// Determine if any logging will be done
+	for _, filt := range log {
+		if lvl >= filt.Level {
+			skip = false
+			break
+		}
+	}
+	if skip {
+		return
+	}
+
+	// Determine caller func
+	pc, _, lineno, ok := runtime.Caller(2)
+	src := ""
+	if ok {
+		src = fmt.Sprintf("%s:%d", runtime.FuncForPC(pc).Name(), lineno)
+	}
+
+	msg := format
+	if len(args) > 0 {
+		msg = fmt.Sprintf(format, args...)
+	}
+
+	// Make the log record
+	rec := &LogRecord{
+		Level:   lvl,
+		Created: time.Now(),
+		Source:  src,
+		Message: msg,
+		Tag:     tag,
+		Ip:      clientIp,
+		LogId:   logId,
+		Url:     url,
 	}
 
 	found := false

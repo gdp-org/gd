@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Pallinder/go-randomdata v1.2.0
+	github.com/alecthomas/log4go v0.0.0-20180109082532-d146e6b86faa // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/elazarl/goproxy v0.0.0-20200809112317-0581fc3aee2d // indirect

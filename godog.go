@@ -31,6 +31,11 @@ func Default() *Engine {
 		RpcServer: dogrpc.NewDogRpcServer(),
 	}
 
+	InitLog()
+	return e
+}
+
+func InitLog(){
 	enable := Config("Log", "enable").MustBool(false)
 	if enable {
 		port := Config("Server", "httpPort").MustInt()
@@ -40,13 +45,11 @@ func Default() *Engine {
 
 		if err := restoreLogConfig("", Config("Server", "serverName").String(),
 			port, Config("Log", "level").String(), Config("Log", "logDir").String()); err != nil {
-
+			panic(fmt.Sprintf("restoreLogConfig occur error:%v", err))
 		}
 
 		LoadConfiguration(logConfigFile)
 	}
-
-	return e
 }
 
 // Engine Run
