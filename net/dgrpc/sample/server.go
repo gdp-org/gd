@@ -30,20 +30,21 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
 }
 
-func main(){
+func main() {
 	var i chan struct{}
 	rc := &mockReg{
 		handler: &server{},
 	}
 	s := &dgrpc.GrpcServer{
-		GrpcRunPort:        10240,
-		RegisterHandler:    rc,
-		UseTls: true,
+		GrpcRunPort:     10240,
+		RegisterHandler: rc,
+		ServiceName:     "gd",
+		UseTls:          true,
 	}
 	err := s.Run()
 	if err != nil {
 		return
 	}
-	dlog.Debug("err:%v",err)
+	dlog.Debug("err:%v", err)
 	<-i
 }
