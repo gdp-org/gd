@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/dlog"
 	pb "github.com/chuck1024/gd/sample/helloworld"
 	"google.golang.org/grpc"
 	"strconv"
@@ -38,6 +37,6 @@ func main() {
 	defer cancel()
 
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-	dlog.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
+	gd.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
 	<-i
 }

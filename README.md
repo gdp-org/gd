@@ -50,7 +50,7 @@ func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err
 
 func main() {
 	d := gd.Default()
-	d.HttpServer.SetInit(func(g *gin.Engine) error {
+	d.SetHttpServer(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),
@@ -95,6 +95,7 @@ healthPort = 9527
 serverName = "gd"
 httpPort   = 10240
 rpcPort    = 10241
+grpcPort   = 10242
 ```
 
 **Process.maxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  

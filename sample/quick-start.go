@@ -20,7 +20,7 @@ func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err
 
 func main() {
 	d := gd.Default()
-	d.HttpServer.SetInit(func(g *gin.Engine) error {
+	d.SetHttpServer(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),

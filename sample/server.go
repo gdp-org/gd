@@ -64,7 +64,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 
 func Register(e *gd.Engine) {
 	// http
-	e.HttpServer.SetInit(func(g *gin.Engine) error {
+	e.SetHttpServer(func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),
@@ -94,7 +94,7 @@ func Register(e *gd.Engine) {
 	rc := &reg{
 		handler: &server{},
 	}
-	e.GrpcServer.Register(rc)
+	e.SetGrpcServer(rc)
 }
 
 func main() {

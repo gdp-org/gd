@@ -212,8 +212,12 @@ func (e *Engine) initCPUAndMemory() error {
 	return nil
 }
 
-func (e *Engine) SetHttpServer(initer dhttp.HttpServerIniter) {
-	e.HttpServer.SetInit(initer)
+func (e *Engine) SetHttpServer(init dhttp.HttpServerIniter) {
+	e.HttpServer.SetInit(init)
+}
+
+func (e *Engine) SetGrpcServer(init dgrpc.IRegisterHandler) {
+	e.GrpcServer.Register(init)
 }
 
 // timeout Millisecond
