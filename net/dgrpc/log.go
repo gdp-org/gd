@@ -50,9 +50,6 @@ func StreamServerLoggerInterceptor() grpc.StreamServerInterceptor {
 			gl.Set(gl.ClientIp, ip)
 		}
 
-		traceId := utls.TraceId()
-		gl.Set(gl.LogId, traceId)
-
 		gl.Set(gl.Url, info.FullMethod)
 		logData := make(map[string]interface{})
 
@@ -92,9 +89,6 @@ func UnaryServerLoggerInterceptor() grpc.UnaryServerInterceptor {
 		if ip != "" {
 			gl.Set(gl.ClientIp, ip)
 		}
-
-		traceId := utls.TraceId()
-		gl.Set(gl.LogId, traceId)
 		gl.Set(gl.Url, info.FullMethod)
 
 		logData := make(map[string]interface{})

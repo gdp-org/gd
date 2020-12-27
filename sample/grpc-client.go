@@ -24,7 +24,6 @@ func (s *server2) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func main() {
-	var i chan struct{}
 	bc := gd.NewGrpcClient("127.0.0.1:10242",func(conn *grpc.ClientConn) (interface{}, error) {
 		rawClient := pb.NewGreeterClient(conn)
 		return rawClient, nil
@@ -38,5 +37,4 @@ func main() {
 
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
 	gd.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
-	<-i
 }
