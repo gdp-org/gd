@@ -229,6 +229,7 @@ func (c *MysqlClient) queryList(query string, args ...interface{}) (*sql.Rows, e
 		if err == nil {
 			return ret, err
 		}
+		log.Warn("MysqlClient queryList, use db:%s, occur err:%v", readDb.host, err)
 
 		if retry < 1 {
 			retry++
