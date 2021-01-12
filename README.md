@@ -82,9 +82,12 @@ What's more, your configuration file must have the necessary parameters, like th
 
 ```ini
 [Log]
+[Log]
 enable     = true
 level      = "DEBUG"
 logDir     = "log"
+stdout     = "false"
+toFile     = "true"
 
 [Process]
 maxCPU     = 2
