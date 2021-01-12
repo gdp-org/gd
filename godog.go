@@ -15,6 +15,7 @@ import (
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
 	"google.golang.org/grpc"
+	"os"
 	"runtime"
 	"syscall"
 	"time"
@@ -68,11 +69,15 @@ func (e *Engine) Run() error {
 	// register signal
 	e.Signal()
 
+	var err error
 	// dump when error occurs
 	logDir := Config("Log", "logDir").String()
-	file, err := utls.Dump(logDir, Config("Server", "serverName").String())
-	if err != nil {
-		Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+	file := &os.File{}
+	if Config("Log", "toFile").MustString("false") == "true" {
+		file, err = utls.Dump(logDir, Config("Server", "serverName").String())
+		if err != nil {
+			Error("Error occurs when initialize dump dumpPanic file, error = %s", err.Error())
+		}
 	}
 
 	// output exit info
@@ -81,6 +86,11 @@ func (e *Engine) Run() error {
 		time.Sleep(time.Second)
 		Info("server stop...ok")
 		Info("- - - - - - - - - - - - - - - - - - -")
+
+		if Config("Log", "toFile").MustString("false") == "false" {
+			return
+		}
+
 		if err := utls.ReviewDumpPanic(file); err != nil {
 			Error("Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
@@ -105,8 +115,10 @@ func (e *Engine) Run() error {
 	if statEnable {
 		statInterval := Config("Statistics", "statInterval").MustInt64(5)
 		statFile := "stat.log"
-		if logDir != "" {
-			statFile = logDir + "/stat.log"
+		if Config("Log", "toFile").MustString("false") == "true" {
+			if logDir != "" {
+				statFile = logDir + "/stat.log"
+			}
 		}
 		stat.StatMgrInstance().Init(statFile, time.Second*time.Duration(statInterval))
 	}
@@ -169,7 +181,6 @@ func (e *Engine) Run() error {
 			Error("rpc server occur error in running application, error = %s", err.Error())
 			return err
 		}
-		defer e.RpcServer.Stop()
 	}
 
 	<-Running

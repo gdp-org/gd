@@ -96,6 +96,9 @@ func restoreLogConfig(configFilePath string, binName string, port int, logLevel 
 		Tag:     "stdout",
 		Level:   "INFO",
 		Type:    "console",
+		Property: []xmlProperty{
+			xmlProperty{Name: "format", Value: defaultFormat},
+		},
 	}
 	filters = append(filters, stdout)
 	// info
