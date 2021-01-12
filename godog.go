@@ -47,12 +47,13 @@ func InitLog() {
 			port = Config("Server", "httpPort").MustInt()
 		} else if Config("Server", "rpcPort").MustInt() > 0 {
 			port = Config("Server", "rpcPort").MustInt()
-		} else if Config("Server", "grpcPort").MustInt() > 0{
+		} else if Config("Server", "grpcPort").MustInt() > 0 {
 			port = Config("Server", "grpcPort").MustInt()
 		}
 
 		if err := restoreLogConfig("", Config("Server", "serverName").String(),
-			port, Config("Log", "level").String(), Config("Log", "logDir").String()); err != nil {
+			port, Config("Log", "level").String(), Config("Log", "logDir").String(),
+			Config("Log", "stdout").MustString("true"), Config("Log", "toFile").MustString("false")); err != nil {
 			panic(fmt.Sprintf("restoreLogConfig occur error:%v", err))
 		}
 

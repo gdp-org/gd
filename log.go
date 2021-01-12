@@ -55,7 +55,7 @@ func getWarnFileName(binName string, port int) string {
 	return fmt.Sprintf("%s_err_%d.log", binName, port)
 }
 
-func restoreLogConfig(configFilePath string, binName string, port int, logLevel string, logDir string) error {
+func restoreLogConfig(configFilePath string, binName string, port int, logLevel string, logDir string, stdoutBool string, toFile string) error {
 	l.Lock()
 	defer l.Unlock()
 	if logDir == "" {
@@ -92,7 +92,7 @@ func restoreLogConfig(configFilePath string, binName string, port int, logLevel 
 	var filters []xmlFilter
 	// stdout
 	stdout := xmlFilter{
-		Enabled: "false",
+		Enabled: stdoutBool,
 		Tag:     "stdout",
 		Level:   "INFO",
 		Type:    "console",
@@ -100,7 +100,7 @@ func restoreLogConfig(configFilePath string, binName string, port int, logLevel 
 	filters = append(filters, stdout)
 	// info
 	info := xmlFilter{
-		Enabled: "true",
+		Enabled: toFile,
 		Tag:     "service",
 		Level:   logLevel,
 		Type:    "file",
@@ -116,7 +116,7 @@ func restoreLogConfig(configFilePath string, binName string, port int, logLevel 
 	filters = append(filters, info)
 	// warn
 	warn := xmlFilter{
-		Enabled: "true",
+		Enabled: toFile,
 		Tag:     "service_err",
 		Level:   "WARNING",
 		Type:    "file",

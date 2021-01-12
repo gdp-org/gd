@@ -85,6 +85,8 @@ What's more, your configuration file must have the necessary parameters, like th
 enable     = true
 level      = "DEBUG"
 logDir     = "log"
+stdout     = "false"
+toFile     = "true"
 
 [Process]
 maxCPU     = 2
