@@ -31,7 +31,7 @@ func (c *MysqlClient) initObjForMysqlDb(dbConfPath string) error {
 		return err
 	}
 
-	if err = c.initDbs(dbConf, c.DataBases); err != nil {
+	if err = c.initDbs(dbConf, c.DataBase); err != nil {
 		return err
 	}
 	return nil
