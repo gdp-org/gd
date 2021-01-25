@@ -15,7 +15,7 @@ var (
 )
 
 func Dup2(from int, to int) error {
-	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, from, to, 0)
+	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, uintptr(from), uintptr(to), 0)
 	if r0 == 0 {
 		if e1 != 0 {
 			return error(e1)
