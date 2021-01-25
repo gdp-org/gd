@@ -83,10 +83,10 @@ type RedisCluster struct {
 }
 
 type RedisClusterClient struct {
-	RedisConfig   *RedisClusterConf
-	RedisConf     *ini.File
-	RedisConfPath string
-	ClusterName   string
+	RedisConfig   *RedisClusterConf `inject:"redisClusterConfig" canNil:"true"`
+	RedisConf     *ini.File         `inject:"redisClusterConf" canNil:"true"`
+	RedisConfPath string            `inject:"redisClusterConfPath" canNil:"true"`
+	ClusterName   string            `inject:"clusterName" canNil:"true"`
 
 	redisCluster *RedisCluster
 	startOnce    sync.Once

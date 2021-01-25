@@ -93,11 +93,7 @@ func (h *HttpServer) Close() {
 	}
 }
 
-func (h *HttpServer) SetInit(i HttpServerInit) {
-	h.HttpServerInit = i
-}
-
-func (h *HttpServer) AddHandler(url string, handle interface{}) {
+func (h *HttpServer) addHandler(url string, handle interface{}) {
 	if h.HandlerMap == nil {
 		h.HandlerMap = make(map[string]interface{})
 	}
@@ -151,43 +147,43 @@ func (h *HttpServer) initGin() error {
 // For GET, POST, PUT, PATCH and DELETE requests the respective shortcut
 // functions can be used.
 func (h *HttpServer) Handle(group *gin.RouterGroup, httpMethod, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.Handle(httpMethod, relativePath, ginHandler)
 }
 
 func (h *HttpServer) POST(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.POST(relativePath, ginHandler)
 }
 
 func (h *HttpServer) GET(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.GET(relativePath, ginHandler)
 }
 
 func (h *HttpServer) DELETE(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.DELETE(relativePath, ginHandler)
 }
 
 func (h *HttpServer) PATCH(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.DELETE(relativePath, ginHandler)
 }
 
 func (h *HttpServer) PUT(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.DELETE(relativePath, ginHandler)
 }
 
 func (h *HttpServer) OPTIONS(group *gin.RouterGroup, relativePath string, handler interface{}) {
-	h.AddHandler(relativePath, handler)
+	h.addHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.DELETE(relativePath, ginHandler)
 }
