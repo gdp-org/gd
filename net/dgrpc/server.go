@@ -37,18 +37,18 @@ type GrpcServer struct {
 	l               net.Listener
 	startOnce       sync.Once
 	closeOnce       sync.Once
-	GrpcRunPort     int
-	RegisterHandler IRegisterHandler
-	ServiceName     string
+	GrpcRunHost     int              `inject:"grpcRunHost"`
+	RegisterHandler IRegisterHandler `inject:"registerHandler"`
+	ServiceName     string           `inject:"serviceName"`
 
-	UseTls             bool
-	GrpcCertServerName string // if not, default gd
-	GrpcCaPemFile      string
-	GrpcServerKeyFile  string
-	GrpcServerPemFile  string
+	UseTls             bool   `inject:"useTls" canNil:"true"`
+	GrpcCertServerName string `inject:"grpcCertServerName" canNil:"true"` // if not, default gd
+	GrpcCaPemFile      string `inject:"grpcCaPemFile" canNil:"true"`
+	GrpcServerKeyFile  string `inject:"grpcServerKeyFile" canNil:"true"`
+	GrpcServerPemFile  string `inject:"grpcServerPemFile" canNil:"true"`
 }
 
-func (s *GrpcServer) Run() error {
+func (s *GrpcServer) Start() error {
 	var err error
 	s.startOnce.Do(func() {
 		err = s.start()
@@ -62,7 +62,7 @@ func (s *GrpcServer) start() error {
 		return fmt.Errorf("init server fail,err=%v", err)
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", s.GrpcRunPort))
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", s.GrpcRunHost))
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -83,18 +83,14 @@ func (s *GrpcServer) startRun() error {
 	go func() {
 		err := s.s.Serve(s.l)
 		if err != nil {
-			log.Crash("start server fail,addr=%v,err=%v", s.GrpcRunPort, err)
+			log.Crash("start server fail,addr=%v,err=%v", s.GrpcRunHost, err)
 		}
 	}()
 
 	return nil
 }
 
-func (s *GrpcServer) Register(i IRegisterHandler) {
-	s.RegisterHandler = i
-}
-
-func (s *GrpcServer) Stop() {
+func (s *GrpcServer) Close() {
 	s.closeOnce.Do(func() {
 		s.s.GracefulStop()
 	})

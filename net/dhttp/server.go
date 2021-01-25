@@ -15,26 +15,26 @@ import (
 	"time"
 )
 
-type HttpServerIniter func(g *gin.Engine) error
+type HttpServerInit func(g *gin.Engine) error
 
 type HttpServer struct {
 	server *http.Server
 	g      *gin.Engine
 
-	NoGinLog                  bool
-	UseHttps                  bool
-	HttpsCertFilePath         string
-	HttpsKeyFilePath          string
-	HttpServerShutdownTimeout int64
-	HttpServerReadTimeout     int64
-	HttpServerWriteTimeout    int64
-	HttpServerRunHost         string
-	HttpServerIniter          HttpServerIniter
+	GinLog                    bool           `inject:"httpServerGinLog" canNil:"true"`
+	UseHttps                  bool           `inject:"httpServerUseHttps" canNil:"true"`
+	HttpsCertFilePath         string         `inject:"httpServerHttpsCertFile" canNil:"true"`
+	HttpsKeyFilePath          string         `inject:"httpServerHttpsKeyFile" canNil:"true"`
+	HttpServerShutdownTimeout int64          `inject:"httpServerShutdownTimeout" canNil:"true"`
+	HttpServerReadTimeout     int64          `inject:"httpServerReadTimeout" canNil:"true"`
+	HttpServerWriteTimeout    int64          `inject:"httpServerWriteTimeout" canNil:"true"`
+	HttpServerRunHost         int            `inject:"httpServerRunHost"`
+	HttpServerInit            HttpServerInit `inject:"httpServerInit"`
 
 	HandlerMap map[string]interface{}
 }
 
-func (h *HttpServer) Run() error {
+func (h *HttpServer) Start() error {
 	defer func() {
 		dlog.Info("http server start http server with:shutdownTimeout=%d,readTimeout=%d,writeTimeout=%d", h.HttpServerShutdownTimeout, h.HttpServerReadTimeout, h.HttpServerWriteTimeout)
 	}()
@@ -78,9 +78,9 @@ func (h *HttpServer) Run() error {
 	return nil
 }
 
-func (h *HttpServer) Stop() {
+func (h *HttpServer) Close() {
 	if h.server == nil {
-		dlog.Info("not graceful http server shutdown %s", h.HttpServerRunHost)
+		dlog.Info("not graceful http server shutdown %d", h.HttpServerRunHost)
 		return
 	}
 
@@ -89,12 +89,12 @@ func (h *HttpServer) Stop() {
 	if err := h.server.Shutdown(ctx); err != nil {
 		dlog.Error("http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunHost, h.HttpServerShutdownTimeout, err)
 	} else {
-		dlog.Info("http server shutdown %s", h.HttpServerRunHost)
+		dlog.Info("http server shutdown %d", h.HttpServerRunHost)
 	}
 }
 
-func (h *HttpServer) SetInit(i HttpServerIniter) {
-	h.HttpServerIniter = i
+func (h *HttpServer) SetInit(i HttpServerInit) {
+	h.HttpServerInit = i
 }
 
 func (h *HttpServer) AddHandler(url string, handle interface{}) {
@@ -110,6 +110,41 @@ func (h *HttpServer) CheckHandle() error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (h *HttpServer) makeHttpServer() error {
+	err := h.initGin()
+	if err != nil {
+		return err
+	}
+
+	s := &http.Server{
+		Addr:         fmt.Sprintf(":%d", h.HttpServerRunHost),
+		Handler:      h.g,
+		ReadTimeout:  time.Duration(h.HttpServerReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(h.HttpServerWriteTimeout) * time.Second,
+	}
+	h.server = s
+	return nil
+}
+
+func (h *HttpServer) initGin() error {
+	var g *gin.Engine
+	gin.SetMode(gin.ReleaseMode)
+	if !h.GinLog {
+		g = gin.New()
+		g.Use(gin.Recovery())
+	} else {
+		g = gin.Default()
+	}
+
+	err := h.HttpServerInit(g)
+	if err != nil {
+		return err
+	}
+
+	h.g = g
 	return nil
 }
 
@@ -155,39 +190,4 @@ func (h *HttpServer) OPTIONS(group *gin.RouterGroup, relativePath string, handle
 	h.AddHandler(relativePath, handler)
 	ginHandler := Wrap(handler)
 	group.DELETE(relativePath, ginHandler)
-}
-
-func (h *HttpServer) makeHttpServer() error {
-	err := h.initGin()
-	if err != nil {
-		return err
-	}
-
-	s := &http.Server{
-		Addr:         h.HttpServerRunHost,
-		Handler:      h.g,
-		ReadTimeout:  time.Duration(h.HttpServerReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(h.HttpServerWriteTimeout) * time.Second,
-	}
-	h.server = s
-	return nil
-}
-
-func (h *HttpServer) initGin() error {
-	var g *gin.Engine
-	gin.SetMode(gin.ReleaseMode)
-	if h.NoGinLog {
-		g = gin.New()
-		g.Use(gin.Recovery())
-	} else {
-		g = gin.Default()
-	}
-
-	err := h.HttpServerIniter(g)
-	if err != nil {
-		return err
-	}
-
-	h.g = g
-	return nil
 }

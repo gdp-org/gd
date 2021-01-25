@@ -278,8 +278,8 @@ func (g *Graph) register(name string, value interface{}, singleton bool, noFill 
 			if singletonStr == "true" {
 				singletonTag = true
 			}
-			_, canNilStr, _ := structtag.Extract("cannil", string(f.Tag))
-			_, nilAbleStr, _ := structtag.Extract("nilable", string(f.Tag))
+			_, canNilStr, _ := structtag.Extract("canNil", string(f.Tag))
+			_, nilAbleStr, _ := structtag.Extract("nilAble", string(f.Tag))
 			canNil := false
 			if canNilStr == "true" || nilAbleStr == "true" {
 				canNil = true

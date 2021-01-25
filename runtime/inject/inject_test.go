@@ -230,11 +230,11 @@ func (s *Sin1) Close() {
 }
 
 type Sin2 struct {
-	Sin1 *Sin1  `inject:"sin1" singleton:"false" cannil:"false"`
+	Sin1 *Sin1  `inject:"sin1" singleton:"false" canNil:"false"`
 	Sin2 *Sin1  `inject:"sin2" singleton:"false"`
 	Sin3 *Sin1  `inject:"sin3" singleton:"true"`
-	Sin4 int    `inject:"sin4" cannil:"true"`
-	Sin5 string `inject:"sin5" cannil:"true"`
+	Sin4 int    `inject:"sin4" canNil:"true"`
+	Sin5 string `inject:"sin5" canNil:"true"`
 	Sin6 string `inject:"sin6"`
 }
 
@@ -271,7 +271,7 @@ func TestNoneSingleton(t *testing.T) {
 }
 
 func TestCanNil(t *testing.T) {
-	fmt.Println("######  cannil test")
+	fmt.Println("######  canNil test")
 	InitDefault()
 	l := &Log{}
 	SetLogger(l)

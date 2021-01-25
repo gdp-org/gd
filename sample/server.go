@@ -11,6 +11,7 @@ import (
 	de "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/chuck1024/gd/runtime/inject"
 	pb "github.com/chuck1024/gd/sample/helloworld"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -64,7 +65,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 
 func Register(e *gd.Engine) {
 	// http
-	e.SetHttpServer(func(g *gin.Engine) error {
+	inject.RegisterOrFail("httpServerInit", func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),
@@ -91,10 +92,7 @@ func Register(e *gd.Engine) {
 	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
 
 	// grpc
-	rc := &reg{
-		handler: &server{},
-	}
-	e.SetGrpcServer(rc)
+	inject.RegisterOrFail("registerHandler", &reg{handler: &server{}})
 }
 
 func main() {

@@ -51,10 +51,10 @@ type MongoConfig struct {
 }
 
 type MongoClient struct {
-	DbConfig   *MongoConfig
-	DbConf     *ini.File
-	DbConfPath string
-	DataBase   string // mongodb 实例名
+	DbConfig   *MongoConfig `inject:"mongoDbConfig" canNil:"true"`
+	DbConf     *ini.File    `inject:"mongoDbConf" canNil:"true"`
+	DbConfPath string       `inject:"mongoDbConfPath" canNil:"true"`
+	DataBase   string       `inject:"mongoDatabase" canNil:"true"` // mongodb 实例名
 
 	client *mongo.Client
 

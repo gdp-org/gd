@@ -63,10 +63,10 @@ type RedisPool struct {
 }
 
 type RedisPoolClient struct {
-	RedisConfig   *RedisConfig
-	RedisConf     *ini.File
-	RedisConfPath string
-	PoolName      string
+	RedisConfig   *RedisConfig `inject:"redisConfig" canNil:"true"`
+	RedisConf     *ini.File    `inject:"redisConf" canNil:"true"`
+	RedisConfPath string       `inject:"redisConfPath" canNil:"true"`
+	PoolName      string       `inject:"poolName" canNil:"true"`
 
 	redisPool *RedisPool
 	startOnce sync.Once

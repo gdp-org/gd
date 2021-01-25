@@ -10,6 +10,7 @@ import (
 	dogError "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/dlog"
 	"io"
+	"os"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -81,10 +82,20 @@ func (s *Server) Start() *dogError.CodeError {
 }
 
 func (s *Server) Serve() *dogError.CodeError {
-	if err := s.Start(); err != nil {
-		return err
-	}
-	s.stopWg.Wait()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Fprintln(os.Stderr, "panic_recovered")
+			}
+		}()
+
+		if dErr := s.Start(); dErr != nil {
+			dlog.Error("drpc start occur error:%s", dErr)
+			return
+		}
+		s.stopWg.Wait()
+	}()
+
 	return nil
 }
 

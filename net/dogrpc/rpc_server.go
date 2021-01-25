@@ -18,7 +18,7 @@ import (
 type RpcHandlerFunc func([]byte) (uint32, []byte)
 
 type RpcServer struct {
-	addr           string
+	Addr           int `inject:"rpcHost"`
 	ss             *Server
 	defaultHandler map[uint32]RpcHandlerFunc
 	wrapHandler    map[uint32]interface{}
@@ -36,12 +36,8 @@ func NewRpcServer() *RpcServer {
 	return s
 }
 
-func (s *RpcServer) Run(port int) error {
-	addr := fmt.Sprintf(":%d", port)
-	dlog.Info("dog rpc try to listen port: %d", port)
-
-	s.addr = addr
-	s.ss.Addr = addr
+func (s *RpcServer) Start() error {
+	s.ss.Addr = fmt.Sprintf(":%d", s.Addr)
 
 	err := s.ss.Serve()
 	if err != nil {
@@ -52,17 +48,8 @@ func (s *RpcServer) Run(port int) error {
 	return nil
 }
 
-func (s *RpcServer) Stop() {
+func (s *RpcServer) Close() {
 	s.ss.Stop()
-}
-
-func (s *RpcServer) SetAddr(addr string) {
-	s.addr = addr
-	s.ss.Addr = addr
-}
-
-func (s *RpcServer) GetAddr() string {
-	return s.addr
 }
 
 func (s *RpcServer) AddHandler(headCmd uint32, f RpcHandlerFunc) {

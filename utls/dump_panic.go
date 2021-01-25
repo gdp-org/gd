@@ -7,7 +7,6 @@ package utls
 
 import (
 	"os"
-	"syscall"
 )
 
 var (
@@ -38,7 +37,7 @@ func Dump(fileDir, name string) (*os.File, error) {
 		return file, err
 	}
 
-	if err := syscall.Dup2(int(file.Fd()), int(os.Stderr.Fd())); err != nil {
+	if err := Dup2(int(file.Fd()), int(os.Stderr.Fd())); err != nil {
 		return file, err
 	}
 	return file, nil

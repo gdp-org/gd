@@ -7,6 +7,7 @@ package config
 
 import (
 	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/utls"
 	"gopkg.in/ini.v1"
 	"sync"
 )
@@ -14,6 +15,7 @@ import (
 var (
 	defaultConfigName = "conf/conf.ini"
 	cache             sync.Map
+	defaultNoConfig   = &Conf{ini: ini.Empty()}
 )
 
 type Conf struct {
@@ -33,10 +35,14 @@ func SetConfPath(path string) {
 func Config() *Conf {
 	cfg, ok := getFile(defaultConfigName)
 	if !ok {
+		if !utls.Exists(defaultConfigName) {
+			return defaultNoConfig
+		}
+
 		tmp, err := ini.Load(defaultConfigName)
 		if err != nil {
 			dlog.Warn("Config ini load conf/conf.ini occur error:%v", err)
-			return &Conf{ini: ini.Empty()}
+			return defaultNoConfig
 		}
 		setFile(defaultConfigName, tmp)
 		cfg = tmp

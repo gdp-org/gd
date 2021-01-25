@@ -33,7 +33,7 @@ type DeployFunc func([]string) string
 type Helper struct {
 	listener net.Listener
 
-	Host     string
+	Host     int `inject:"helperHost"`
 	Updater  UpdateFunc
 	Finder   FindFunc
 	Perfer   PerfFunc
@@ -42,9 +42,9 @@ type Helper struct {
 }
 
 func (helper *Helper) Start() error {
-	l, err := net.Listen("tcp", helper.Host)
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d",helper.Host))
 	if err != nil {
-		return fmt.Errorf("host=%s,%v", helper.Host, err)
+		return fmt.Errorf("host=%d,%v", helper.Host, err)
 	}
 	helper.listener = l
 

@@ -7,10 +7,12 @@ package gd
 
 import (
 	"fmt"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dgrpc"
 	"github.com/chuck1024/gd/net/dhttp"
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/runtime/helper"
+	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/runtime/stat"
 	"github.com/chuck1024/gd/utls"
@@ -29,18 +31,18 @@ type Engine struct {
 
 func Default() *Engine {
 	e := &Engine{
-		HttpServer: &dhttp.HttpServer{
-			NoGinLog: true,
-		},
+		HttpServer: &dhttp.HttpServer{},
 		RpcServer:  dogrpc.NewDogRpcServer(),
 		GrpcServer: &dgrpc.GrpcServer{},
 	}
 
-	InitLog()
+	initLog()
+	inject.InitDefault()
+	inject.SetLogger(dlog.Global)
 	return e
 }
 
-func InitLog() {
+func initLog() {
 	enable := Config("Log", "enable").MustBool(false)
 	if enable {
 		var port int
@@ -68,6 +70,8 @@ func (e *Engine) Run() error {
 	Info("process start")
 	// register signal
 	e.Signal()
+
+	defer inject.Close()
 
 	var err error
 	// dump when error occurs
@@ -127,13 +131,8 @@ func (e *Engine) Run() error {
 	httpPort := Config("Server", "httpPort").MustInt()
 	if httpPort > 0 {
 		Info("http server try listen port:%d", httpPort)
-
-		e.HttpServer.HttpServerRunHost = fmt.Sprintf(":%d", httpPort)
-		if err = e.HttpServer.Run(); err != nil {
-			Error("Http server occur error in running application, error = %s", err.Error())
-			return err
-		}
-		defer e.HttpServer.Stop()
+		inject.RegisterOrFail("httpServerRunHost", httpPort)
+		inject.RegisterOrFail("httpServer", e.HttpServer)
 
 		if falconEnable {
 			pc.SetRunPort(httpPort)
@@ -144,14 +143,9 @@ func (e *Engine) Run() error {
 	grpcPort := Config("Server", "grpcPort").MustInt()
 	if grpcPort > 0 {
 		Info("grpc server try listen port:%d", grpcPort)
-
-		e.GrpcServer.GrpcRunPort = grpcPort
-		e.GrpcServer.ServiceName = Config("Server", "serverName").String()
-		if err = e.GrpcServer.Run(); err != nil {
-			Error("Grpc server occur error in running application, error = %s", err.Error())
-			return err
-		}
-		defer e.GrpcServer.Stop()
+		inject.RegisterOrFail("grpcRunHost", grpcPort)
+		inject.RegisterOrFail("serviceName", Config("Server", "serverName").String())
+		inject.RegisterOrFail("grpcServer", e.GrpcServer)
 
 		if falconEnable {
 			pc.SetRunPort(grpcPort)
@@ -162,14 +156,8 @@ func (e *Engine) Run() error {
 	healthPort := Config("Process", "healthPort").MustInt()
 	if healthPort > 0 {
 		Info("health server try listen port:%d", healthPort)
-
-		host := fmt.Sprintf(":%d", healthPort)
-		health := &helper.Helper{Host: host}
-		if err := health.Start(); err != nil {
-			Error("start health failed on %s\n", host)
-			return err
-		}
-		defer health.Close()
+		inject.RegisterOrFail("helperHost", healthPort)
+		inject.RegisterOrFail("helper", (*helper.Helper)(nil))
 	}
 
 	// rpc server
@@ -177,10 +165,8 @@ func (e *Engine) Run() error {
 	if rpcPort > 0 {
 		Info("rpc server try listen port:%d", rpcPort)
 
-		if err = e.RpcServer.Run(rpcPort); err != nil {
-			Error("rpc server occur error in running application, error = %s", err.Error())
-			return err
-		}
+		inject.RegisterOrFail("rpcHost", rpcPort)
+		inject.RegisterOrFail("rpcServer", e.RpcServer)
 	}
 
 	<-Running
@@ -222,14 +208,6 @@ func (e *Engine) initCPUAndMemory() error {
 	}
 
 	return nil
-}
-
-func (e *Engine) SetHttpServer(init dhttp.HttpServerIniter) {
-	e.HttpServer.SetInit(init)
-}
-
-func (e *Engine) SetGrpcServer(init dgrpc.IRegisterHandler) {
-	e.GrpcServer.Register(init)
 }
 
 // timeout Millisecond

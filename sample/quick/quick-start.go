@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/net/dhttp"
+	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -20,7 +21,7 @@ func HandlerHttp(c *gin.Context, req interface{}) (code int, message string, err
 
 func main() {
 	d := gd.Default()
-	d.SetHttpServer(func(g *gin.Engine) error {
+	inject.RegisterOrFail("httpServerInit", func(g *gin.Engine) error {
 		r := g.Group("")
 		r.Use(
 			dhttp.GlFilter(),

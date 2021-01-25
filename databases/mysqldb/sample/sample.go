@@ -23,7 +23,7 @@ type TestDB struct {
 
 func main() {
 	var i chan struct{}
-	o := mysqldb.MysqlClient{DataBases: "test"}
+	o := mysqldb.MysqlClient{DataBase: "test"}
 	if err := o.Start(); err != nil {
 		dlog.Error("err:%s", err)
 		return

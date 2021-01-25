@@ -28,9 +28,6 @@ func (e *Engine) Signal() {
 			select {
 			case sig := <-Shutdown:
 				Info("receive signal: %v, to stop server...", sig)
-				if e.RpcServer.GetAddr() != "" {
-					e.RpcServer.Stop()
-				}
 				Running <- false
 			case <-Hup:
 			}
