@@ -42,7 +42,7 @@ type Helper struct {
 }
 
 func (helper *Helper) Start() error {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d",helper.Host))
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", helper.Host))
 	if err != nil {
 		return fmt.Errorf("host=%d,%v", helper.Host, err)
 	}

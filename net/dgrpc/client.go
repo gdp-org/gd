@@ -24,7 +24,7 @@ import (
 
 type GrpcClient struct {
 	Target             string
-	ServiceName         string
+	ServiceName        string
 	Timeout            int
 	MaxRetries         int
 	PerCallTimeoutInMs int

@@ -126,35 +126,35 @@ the basis of it. I will import introduce rpc server. Focus on the rpc server.
 
 ```go
 type Packet interface {
-ID() uint32
-SetErrCode(code uint32)
+	ID() uint32
+	SetErrCode(code uint32)
 }
 
 default rpc packet:
 type RpcPacket struct {
-Seq       uint32
-ErrCode   uint32
-Cmd       uint32 // also be a string, for dispatch.
-PacketLen uint32
-Body      []byte
+	Seq       uint32
+	ErrCode   uint32
+	Cmd       uint32 // also be a string, for dispatch.
+	PacketLen uint32
+	Body      []byte
 }
 
 gd rpc packet:
 type DogPacket struct {
-Header
-Body []byte
+	Header
+	Body []byte
 }
 
 type Header struct {
-PacketLen uint32
-Seq       uint32
-Cmd       uint32
-CheckSum  uint32
-ErrCode   uint32
-Version   uint8
-Padding   uint8
-SOH       uint8
-EOH       uint8
+	PacketLen uint32
+	Seq       uint32
+	Cmd       uint32
+	CheckSum  uint32
+	ErrCode   uint32
+	Version   uint8
+	Padding   uint8
+	SOH       uint8
+	EOH       uint8
 }
 ```
 
@@ -170,40 +170,40 @@ based on etcd and zookeeper implementation.
 ```go
 register :
 type DogRegister interface {
-NewRegister(hosts []string, root, environ, group, service string)
-SetRootNode(node string) error
-GetRootNode() (root string)
-SetHeartBeat(heartBeat time.Duration)
-SetOffline(offline bool)
-Run(ip string, port int, weight uint64) error
-Close()
+	NewRegister(hosts []string, root, environ, group, service string)
+	SetRootNode(node string) error
+	GetRootNode() (root string)
+	SetHeartBeat(heartBeat time.Duration)
+	SetOffline(offline bool)
+	Run(ip string, port int, weight uint64) error
+	Close()
 }
 
 discovery:
 type DogDiscovery interface {
-NewDiscovery(dns []string)
-Watch(node string) error
-WatchMulti(nodes []string) error
-AddNode(node string, info *server.NodeInfo)
-DelNode(node string, key string)
-GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
-Run() error
-Close() error
+	NewDiscovery(dns []string)
+	Watch(node string) error
+	WatchMulti(nodes []string) error
+	AddNode(node string, info *server.NodeInfo)
+	DelNode(node string, key string)
+	GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
+	Run() error
+	Close() error
 }
 
 nodeInfo:
 type NodeInfo interface {
-GetIp() string
-GetPort() int
-GetOffline() bool
-GetWeight() uint64
+	GetIp() string
+	GetPort() int
+	GetOffline() bool
+	GetWeight() uint64
 }
 
 type DefaultNodeInfo struct {
-Ip      string `json:"ip"`
-Port    int    `json:"port"`
-Offline bool   `json:"offline"`
-Weight  uint64 `json:"weight"`
+	Ip      string `json:"ip"`
+	Port    int    `json:"port"`
+	Offline bool   `json:"offline"`
+	Weight  uint64 `json:"weight"`
 }
 ```
 
@@ -237,40 +237,40 @@ import (
 )
 
 type TestReq struct {
- Data string
+	Data string
 }
 
 type TestResp struct {
- Ret string
+	Ret string
 }
 
 func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, err error, ret *TestResp) {
- gd.Debug("httpServerTest req:%v", req)
+	gd.Debug("httpServerTest req:%v", req)
+	
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
 
- ret = &TestResp{
-  Ret: "ok!!!",
- }
-
- return http.StatusOK, "ok", nil, ret
+	return http.StatusOK, "ok", nil, ret
 }
 
 func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
- gd.Debug("rpc sever req:%v", req)
+	gd.Debug("rpc sever req:%v", req)
+	
+	ret = &TestResp{
+		Ret: "ok!!!",
+	}
 
- ret = &TestResp{
-  Ret: "ok!!!",
- }
-
- return uint32(de.RpcSuccess), "ok", nil, ret
+	return uint32(de.RpcSuccess), "ok", nil, ret
 }
 
 type reg struct {
- handler pb.GreeterServer
+	handler pb.GreeterServer
 }
 
 func (r *reg) RegisterHandler(s *grpc.Server) error {
- pb.RegisterGreeterServer(s, r.handler)
- return nil
+	pb.RegisterGreeterServer(s, r.handler)
+	return nil
 }
 
 // server is used to implement hello world.GreeterServer.
@@ -278,51 +278,50 @@ type server struct{}
 
 // SayHello implements hello world.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
- return &pb.HelloReply{Message: "Hello " + in.Name}, nil
+	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
 }
 
 func Register(e *gd.Engine) {
- // http
- inject.RegisterOrFail("httpServerInit", func(g *gin.Engine) error {
-  r := g.Group("")
-  r.Use(
-   dhttp.GlFilter(),
-   dhttp.StatFilter(),
-   dhttp.GroupFilter(),
-   dhttp.Logger("sample"),
-  )
-
-  e.HttpServer.POST(r, "test", HandlerHttpTest)
-
-  if err := e.HttpServer.CheckHandle(); err != nil {
-   return err
-  }
-
-  return nil
+ // http 
+	inject.RegisterOrFail("httpServerInit", func(g *gin.Engine) error {
+		r := g.Group("")
+		r.Use(
+			dhttp.GlFilter(), 
+			dhttp.StatFilter(), 
+			dhttp.GroupFilter(), 
+			dhttp.Logger("sample"), 
+		)
+		
+		e.HttpServer.POST(r, "test", HandlerHttpTest)
+		
+		if err := e.HttpServer.CheckHandle(); err != nil {
+			return err
+		}
+		return nil
  })
-
- // Rpc
- e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
- if err := e.RpcServer.DogRpcRegister(); err != nil {
-  gd.Error("DogRpcRegister occur error:%s", err)
-  return
- }
- dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
-
- // grpc
- inject.RegisterOrFail("registerHandler", &reg{handler: &server{}})
+	
+	// Rpc 
+	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
+	if err := e.RpcServer.DogRpcRegister(); err != nil {
+		gd.Error("DogRpcRegister occur error:%s", err)
+		return
+	}
+	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
+	
+	// grpc 
+	inject.RegisterOrFail("registerHandler", &reg{handler: &server{}})
 }
 
 func main() {
- d := gd.Default()
-
- Register(d)
-
- err := d.Run()
- if err != nil {
-  gd.Error("Error occurs, error = %s", err.Error())
-  return
- }
+	d := gd.Default()
+	
+	Register(d)
+	
+	err := d.Run()
+	if err != nil {
+		gd.Error("Error occurs, error = %s", err.Error())
+		return
+	}
 }
 
 // you can use command to test http service.
