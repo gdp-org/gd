@@ -8,6 +8,7 @@ package dhttp
 import (
 	"errors"
 	"fmt"
+	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"strings"
@@ -46,6 +47,11 @@ func (c *HttpClient) MethodTimeout(method string, path string, header map[string
 	a := gorequest.New().Timeout(timeout).CustomMethod(strings.ToUpper(method), target)
 	for k, v := range header {
 		a.Set(k, v)
+	}
+
+	traceId, ok := gl.Get(gl.LogId)
+	if ok {
+		a.Set("traceId", traceId.(string))
 	}
 
 	if params != nil {

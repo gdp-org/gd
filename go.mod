@@ -11,7 +11,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20200809112317-0581fc3aee2d // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
 	github.com/garyburd/redigo v1.6.2
-	github.com/gin-gonic/gin v1.5.0
+	github.com/gin-gonic/gin v1.6.3
 	github.com/go-errors/errors v1.1.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
