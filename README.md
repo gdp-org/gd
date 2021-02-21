@@ -93,9 +93,6 @@ future. What's more, your configuration file must have the necessary parameters,
 [Log]
 enable = true
 level = "DEBUG"
-logDir = "log"
-stdout = "false"
-toFile = "true"
 
 [Process]
 maxCPU = 2
