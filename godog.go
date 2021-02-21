@@ -54,13 +54,11 @@ func initLog() {
 			port = Config("Server", "grpcPort").MustInt()
 		}
 
-		if err := restoreLogConfig("", Config("Server", "serverName").String(),
+		if err := initConfig(Config("Server", "serverName").String(),
 			port, Config("Log", "level").String(), Config("Log", "logDir").String(),
 			Config("Log", "stdout").MustString("true"), Config("Log", "toFile").MustString("false")); err != nil {
 			panic(fmt.Sprintf("restoreLogConfig occur error:%v", err))
 		}
-
-		LoadConfiguration(logConfigFile)
 	}
 }
 

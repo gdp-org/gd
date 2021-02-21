@@ -6,10 +6,8 @@
 package gd
 
 import (
-	"encoding/xml"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/utls"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,28 +16,9 @@ import (
 
 var (
 	l             = sync.Mutex{}
-	logConfigFile = "conf/log.xml"
 	defaultLogDir = "log"
 	defaultFormat = "%L	%D %T	%l	%I	%G	%M	%S"
 )
-
-type xmlLoggerConfig struct {
-	ScribeCategory string      `xml:"scribeCategory"`
-	Filter         []xmlFilter `xml:"filter"`
-}
-
-type xmlProperty struct {
-	Name  string `xml:"name,attr"`
-	Value string `xml:",chardata"`
-}
-
-type xmlFilter struct {
-	Enabled  string        `xml:"enabled,attr"`
-	Tag      string        `xml:"tag"`
-	Level    string        `xml:"level"`
-	Type     string        `xml:"type"`
-	Property []xmlProperty `xml:"property"`
-}
 
 func getInfoFileName(binName string, port int) string {
 	if port == 0 {
@@ -55,15 +34,11 @@ func getWarnFileName(binName string, port int) string {
 	return fmt.Sprintf("%s_err_%d.log", binName, port)
 }
 
-func restoreLogConfig(configFilePath string, binName string, port int, logLevel string, logDir string, stdoutBool string, toFile string) error {
+func initConfig(binName string, port int, logLevel string, logDir string, stdoutBool string, toFile string) error {
 	l.Lock()
 	defer l.Unlock()
 	if logDir == "" {
 		logDir = defaultLogDir
-	}
-
-	if configFilePath == "" {
-		configFilePath = logConfigFile
 	}
 
 	if logLevel == "" {
@@ -89,71 +64,57 @@ func restoreLogConfig(configFilePath string, binName string, port int, logLevel 
 	infoFileName := getInfoFileName(binName, port)
 	warnFileName := getWarnFileName(binName, port)
 
-	var filters []xmlFilter
+	var filters []dlog.XmlFilter
 	// stdout
-	stdout := xmlFilter{
+	stdout := dlog.XmlFilter{
 		Enabled: stdoutBool,
 		Tag:     "stdout",
 		Level:   "INFO",
 		Type:    "console",
-		Property: []xmlProperty{
-			xmlProperty{Name: "format", Value: defaultFormat},
+		Property: []dlog.XmlProperty{
+			dlog.XmlProperty{Name: "format", Value: defaultFormat},
 		},
 	}
 	filters = append(filters, stdout)
 	// info
-	info := xmlFilter{
+	info := dlog.XmlFilter{
 		Enabled: toFile,
 		Tag:     "service",
 		Level:   logLevel,
 		Type:    "file",
-		Property: []xmlProperty{
-			xmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, infoFileName)},
-			xmlProperty{Name: "format", Value: defaultFormat},
-			xmlProperty{Name: "rotate", Value: "true"},
-			xmlProperty{Name: "maxsize", Value: "0M"},
-			xmlProperty{Name: "maxlines", Value: "0K"},
-			xmlProperty{Name: "hourly", Value: "true"},
+		Property: []dlog.XmlProperty{
+			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, infoFileName)},
+			dlog.XmlProperty{Name: "format", Value: defaultFormat},
+			dlog.XmlProperty{Name: "rotate", Value: "true"},
+			dlog.XmlProperty{Name: "maxsize", Value: "0M"},
+			dlog.XmlProperty{Name: "maxlines", Value: "0K"},
+			dlog.XmlProperty{Name: "hourly", Value: "true"},
 		},
 	}
 	filters = append(filters, info)
 	// warn
-	warn := xmlFilter{
+	warn := dlog.XmlFilter{
 		Enabled: toFile,
 		Tag:     "service_err",
 		Level:   "WARNING",
 		Type:    "file",
-		Property: []xmlProperty{
-			xmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, warnFileName)},
-			xmlProperty{Name: "format", Value: defaultFormat},
-			xmlProperty{Name: "rotate", Value: "true"},
-			xmlProperty{Name: "maxsize", Value: "0M"},
-			xmlProperty{Name: "maxlines", Value: "0K"},
-			xmlProperty{Name: "hourly", Value: "true"},
+		Property: []dlog.XmlProperty{
+			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, warnFileName)},
+			dlog.XmlProperty{Name: "format", Value: defaultFormat},
+			dlog.XmlProperty{Name: "rotate", Value: "true"},
+			dlog.XmlProperty{Name: "maxsize", Value: "0M"},
+			dlog.XmlProperty{Name: "maxlines", Value: "0K"},
+			dlog.XmlProperty{Name: "hourly", Value: "true"},
 		},
 	}
 	filters = append(filters, warn)
 
-	c := &xmlLoggerConfig{
+	c := &dlog.XmlLoggerConfig{
 		Filter: filters,
 	}
 
-	bts, err := xml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	err = utls.Store2File(configFilePath, string(bts))
-	if err != nil {
-		return err
-	}
-
+	dlog.LoadConfigurationByXml(c)
 	return nil
-}
-
-// Wrapper for (*Logger).LoadConfiguration
-func LoadConfiguration(filename string) {
-	dlog.LoadConfiguration(filename)
 }
 
 // wrap log debug
