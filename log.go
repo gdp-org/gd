@@ -11,14 +11,26 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 var (
-	l             = sync.Mutex{}
-	defaultLogDir = "log"
-	defaultFormat = "%L	%D %T	%l	%I	%G	%M	%S"
+	defaultLogDir   = "log"
+	defaultLogLevel = "DEBUG"
+	defaultFormat   = "%L	%D %T	%l	%I	%G	%M	%S"
 )
+
+type gdConfig struct {
+	BinName    string `json:"binName"`
+	Port       int    `json:"port"`
+	LogLevel   string `json:"logLevel"`
+	LogDir     string `json:"logDir"`
+	Stdout     string `json:"stdout"`
+	Format     string `json:"format"`
+	Rotate     string `json:"rotate"`
+	Maxsize    string `json:"maxsize"`
+	MaxLines   string `json:"maxLines"`
+	RotateType string `json:"rotateType"` // daily hourly
+}
 
 func getInfoFileName(binName string, port int) string {
 	if port == 0 {
@@ -34,18 +46,16 @@ func getWarnFileName(binName string, port int) string {
 	return fmt.Sprintf("%s_err_%d.log", binName, port)
 }
 
-func initConfig(binName string, port int, logLevel string, logDir string, stdoutBool string, toFile string) error {
-	l.Lock()
-	defer l.Unlock()
-	if logDir == "" {
-		logDir = defaultLogDir
+func (g *gdConfig) initLogConfig() error {
+	if g.LogDir == "" {
+		g.LogDir = defaultLogDir
 	}
 
-	if logLevel == "" {
-		logLevel = "DEBUG"
+	if g.LogLevel == "" {
+		g.LogLevel = defaultLogLevel
 	}
 
-	if binName == "" {
+	if g.BinName == "" {
 		ex, err := os.Executable()
 		if err != nil {
 			return err
@@ -54,20 +64,20 @@ func initConfig(binName string, port int, logLevel string, logDir string, stdout
 		if strings.Contains(exPath, "/") {
 			ex = ex[len(exPath)+1:]
 		}
-		binName = ex
+		g.BinName = ex
 	}
 
-	if logLevel != "DEBUG" && logLevel != "INFO" && logLevel != "WARNING" && logLevel != "ERROR" {
-		return fmt.Errorf("invalid log level %v", logLevel)
+	if g.LogLevel != "DEBUG" && g.LogLevel != "INFO" && g.LogLevel != "WARNING" && g.LogLevel != "ERROR" {
+		return fmt.Errorf("invalid log level %v", g.LogLevel)
 	}
 
-	infoFileName := getInfoFileName(binName, port)
-	warnFileName := getWarnFileName(binName, port)
+	infoFileName := getInfoFileName(g.BinName, g.Port)
+	warnFileName := getWarnFileName(g.BinName, g.Port)
 
 	var filters []dlog.XmlFilter
 	// stdout
 	stdout := dlog.XmlFilter{
-		Enabled: stdoutBool,
+		Enabled: g.Stdout,
 		Tag:     "stdout",
 		Level:   "INFO",
 		Type:    "console",
@@ -76,19 +86,24 @@ func initConfig(binName string, port int, logLevel string, logDir string, stdout
 		},
 	}
 	filters = append(filters, stdout)
+
+	toFile := "false"
+	if len(g.LogDir) > 0 {
+		toFile = "true"
+	}
 	// info
 	info := dlog.XmlFilter{
 		Enabled: toFile,
 		Tag:     "service",
-		Level:   logLevel,
+		Level:   g.LogLevel,
 		Type:    "file",
 		Property: []dlog.XmlProperty{
-			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, infoFileName)},
+			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", g.LogDir, infoFileName)},
 			dlog.XmlProperty{Name: "format", Value: defaultFormat},
-			dlog.XmlProperty{Name: "rotate", Value: "true"},
-			dlog.XmlProperty{Name: "maxsize", Value: "0M"},
-			dlog.XmlProperty{Name: "maxlines", Value: "0K"},
-			dlog.XmlProperty{Name: "hourly", Value: "true"},
+			dlog.XmlProperty{Name: "rotate", Value: g.Rotate},
+			dlog.XmlProperty{Name: "maxsize", Value: g.Maxsize},
+			dlog.XmlProperty{Name: "maxLines", Value: g.MaxLines},
+			dlog.XmlProperty{Name: g.RotateType, Value: "true"},
 		},
 	}
 	filters = append(filters, info)
@@ -99,12 +114,12 @@ func initConfig(binName string, port int, logLevel string, logDir string, stdout
 		Level:   "WARNING",
 		Type:    "file",
 		Property: []dlog.XmlProperty{
-			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", logDir, warnFileName)},
+			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", g.LogDir, warnFileName)},
 			dlog.XmlProperty{Name: "format", Value: defaultFormat},
-			dlog.XmlProperty{Name: "rotate", Value: "true"},
-			dlog.XmlProperty{Name: "maxsize", Value: "0M"},
-			dlog.XmlProperty{Name: "maxlines", Value: "0K"},
-			dlog.XmlProperty{Name: "hourly", Value: "true"},
+			dlog.XmlProperty{Name: "rotate", Value: g.Rotate},
+			dlog.XmlProperty{Name: "maxsize", Value: g.Maxsize},
+			dlog.XmlProperty{Name: "maxLines", Value: g.MaxLines},
+			dlog.XmlProperty{Name: g.RotateType, Value: "true"},
 		},
 	}
 	filters = append(filters, warn)

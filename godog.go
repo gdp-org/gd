@@ -54,10 +54,21 @@ func initLog() {
 			port = Config("Server", "grpcPort").MustInt()
 		}
 
-		if err := initConfig(Config("Server", "serverName").String(),
-			port, Config("Log", "level").String(), Config("Log", "logDir").String(),
-			Config("Log", "stdout").MustString("true"), Config("Log", "toFile").MustString("false")); err != nil {
-			panic(fmt.Sprintf("restoreLogConfig occur error:%v", err))
+		log := &gdConfig{
+			BinName:    Config("Server", "serverName").String(),
+			Port:       port,
+			LogLevel:   Config("Log", "level").String(),
+			LogDir:     Config("Log", "logDir").String(),
+			Stdout:     Config("Log", "stdout").MustString("true"),
+			Format:     Config("Log", "format").String(),
+			Rotate:     Config("Log", "rotate").MustString("true"),
+			Maxsize:    Config("Log", "maxsize").MustString("0M"),
+			MaxLines:   Config("Log", "maxLines").MustString("0k"),
+			RotateType: Config("Log", "rotateType").MustString("hourly"),
+		}
+
+		if err := log.initLogConfig(); err != nil {
+			panic(fmt.Sprintf("initLogConfig occur error:%v", err))
 		}
 	}
 }

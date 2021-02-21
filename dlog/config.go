@@ -214,7 +214,7 @@ func strToNumSuffix(str string, mult int) int {
 func xmlToFileLogWriter(props []XmlProperty, enabled bool) (*FileLogWriter, bool) {
 	file := ""
 	format := "[%D %T] [%L] (%S) %M"
-	maxlines := 0
+	maxLines := 0
 	maxsize := 0
 	daily := false
 	hourly := false
@@ -227,8 +227,8 @@ func xmlToFileLogWriter(props []XmlProperty, enabled bool) (*FileLogWriter, bool
 			file = strings.Trim(prop.Value, " \r\n")
 		case "format":
 			format = strings.Trim(prop.Value, " \r\n")
-		case "maxlines":
-			maxlines = strToNumSuffix(strings.Trim(prop.Value, " \r\n"), 1000)
+		case "maxLines":
+			maxLines = strToNumSuffix(strings.Trim(prop.Value, " \r\n"), 1000)
 		case "maxsize":
 			maxsize = strToNumSuffix(strings.Trim(prop.Value, " \r\n"), 1024)
 		case "daily":
@@ -253,9 +253,9 @@ func xmlToFileLogWriter(props []XmlProperty, enabled bool) (*FileLogWriter, bool
 		return nil, true
 	}
 
-	flw := NewFileLogWriter(file, rotate)
+	flw := NewFileLogWriter(file, rotate, daily, hourly)
 	flw.SetFormat(format)
-	flw.SetRotateLines(maxlines)
+	flw.SetRotateLines(maxLines)
 	flw.SetRotateSize(maxsize)
 	flw.SetRotateDaily(daily)
 	flw.SetRotateHourly(hourly)
