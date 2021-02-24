@@ -57,10 +57,10 @@ func initLog() {
 		log := &gdConfig{
 			BinName:    Config("Server", "serverName").String(),
 			Port:       port,
-			LogLevel:   Config("Log", "level").String(),
+			LogLevel:   Config("Log", "level").MustString(defaultFormat),
 			LogDir:     Config("Log", "logDir").String(),
 			Stdout:     Config("Log", "stdout").MustString("true"),
-			Format:     Config("Log", "format").String(),
+			Format:     Config("Log", "format").MustString(defaultFormat),
 			Rotate:     Config("Log", "rotate").MustString("true"),
 			Maxsize:    Config("Log", "maxsize").MustString("0M"),
 			MaxLines:   Config("Log", "maxLines").MustString("0k"),

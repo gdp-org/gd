@@ -46,10 +46,6 @@ func getWarnFileName(binName string, port int) string {
 }
 
 func (g *gdConfig) initLogConfig() error {
-	if g.LogLevel == "" {
-		g.LogLevel = defaultLogLevel
-	}
-
 	if g.BinName == "" {
 		ex, err := os.Executable()
 		if err != nil {
@@ -77,7 +73,7 @@ func (g *gdConfig) initLogConfig() error {
 		Level:   "INFO",
 		Type:    "console",
 		Property: []dlog.XmlProperty{
-			dlog.XmlProperty{Name: "format", Value: defaultFormat},
+			dlog.XmlProperty{Name: "format", Value: g.Format},
 		},
 	}
 	filters = append(filters, stdout)
@@ -94,7 +90,7 @@ func (g *gdConfig) initLogConfig() error {
 		Type:    "file",
 		Property: []dlog.XmlProperty{
 			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", g.LogDir, infoFileName)},
-			dlog.XmlProperty{Name: "format", Value: defaultFormat},
+			dlog.XmlProperty{Name: "format", Value: g.Format},
 			dlog.XmlProperty{Name: "rotate", Value: g.Rotate},
 			dlog.XmlProperty{Name: "maxsize", Value: g.Maxsize},
 			dlog.XmlProperty{Name: "maxLines", Value: g.MaxLines},
@@ -110,7 +106,7 @@ func (g *gdConfig) initLogConfig() error {
 		Type:    "file",
 		Property: []dlog.XmlProperty{
 			dlog.XmlProperty{Name: "filename", Value: fmt.Sprintf("%s/%s", g.LogDir, warnFileName)},
-			dlog.XmlProperty{Name: "format", Value: defaultFormat},
+			dlog.XmlProperty{Name: "format", Value: g.Format},
 			dlog.XmlProperty{Name: "rotate", Value: g.Rotate},
 			dlog.XmlProperty{Name: "maxsize", Value: g.Maxsize},
 			dlog.XmlProperty{Name: "maxLines", Value: g.MaxLines},
