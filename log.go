@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	defaultLogDir   = "log"
 	defaultLogLevel = "DEBUG"
 	defaultFormat   = "%L	%D %T	%l	%I	%G	%M	%S"
 )
@@ -47,10 +46,6 @@ func getWarnFileName(binName string, port int) string {
 }
 
 func (g *gdConfig) initLogConfig() error {
-	if g.LogDir == "" {
-		g.LogDir = defaultLogDir
-	}
-
 	if g.LogLevel == "" {
 		g.LogLevel = defaultLogLevel
 	}
