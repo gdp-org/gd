@@ -15,7 +15,7 @@ func SetConfPath(path string) {
 	config.SetConfPath(path)
 }
 
-func GetConfig() *ini.File {
+func GetConfFile() *ini.File {
 	return config.Config().GetIniFile()
 }
 
