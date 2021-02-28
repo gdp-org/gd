@@ -106,12 +106,15 @@ rpcPort = 10241
 grpcPort = 10242
 ```
 
+**Log.enable**: log config, turn on log output.
+**Log.level**: log level.
 **Process.maxCPU**: a limit of CPU usage. 0 is default, means to use half cores.  
 **Process.maxMemory**: a limit of memory usage.
 **Process.healthPort**: the port for monitor. If it is 0, monitor server will not run.
 **Server.serverName**: server name.  
 **Server.httpPort**: http port. If it is 0, http server will not run.   
 **Server.rpcPort**: rpc port. If it is 0, rpc server will not run.
+**Server.grpcPort**: grpc port. If it is 0, grpc server will not run.
 
 Those items mentioned above are the base need of a server application. And they are defined in config file:
 sample/conf/conf.json.
@@ -581,7 +584,8 @@ func TestDiscZk(t *testing.T) {
 }
 ```
 
-More information can be obtained in the source code
+---
+PS: More information can be obtained in the source code
 
 ---
 
