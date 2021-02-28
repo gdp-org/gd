@@ -26,6 +26,10 @@ func (c *Conf) Section(name string) *ini.Section {
 	return c.ini.Section(name)
 }
 
+func (c *Conf) GetIniFile() *ini.File {
+	return c.ini
+}
+
 func SetConfPath(path string) {
 	if path != "" {
 		defaultConfigName = path
