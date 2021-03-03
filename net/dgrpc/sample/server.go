@@ -36,12 +36,12 @@ func main() {
 		handler: &server{},
 	}
 	s := &dgrpc.GrpcServer{
-		GrpcRunPort:     10240,
+		GrpcRunHost:     10240,
 		RegisterHandler: rc,
 		ServiceName:     "gd",
 		UseTls:          true,
 	}
-	err := s.Run()
+	err := s.Start()
 	if err != nil {
 		return
 	}
