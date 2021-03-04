@@ -44,7 +44,7 @@ func CheckWrap(toWrap interface{}) error {
 		return fmt.Errorf("params out 3 must be interface %v", toWrap)
 	}
 	if !wt.Out(2).Implements(errInterface) {
-		return fmt.Errorf("params out 4 must be error %v", toWrap)
+		return fmt.Errorf("params out 3 must be error %v", toWrap)
 	}
 	return nil
 }
