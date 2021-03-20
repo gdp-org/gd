@@ -50,13 +50,18 @@ func Logger(pk string) gin.HandlerFunc {
 		costKey := pk
 
 		// traceId
-		traceId := c.Query("traceId")
+		traceId := c.Query(TraceID)
 		if traceId != "" {
 			gl.Set(gl.LogId, traceId)
 		} else {
-			traceId = utls.TraceId()
-			c.Set(TraceID, traceId)
-			gl.Set(gl.LogId, traceId)
+			traceId = c.GetHeader(TraceID)
+			if traceId != "" {
+				gl.Set(gl.LogId, traceId)
+			} else {
+				traceId = utls.TraceId()
+				c.Set(TraceID, traceId)
+				gl.Set(gl.LogId, traceId)
+			}
 		}
 
 		realIp, _ := network.GetRealIP(c.Request)

@@ -24,10 +24,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
@@ -82,29 +82,28 @@ type HttpClientRetryable struct {
 
 // A HttpClient is a object storing all request data for client.
 type HttpClient struct {
-	Url               string
-	Method            string
-	Header            http.Header
-	TargetType        string
-	ForceType         string
-	Data              map[string]interface{}
-	SliceData         []interface{}
-	FormData          url.Values
-	QueryData         url.Values
-	FileData          []File
-	BounceToRawString bool
-	RawString         string
-	Client            *http.Client
-	Transport         *http.Transport
-	Cookies           []*http.Cookie
-	Errors            []error
-	BasicAuth         struct{ Username, Password string }
-	Debug             bool
-	CurlCommand       bool
-	logger            *log.Logger
-	Retryable         HttpClientRetryable
-	DoNotClearHttpClient  bool
-	isClone           bool
+	Url                  string
+	Method               string
+	Header               http.Header
+	TargetType           string
+	ForceType            string
+	Data                 map[string]interface{}
+	SliceData            []interface{}
+	FormData             url.Values
+	QueryData            url.Values
+	FileData             []File
+	BounceToRawString    bool
+	RawString            string
+	Client               *http.Client
+	Transport            *http.Transport
+	Cookies              []*http.Cookie
+	Errors               []error
+	BasicAuth            struct{ Username, Password string }
+	Debug                bool
+	CurlCommand          bool
+	Retryable            HttpClientRetryable
+	DoNotClearHttpClient bool
+	isClone              bool
 }
 
 var DisableTransportSwap = false
@@ -135,7 +134,6 @@ func New() *HttpClient {
 		BasicAuth:         struct{ Username, Password string }{},
 		Debug:             debug,
 		CurlCommand:       false,
-		logger:            log.New(os.Stderr, "[HttpClient]", log.LstdFlags),
 		isClone:           false,
 	}
 	dhc.Transport.DisableKeepAlives = true
@@ -257,29 +255,28 @@ func copyRetryable(old HttpClientRetryable) HttpClientRetryable {
 // Note: DoNotClearHttpClient is forced to "true" after Clone
 func (dhc *HttpClient) Clone() *HttpClient {
 	clone := &HttpClient{
-		Url:               dhc.Url,
-		Method:            dhc.Method,
-		Header:            http.Header(cloneMapArray(dhc.Header)),
-		TargetType:        dhc.TargetType,
-		ForceType:         dhc.ForceType,
-		Data:              shallowCopyData(dhc.Data),
-		SliceData:         shallowCopyDataSlice(dhc.SliceData),
-		FormData:          url.Values(cloneMapArray(dhc.FormData)),
-		QueryData:         url.Values(cloneMapArray(dhc.QueryData)),
-		FileData:          shallowCopyFileArray(dhc.FileData),
-		BounceToRawString: dhc.BounceToRawString,
-		RawString:         dhc.RawString,
-		Client:            dhc.Client,
-		Transport:         dhc.Transport,
-		Cookies:           shallowCopyCookies(dhc.Cookies),
-		Errors:            shallowCopyErrors(dhc.Errors),
-		BasicAuth:         dhc.BasicAuth,
-		Debug:             dhc.Debug,
-		CurlCommand:       dhc.CurlCommand,
-		logger:            dhc.logger,
-		Retryable:         copyRetryable(dhc.Retryable),
-		DoNotClearHttpClient:  true,
-		isClone:           true,
+		Url:                  dhc.Url,
+		Method:               dhc.Method,
+		Header:               http.Header(cloneMapArray(dhc.Header)),
+		TargetType:           dhc.TargetType,
+		ForceType:            dhc.ForceType,
+		Data:                 shallowCopyData(dhc.Data),
+		SliceData:            shallowCopyDataSlice(dhc.SliceData),
+		FormData:             url.Values(cloneMapArray(dhc.FormData)),
+		QueryData:            url.Values(cloneMapArray(dhc.QueryData)),
+		FileData:             shallowCopyFileArray(dhc.FileData),
+		BounceToRawString:    dhc.BounceToRawString,
+		RawString:            dhc.RawString,
+		Client:               dhc.Client,
+		Transport:            dhc.Transport,
+		Cookies:              shallowCopyCookies(dhc.Cookies),
+		Errors:               shallowCopyErrors(dhc.Errors),
+		BasicAuth:            dhc.BasicAuth,
+		Debug:                dhc.Debug,
+		CurlCommand:          dhc.CurlCommand,
+		Retryable:            copyRetryable(dhc.Retryable),
+		DoNotClearHttpClient: true,
+		isClone:              true,
 	}
 	return clone
 }
@@ -302,11 +299,6 @@ func (dhc *HttpClient) SetDoNotClearHttpClient(enable bool) *HttpClient {
 	return dhc
 }
 
-func (dhc *HttpClient) SetLogger(logger *log.Logger) *HttpClient {
-	dhc.logger = logger
-	return dhc
-}
-
 // Clear HttpClient data for another new request.
 func (dhc *HttpClient) ClearHttpClient() {
 	if dhc.DoNotClearHttpClient {
@@ -326,6 +318,12 @@ func (dhc *HttpClient) ClearHttpClient() {
 	dhc.TargetType = TypeJSON
 	dhc.Cookies = make([]*http.Cookie, 0)
 	dhc.Errors = nil
+}
+
+// http timeout
+func (dhc *HttpClient) Timeout(timeout time.Duration) *HttpClient {
+	dhc.Client.Timeout = timeout
+	return dhc
 }
 
 // Just a wrapper to initialize HttpClient instance by method string
@@ -1146,11 +1144,11 @@ func (dhc *HttpClient) End(callback ...func(response Response, body string, err 
 // EndBytes should be used when you want the body as bytes. The callbacks work the same way as with `End`, except that a byte array is used instead of a string.
 func (dhc *HttpClient) EndBytes(callback ...func(response Response, body []byte, err error)) (Response, []byte, error) {
 	var (
-		err error
+		err  error
 		resp Response
 		body []byte
 	)
-	
+
 	for {
 		resp, body, err = dhc.getResponseBytes()
 		if err != nil {
@@ -1232,7 +1230,7 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 
 	traceId, ok := gl.Get(gl.LogId)
 	if ok {
-		dhc.SetHeader("traceId", traceId.(string))
+		dhc.SetHeader(TraceID, traceId.(string))
 	}
 
 	// if slice and map get mixed, let'dhc bounce to rawstring
@@ -1255,22 +1253,20 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	// Log details of this request
 	if dhc.Debug {
 		dump, err := httputil.DumpRequest(req, true)
-		dhc.logger.SetPrefix("[http] ")
 		if err != nil {
-			dhc.logger.Println("Error:", err)
+			dlog.Error("[http] Error:%v", err)
 		} else {
-			dhc.logger.Printf("HTTP Request: %dhc", string(dump))
+			dlog.Info("[http] HTTP Request: %s", string(dump))
 		}
 	}
 
 	// Display CURL command line
 	if dhc.CurlCommand {
 		curl, err := http2curl.GetCurlCommand(req)
-		dhc.logger.SetPrefix("[curl] ")
 		if err != nil {
-			dhc.logger.Println("Error:", err)
+			dlog.Error("getResponseBytes CURL command occur error:%s", err)
 		} else {
-			dhc.logger.Printf("CURL command line: %dhc", curl)
+			dlog.Info("CURL command :%v", curl)
 		}
 	}
 
@@ -1286,9 +1282,9 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	if dhc.Debug {
 		dump, err := httputil.DumpResponse(resp, true)
 		if nil != err {
-			dhc.logger.Println("Error:", err)
+			dlog.Error("http Error:%v", err)
 		} else {
-			dhc.logger.Printf("HTTP Response: %dhc", string(dump))
+			dlog.Info("http HTTP Response: %dhc", string(dump))
 		}
 	}
 
