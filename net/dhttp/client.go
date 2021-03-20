@@ -118,7 +118,7 @@ func New() *HttpClient {
 
 	debug := os.Getenv("HttpClient_DEBUG") == "1"
 
-	dr := &HttpClient{
+	dhc := &HttpClient{
 		TargetType:        TypeJSON,
 		Data:              make(map[string]interface{}),
 		Header:            http.Header{},
@@ -138,8 +138,8 @@ func New() *HttpClient {
 		logger:            log.New(os.Stderr, "[HttpClient]", log.LstdFlags),
 		isClone:           false,
 	}
-	dr.Transport.DisableKeepAlives = true
-	return dr
+	dhc.Transport.DisableKeepAlives = true
+	return dhc
 }
 
 func cloneMapArray(old map[string][]string) map[string][]string {
@@ -208,32 +208,32 @@ func shallowCopyErrors(old []error) []error {
 	return newData
 }
 
-func (dr *HttpClient) setJSONHeaders(headers string) *HttpClient {
+func (dhc *HttpClient) setJSONHeaders(headers string) *HttpClient {
 	var val map[string]string
 	if err := json.Unmarshal([]byte(headers), &val); err == nil {
 		for k, v := range val {
-			dr.SetHeader(k, v)
+			dhc.SetHeader(k, v)
 		}
 	} else {
-		dr.Errors = append(dr.Errors, err)
+		dhc.Errors = append(dhc.Errors, err)
 	}
-	return dr
+	return dhc
 }
 
-func (dr *HttpClient) setStructHeaders(headers interface{}) *HttpClient {
+func (dhc *HttpClient) setStructHeaders(headers interface{}) *HttpClient {
 	if marshalContent, err := json.Marshal(headers); err != nil {
-		dr.Errors = append(dr.Errors, err)
+		dhc.Errors = append(dhc.Errors, err)
 	} else {
 		var val map[string]string
 		if err := json.Unmarshal(marshalContent, &val); err != nil {
-			dr.Errors = append(dr.Errors, err)
+			dhc.Errors = append(dhc.Errors, err)
 		} else {
 			for k, v := range val {
-				dr.SetHeader(k, v)
+				dhc.SetHeader(k, v)
 			}
 		}
 	}
-	return dr
+	return dhc
 }
 
 // just need to change the array pointer?
@@ -255,29 +255,29 @@ func copyRetryable(old HttpClientRetryable) HttpClientRetryable {
 // that the base request set your timeout and redirect polices, and no modification of
 // the client or transport happen after cloning.
 // Note: DoNotClearHttpClient is forced to "true" after Clone
-func (dr *HttpClient) Clone() *HttpClient {
+func (dhc *HttpClient) Clone() *HttpClient {
 	clone := &HttpClient{
-		Url:               dr.Url,
-		Method:            dr.Method,
-		Header:            http.Header(cloneMapArray(dr.Header)),
-		TargetType:        dr.TargetType,
-		ForceType:         dr.ForceType,
-		Data:              shallowCopyData(dr.Data),
-		SliceData:         shallowCopyDataSlice(dr.SliceData),
-		FormData:          url.Values(cloneMapArray(dr.FormData)),
-		QueryData:         url.Values(cloneMapArray(dr.QueryData)),
-		FileData:          shallowCopyFileArray(dr.FileData),
-		BounceToRawString: dr.BounceToRawString,
-		RawString:         dr.RawString,
-		Client:            dr.Client,
-		Transport:         dr.Transport,
-		Cookies:           shallowCopyCookies(dr.Cookies),
-		Errors:            shallowCopyErrors(dr.Errors),
-		BasicAuth:         dr.BasicAuth,
-		Debug:             dr.Debug,
-		CurlCommand:       dr.CurlCommand,
-		logger:            dr.logger,
-		Retryable:         copyRetryable(dr.Retryable),
+		Url:               dhc.Url,
+		Method:            dhc.Method,
+		Header:            http.Header(cloneMapArray(dhc.Header)),
+		TargetType:        dhc.TargetType,
+		ForceType:         dhc.ForceType,
+		Data:              shallowCopyData(dhc.Data),
+		SliceData:         shallowCopyDataSlice(dhc.SliceData),
+		FormData:          url.Values(cloneMapArray(dhc.FormData)),
+		QueryData:         url.Values(cloneMapArray(dhc.QueryData)),
+		FileData:          shallowCopyFileArray(dhc.FileData),
+		BounceToRawString: dhc.BounceToRawString,
+		RawString:         dhc.RawString,
+		Client:            dhc.Client,
+		Transport:         dhc.Transport,
+		Cookies:           shallowCopyCookies(dhc.Cookies),
+		Errors:            shallowCopyErrors(dhc.Errors),
+		BasicAuth:         dhc.BasicAuth,
+		Debug:             dhc.Debug,
+		CurlCommand:       dhc.CurlCommand,
+		logger:            dhc.logger,
+		Retryable:         copyRetryable(dhc.Retryable),
 		DoNotClearHttpClient:  true,
 		isClone:           true,
 	}
@@ -285,129 +285,129 @@ func (dr *HttpClient) Clone() *HttpClient {
 }
 
 // Enable the debug mode which logs request/response detail
-func (dr *HttpClient) SetDebug(enable bool) *HttpClient {
-	dr.Debug = enable
-	return dr
+func (dhc *HttpClient) SetDebug(enable bool) *HttpClient {
+	dhc.Debug = enable
+	return dhc
 }
 
 // Enable the curl command mode which display a CURL command line
-func (dr *HttpClient) SetCurlCommand(enable bool) *HttpClient {
-	dr.CurlCommand = enable
-	return dr
+func (dhc *HttpClient) SetCurlCommand(enable bool) *HttpClient {
+	dhc.CurlCommand = enable
+	return dhc
 }
 
 // Enable the DoNotClear mode for not clearing super agent and reuse for the next request
-func (dr *HttpClient) SetDoNotClearHttpClient(enable bool) *HttpClient {
-	dr.DoNotClearHttpClient = enable
-	return dr
+func (dhc *HttpClient) SetDoNotClearHttpClient(enable bool) *HttpClient {
+	dhc.DoNotClearHttpClient = enable
+	return dhc
 }
 
-func (dr *HttpClient) SetLogger(logger *log.Logger) *HttpClient {
-	dr.logger = logger
-	return dr
+func (dhc *HttpClient) SetLogger(logger *log.Logger) *HttpClient {
+	dhc.logger = logger
+	return dhc
 }
 
 // Clear HttpClient data for another new request.
-func (dr *HttpClient) ClearHttpClient() {
-	if dr.DoNotClearHttpClient {
+func (dhc *HttpClient) ClearHttpClient() {
+	if dhc.DoNotClearHttpClient {
 		return
 	}
-	dr.Url = ""
-	dr.Method = ""
-	dr.Header = http.Header{}
-	dr.Data = make(map[string]interface{})
-	dr.SliceData = []interface{}{}
-	dr.FormData = url.Values{}
-	dr.QueryData = url.Values{}
-	dr.FileData = make([]File, 0)
-	dr.BounceToRawString = false
-	dr.RawString = ""
-	dr.ForceType = ""
-	dr.TargetType = TypeJSON
-	dr.Cookies = make([]*http.Cookie, 0)
-	dr.Errors = nil
+	dhc.Url = ""
+	dhc.Method = ""
+	dhc.Header = http.Header{}
+	dhc.Data = make(map[string]interface{})
+	dhc.SliceData = []interface{}{}
+	dhc.FormData = url.Values{}
+	dhc.QueryData = url.Values{}
+	dhc.FileData = make([]File, 0)
+	dhc.BounceToRawString = false
+	dhc.RawString = ""
+	dhc.ForceType = ""
+	dhc.TargetType = TypeJSON
+	dhc.Cookies = make([]*http.Cookie, 0)
+	dhc.Errors = nil
 }
 
 // Just a wrapper to initialize HttpClient instance by method string
-func (dr *HttpClient) CustomMethod(method, targetUrl string) *HttpClient {
+func (dhc *HttpClient) CustomMethod(method, targetUrl string) *HttpClient {
 	switch method {
 	case POST:
-		return dr.Post(targetUrl)
+		return dhc.Post(targetUrl)
 	case GET:
-		return dr.Get(targetUrl)
+		return dhc.Get(targetUrl)
 	case HEAD:
-		return dr.Head(targetUrl)
+		return dhc.Head(targetUrl)
 	case PUT:
-		return dr.Put(targetUrl)
+		return dhc.Put(targetUrl)
 	case DELETE:
-		return dr.Delete(targetUrl)
+		return dhc.Delete(targetUrl)
 	case PATCH:
-		return dr.Patch(targetUrl)
+		return dhc.Patch(targetUrl)
 	case OPTIONS:
-		return dr.Options(targetUrl)
+		return dhc.Options(targetUrl)
 	default:
-		dr.ClearHttpClient()
-		dr.Method = method
-		dr.Url = targetUrl
-		dr.Errors = nil
-		return dr
+		dhc.ClearHttpClient()
+		dhc.Method = method
+		dhc.Url = targetUrl
+		dhc.Errors = nil
+		return dhc
 	}
 }
 
-func (dr *HttpClient) Get(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = GET
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Get(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = GET
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Post(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = POST
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Post(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = POST
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Head(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = HEAD
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Head(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = HEAD
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Put(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = PUT
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Put(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = PUT
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Delete(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = DELETE
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Delete(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = DELETE
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Patch(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = PATCH
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Patch(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = PATCH
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
-func (dr *HttpClient) Options(targetUrl string) *HttpClient {
-	dr.ClearHttpClient()
-	dr.Method = OPTIONS
-	dr.Url = targetUrl
-	dr.Errors = nil
-	return dr
+func (dhc *HttpClient) Options(targetUrl string) *HttpClient {
+	dhc.ClearHttpClient()
+	dhc.Method = OPTIONS
+	dhc.Url = targetUrl
+	dhc.Errors = nil
+	return dhc
 }
 
 // Set is used for setting header fields,
@@ -418,9 +418,9 @@ func (dr *HttpClient) Options(targetUrl string) *HttpClient {
 //      Post("/gamelist").
 //      SetHeader("Accept", "application/json").
 //      End()
-func (dr *HttpClient) SetHeader(param string, value string) *HttpClient {
-	dr.Header.Set(param, value)
-	return dr
+func (dhc *HttpClient) SetHeader(param string, value string) *HttpClient {
+	dhc.Header.Set(param, value)
+	return dhc
 }
 
 // AppendHeader is used for setting header fileds with multiple values,
@@ -431,9 +431,9 @@ func (dr *HttpClient) SetHeader(param string, value string) *HttpClient {
 //      AppendHeader("Accept", "application/json").
 //      AppendHeader("Accept", "text/plain").
 //      End()
-func (dr *HttpClient) AppendHeader(param string, value string) *HttpClient {
-	dr.Header.Add(param, value)
-	return dr
+func (dhc *HttpClient) AppendHeader(param string, value string) *HttpClient {
+	dhc.Header.Add(param, value)
+	return dhc
 }
 
 // SetHeaders is used to set headers with multiple fields.
@@ -452,15 +452,15 @@ func (dr *HttpClient) AppendHeader(param string, value string) *HttpClient {
 //    SetHeaders(headers).
 //    End()
 //
-func (dr *HttpClient) SetHeaders(headers interface{}) *HttpClient {
+func (dhc *HttpClient) SetHeaders(headers interface{}) *HttpClient {
 	switch v := reflect.ValueOf(headers); v.Kind() {
 	case reflect.String:
-		dr.setJSONHeaders(v.String())
+		dhc.setJSONHeaders(v.String())
 	case reflect.Struct:
-		dr.setStructHeaders(v.Interface())
+		dhc.setStructHeaders(v.Interface())
 	default:
 	}
-	return dr
+	return dhc
 }
 
 // Retryable is used for setting a Retry policy
@@ -472,15 +472,15 @@ func (dr *HttpClient) SetHeaders(headers interface{}) *HttpClient {
 //      Post("/gamelist").
 //      Retry(3, 5 * time.seconds, http.StatusBadRequest, http.StatusInternalServerError).
 //      End()
-func (dr *HttpClient) Retry(retryCount int, retryTime time.Duration, statusCode ...int) *HttpClient {
+func (dhc *HttpClient) Retry(retryCount int, retryTime time.Duration, statusCode ...int) *HttpClient {
 	for _, code := range statusCode {
 		statusText := http.StatusText(code)
 		if len(statusText) == 0 {
-			dr.Errors = append(dr.Errors, errors.New("StatusCode '"+strconv.Itoa(code)+"' doesn't exist in http package"))
+			dhc.Errors = append(dhc.Errors, errors.New("StatusCode '"+strconv.Itoa(code)+"' doesn't exist in http package"))
 		}
 	}
 
-	dr.Retryable = struct {
+	dhc.Retryable = struct {
 		RetryableStatus []int
 		RetryTime       time.Duration
 		RetryCount      int
@@ -493,7 +493,7 @@ func (dr *HttpClient) Retry(retryCount int, retryTime time.Duration, statusCode 
 		0,
 		true,
 	}
-	return dr
+	return dhc
 }
 
 // SetBasicAuth sets the basic authentication header
@@ -503,21 +503,21 @@ func (dr *HttpClient) Retry(retryCount int, retryTime time.Duration, statusCode 
 //      Post("/gamelist").
 //      SetBasicAuth("myuser", "mypass").
 //      End()
-func (dr *HttpClient) SetBasicAuth(username string, password string) *HttpClient {
-	dr.BasicAuth = struct{ Username, Password string }{username, password}
-	return dr
+func (dhc *HttpClient) SetBasicAuth(username string, password string) *HttpClient {
+	dhc.BasicAuth = struct{ Username, Password string }{username, password}
+	return dhc
 }
 
 // AddCookie adds a cookie to the request. The behavior is the same as AddCookie on Request from net/http
-func (dr *HttpClient) AddCookie(c *http.Cookie) *HttpClient {
-	dr.Cookies = append(dr.Cookies, c)
-	return dr
+func (dhc *HttpClient) AddCookie(c *http.Cookie) *HttpClient {
+	dhc.Cookies = append(dhc.Cookies, c)
+	return dhc
 }
 
 // AddCookies is a convenient method to add multiple cookies
-func (dr *HttpClient) AddCookies(cookies []*http.Cookie) *HttpClient {
-	dr.Cookies = append(dr.Cookies, cookies...)
-	return dr
+func (dhc *HttpClient) AddCookies(cookies []*http.Cookie) *HttpClient {
+	dhc.Cookies = append(dhc.Cookies, cookies...)
+	return dhc
 }
 
 var Types = map[string]string{
@@ -550,13 +550,13 @@ var Types = map[string]string{
 //    "text/plain" uses "text"
 //    "application/x-www-form-urlencoded" uses "urlencoded", "form" or "form-data"
 //
-func (dr *HttpClient) Type(typeStr string) *HttpClient {
+func (dhc *HttpClient) Type(typeStr string) *HttpClient {
 	if _, ok := Types[typeStr]; ok {
-		dr.ForceType = typeStr
+		dhc.ForceType = typeStr
 	} else {
-		dr.Errors = append(dr.Errors, errors.New("Type func: incorrect type \""+typeStr+"\""))
+		dhc.Errors = append(dhc.Errors, errors.New("Type func: incorrect type \""+typeStr+"\""))
 	}
-	return dr
+	return dhc
 }
 
 // Query function accepts either json string or strings which will form a query-string in url of GET method or body of POST method.
@@ -592,26 +592,26 @@ func (dr *HttpClient) Type(typeStr string) *HttpClient {
 //        Query(`{ size: '50x50', weight:'20kg' }`).
 //        End()
 //
-func (dr *HttpClient) Query(content interface{}) *HttpClient {
+func (dhc *HttpClient) Query(content interface{}) *HttpClient {
 	switch v := reflect.ValueOf(content); v.Kind() {
 	case reflect.String:
-		dr.queryString(v.String())
+		dhc.queryString(v.String())
 	case reflect.Struct:
-		dr.queryStruct(v.Interface())
+		dhc.queryStruct(v.Interface())
 	case reflect.Map:
-		dr.queryMap(v.Interface())
+		dhc.queryMap(v.Interface())
 	default:
 	}
-	return dr
+	return dhc
 }
 
-func (dr *HttpClient) queryStruct(content interface{}) *HttpClient {
+func (dhc *HttpClient) queryStruct(content interface{}) *HttpClient {
 	if marshalContent, err := json.Marshal(content); err != nil {
-		dr.Errors = append(dr.Errors, err)
+		dhc.Errors = append(dhc.Errors, err)
 	} else {
 		var val map[string]interface{}
 		if err := json.Unmarshal(marshalContent, &val); err != nil {
-			dr.Errors = append(dr.Errors, err)
+			dhc.Errors = append(dhc.Errors, err)
 		} else {
 			for k, v := range val {
 				k = strings.ToLower(k)
@@ -630,44 +630,44 @@ func (dr *HttpClient) queryStruct(content interface{}) *HttpClient {
 					}
 					queryVal = string(j)
 				}
-				dr.QueryData.Add(k, queryVal)
+				dhc.QueryData.Add(k, queryVal)
 			}
 		}
 	}
-	return dr
+	return dhc
 }
 
-func (dr *HttpClient) queryString(content string) *HttpClient {
+func (dhc *HttpClient) queryString(content string) *HttpClient {
 	var val map[string]string
 	if err := json.Unmarshal([]byte(content), &val); err == nil {
 		for k, v := range val {
-			dr.QueryData.Add(k, v)
+			dhc.QueryData.Add(k, v)
 		}
 	} else {
 		if queryData, err := url.ParseQuery(content); err == nil {
 			for k, queryValues := range queryData {
 				for _, queryValue := range queryValues {
-					dr.QueryData.Add(k, string(queryValue))
+					dhc.QueryData.Add(k, string(queryValue))
 				}
 			}
 		} else {
-			dr.Errors = append(dr.Errors, err)
+			dhc.Errors = append(dhc.Errors, err)
 		}
 		// TODO: need to check correct format of 'field=val&field=val&...'
 	}
-	return dr
+	return dhc
 }
 
-func (dr *HttpClient) queryMap(content interface{}) *HttpClient {
-	return dr.queryStruct(content)
+func (dhc *HttpClient) queryMap(content interface{}) *HttpClient {
+	return dhc.queryStruct(content)
 }
 
 // As Go conventions accepts ; as a synonym for &. (https://github.com/golang/go/issues/2210)
 // Thus, Query won't accept ; in a querystring if we provide something like fields=f1;f2;f3
 // This Param is then created as an alternative method to solve this.
-func (dr *HttpClient) Param(key string, value string) *HttpClient {
-	dr.QueryData.Add(key, value)
-	return dr
+func (dhc *HttpClient) Param(key string, value string) *HttpClient {
+	dhc.QueryData.Add(key, value)
+	return dhc
 }
 
 // Set TLSClientConfig for underling Transport.
@@ -677,16 +677,16 @@ func (dr *HttpClient) Param(key string, value string) *HttpClient {
 //        Get("https://disable-security-check.com").
 //        End()
 //
-func (dr *HttpClient) TLSClientConfig(config *tls.Config) *HttpClient {
-	dr.Transport.TLSClientConfig = config
-	return dr
+func (dhc *HttpClient) TLSClientConfig(config *tls.Config) *HttpClient {
+	dhc.Transport.TLSClientConfig = config
+	return dhc
 }
 
 // Proxy function accepts a proxy url string to setup proxy url for any request.
 // It provides a convenience way to setup proxy which have advantages over usual old ways.
 // One example is you might try to set `http_proxy` environment. This means you are setting proxy up for all the requests.
 // You will not be able to send different request with different proxy unless you change your `http_proxy` environment again.
-// Another example is using Golang proxy setting. This is normal prefer way to do but too verbase compared to GoRequest'dr Proxy:
+// Another example is using Golang proxy setting. This is normal prefer way to do but too verbase compared to GoRequest'dhc Proxy:
 //
 //      New().Proxy("http://myproxy:9999").
 //        Post("http://www.google.com").
@@ -698,33 +698,33 @@ func (dr *HttpClient) TLSClientConfig(config *tls.Config) *HttpClient {
 //        Post("http://www.google.com").
 //        End()
 //
-func (dr *HttpClient) Proxy(proxyUrl string) *HttpClient {
+func (dhc *HttpClient) Proxy(proxyUrl string) *HttpClient {
 	parsedProxyUrl, err := url.Parse(proxyUrl)
 	if err != nil {
-		dr.Errors = append(dr.Errors, err)
+		dhc.Errors = append(dhc.Errors, err)
 	} else if proxyUrl == "" {
-		dr.Transport.Proxy = nil
+		dhc.Transport.Proxy = nil
 	} else {
-		dr.Transport.Proxy = http.ProxyURL(parsedProxyUrl)
+		dhc.Transport.Proxy = http.ProxyURL(parsedProxyUrl)
 	}
-	return dr
+	return dhc
 }
 
 // RedirectPolicy accepts a function to define how to handle redirects. If the
 // policy function returns an error, the next Request is not made and the previous
 // request is returned.
 //
-// The policy function'dr arguments are the Request about to be made and the
+// The policy function'dhc arguments are the Request about to be made and the
 // past requests in order of oldest first.
-func (dr *HttpClient) RedirectPolicy(policy func(req Request, via []Request) error) *HttpClient {
-	dr.Client.CheckRedirect = func(r *http.Request, v []*http.Request) error {
+func (dhc *HttpClient) RedirectPolicy(policy func(req Request, via []Request) error) *HttpClient {
+	dhc.Client.CheckRedirect = func(r *http.Request, v []*http.Request) error {
 		vv := make([]Request, len(v))
 		for i, r := range v {
 			vv[i] = Request(r)
 		}
 		return policy(Request(r), vv)
 	}
-	return dr
+	return dhc
 }
 
 // Send function accepts either json string or query strings which is usually used to assign data to POST or PUT method.
@@ -772,35 +772,35 @@ func (dr *HttpClient) RedirectPolicy(policy func(req Request, via []Request) err
 //        Send("hello world").
 //        End()
 //
-func (dr *HttpClient) Send(content interface{}) *HttpClient {
+func (dhc *HttpClient) Send(content interface{}) *HttpClient {
 	// TODO: add normal text mode or other mode to Send func
 	switch v := reflect.ValueOf(content); v.Kind() {
 	case reflect.String:
-		dr.SendString(v.String())
+		dhc.SendString(v.String())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64: // includes rune
-		dr.SendString(strconv.FormatInt(v.Int(), 10))
+		dhc.SendString(strconv.FormatInt(v.Int(), 10))
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64: // includes byte
-		dr.SendString(strconv.FormatUint(v.Uint(), 10))
+		dhc.SendString(strconv.FormatUint(v.Uint(), 10))
 	case reflect.Float64:
-		dr.SendString(strconv.FormatFloat(v.Float(), 'f', -1, 64))
+		dhc.SendString(strconv.FormatFloat(v.Float(), 'f', -1, 64))
 	case reflect.Float32:
-		dr.SendString(strconv.FormatFloat(v.Float(), 'f', -1, 32))
+		dhc.SendString(strconv.FormatFloat(v.Float(), 'f', -1, 32))
 	case reflect.Bool:
-		dr.SendString(strconv.FormatBool(v.Bool()))
+		dhc.SendString(strconv.FormatBool(v.Bool()))
 	case reflect.Struct:
-		dr.SendStruct(v.Interface())
+		dhc.SendStruct(v.Interface())
 	case reflect.Slice:
-		dr.SendSlice(makeSliceOfReflectValue(v))
+		dhc.SendSlice(makeSliceOfReflectValue(v))
 	case reflect.Array:
-		dr.SendSlice(makeSliceOfReflectValue(v))
+		dhc.SendSlice(makeSliceOfReflectValue(v))
 	case reflect.Ptr:
-		dr.Send(v.Elem().Interface())
+		dhc.Send(v.Elem().Interface())
 	case reflect.Map:
-		dr.SendMap(v.Interface())
+		dhc.SendMap(v.Interface())
 	default:
-		return dr
+		return dhc
 	}
-	return dr
+	return dhc
 }
 
 func makeSliceOfReflectValue(v reflect.Value) (slice []interface{}) {
@@ -817,42 +817,42 @@ func makeSliceOfReflectValue(v reflect.Value) (slice []interface{}) {
 	return slice
 }
 
-// SendSlice (similar to SendString) returns HttpClient'dr itself for any next chain and takes content []interface{} as a parameter.
-// Its duty is to append slice of interface{} into dr.SliceData ([]interface{}) which later changes into json array in the End() func.
-func (dr *HttpClient) SendSlice(content []interface{}) *HttpClient {
-	dr.SliceData = append(dr.SliceData, content...)
-	return dr
+// SendSlice (similar to SendString) returns HttpClient'dhc itself for any next chain and takes content []interface{} as a parameter.
+// Its duty is to append slice of interface{} into dhc.SliceData ([]interface{}) which later changes into json array in the End() func.
+func (dhc *HttpClient) SendSlice(content []interface{}) *HttpClient {
+	dhc.SliceData = append(dhc.SliceData, content...)
+	return dhc
 }
 
-func (dr *HttpClient) SendMap(content interface{}) *HttpClient {
-	return dr.SendStruct(content)
+func (dhc *HttpClient) SendMap(content interface{}) *HttpClient {
+	return dhc.SendStruct(content)
 }
 
-// SendStruct (similar to SendString) returns HttpClient'dr itself for any next chain and takes content interface{} as a parameter.
-// Its duty is to transfrom interface{} (implicitly always a struct) into dr.Data (map[string]interface{}) which later changes into appropriate format such as json, form, text, etc. in the End() func.
-func (dr *HttpClient) SendStruct(content interface{}) *HttpClient {
+// SendStruct (similar to SendString) returns HttpClient'dhc itself for any next chain and takes content interface{} as a parameter.
+// Its duty is to transfrom interface{} (implicitly always a struct) into dhc.Data (map[string]interface{}) which later changes into appropriate format such as json, form, text, etc. in the End() func.
+func (dhc *HttpClient) SendStruct(content interface{}) *HttpClient {
 	if marshalContent, err := json.Marshal(content); err != nil {
-		dr.Errors = append(dr.Errors, err)
+		dhc.Errors = append(dhc.Errors, err)
 	} else {
 		var val map[string]interface{}
 		d := json.NewDecoder(bytes.NewBuffer(marshalContent))
 		d.UseNumber()
 		if err := d.Decode(&val); err != nil {
-			dr.Errors = append(dr.Errors, err)
+			dhc.Errors = append(dhc.Errors, err)
 		} else {
 			for k, v := range val {
-				dr.Data[k] = v
+				dhc.Data[k] = v
 			}
 		}
 	}
-	return dr
+	return dhc
 }
 
-// SendString returns HttpClient'dr itself for any next chain and takes content string as a parameter.
-// Its duty is to transform String into dr.Data (map[string]interface{}) which later changes into appropriate format such as json, form, text, etc. in the End func.
+// SendString returns HttpClient'dhc itself for any next chain and takes content string as a parameter.
+// Its duty is to transform String into dhc.Data (map[string]interface{}) which later changes into appropriate format such as json, form, text, etc. in the End func.
 // Send implicitly uses SendString and you should use Send instead of this.
-func (dr *HttpClient) SendString(content string) *HttpClient {
-	if !dr.BounceToRawString {
+func (dhc *HttpClient) SendString(content string) *HttpClient {
+	if !dhc.BounceToRawString {
 		var val interface{}
 		d := json.NewDecoder(strings.NewReader(content))
 		d.UseNumber()
@@ -860,20 +860,20 @@ func (dr *HttpClient) SendString(content string) *HttpClient {
 			switch v := reflect.ValueOf(val); v.Kind() {
 			case reflect.Map:
 				for k, v := range val.(map[string]interface{}) {
-					dr.Data[k] = v
+					dhc.Data[k] = v
 				}
 			// add to SliceData
 			case reflect.Slice:
-				dr.SendSlice(val.([]interface{}))
+				dhc.SendSlice(val.([]interface{}))
 			// bounce to rawstring if it is arrayjson, or others
 			default:
-				dr.BounceToRawString = true
+				dhc.BounceToRawString = true
 			}
 		} else if formData, err := url.ParseQuery(content); err == nil {
 			for k, formValues := range formData {
 				for _, formValue := range formValues {
 					// make it array if already have key
-					if val, ok := dr.Data[k]; ok {
+					if val, ok := dhc.Data[k]; ok {
 						var strArray []string
 						strArray = append(strArray, string(formValue))
 						// check if previous data is one string or array
@@ -883,21 +883,21 @@ func (dr *HttpClient) SendString(content string) *HttpClient {
 						case string:
 							strArray = append(strArray, oldValue)
 						}
-						dr.Data[k] = strArray
+						dhc.Data[k] = strArray
 					} else {
 						// make it just string if does not already have same key
-						dr.Data[k] = formValue
+						dhc.Data[k] = formValue
 					}
 				}
 			}
-			dr.TargetType = TypeForm
+			dhc.TargetType = TypeForm
 		} else {
-			dr.BounceToRawString = true
+			dhc.BounceToRawString = true
 		}
 	}
 	// Dump all contents to RawString in case in the end user doesn't want json or form.
-	dr.RawString += content
-	return dr
+	dhc.RawString += content
+	return dhc
 }
 
 type File struct {
@@ -953,7 +953,7 @@ type File struct {
 //        SendFile(b, "", "my_custom_fieldname"). // filename left blank, will become "example_file.ext"
 //        End()
 //
-func (dr *HttpClient) SendFile(file interface{}, args ...string) *HttpClient {
+func (dhc *HttpClient) SendFile(file interface{}, args ...string) *HttpClient {
 
 	filename := ""
 	fieldname := "file"
@@ -965,25 +965,25 @@ func (dr *HttpClient) SendFile(file interface{}, args ...string) *HttpClient {
 		fieldname = strings.TrimSpace(args[1])
 	}
 	if fieldname == "file" || fieldname == "" {
-		fieldname = "file" + strconv.Itoa(len(dr.FileData)+1)
+		fieldname = "file" + strconv.Itoa(len(dhc.FileData)+1)
 	}
 
 	switch v := reflect.ValueOf(file); v.Kind() {
 	case reflect.String:
 		pathToFile, err := filepath.Abs(v.String())
 		if err != nil {
-			dr.Errors = append(dr.Errors, err)
-			return dr
+			dhc.Errors = append(dhc.Errors, err)
+			return dhc
 		}
 		if filename == "" {
 			filename = filepath.Base(pathToFile)
 		}
 		data, err := ioutil.ReadFile(v.String())
 		if err != nil {
-			dr.Errors = append(dr.Errors, err)
-			return dr
+			dhc.Errors = append(dhc.Errors, err)
+			return dhc
 		}
-		dr.FileData = append(dr.FileData, File{
+		dhc.FileData = append(dhc.FileData, File{
 			Filename:  filename,
 			Fieldname: fieldname,
 			Data:      data,
@@ -1001,15 +1001,15 @@ func (dr *HttpClient) SendFile(file interface{}, args ...string) *HttpClient {
 		for i := range slice {
 			f.Data[i] = slice[i].(byte)
 		}
-		dr.FileData = append(dr.FileData, f)
+		dhc.FileData = append(dhc.FileData, f)
 	case reflect.Ptr:
 		if len(args) == 1 {
-			return dr.SendFile(v.Elem().Interface(), args[0])
+			return dhc.SendFile(v.Elem().Interface(), args[0])
 		}
 		if len(args) >= 2 {
-			return dr.SendFile(v.Elem().Interface(), args[0], args[1])
+			return dhc.SendFile(v.Elem().Interface(), args[0], args[1])
 		}
-		return dr.SendFile(v.Elem().Interface())
+		return dhc.SendFile(v.Elem().Interface())
 	default:
 		if v.Type() == reflect.TypeOf(os.File{}) {
 			osfile := v.Interface().(os.File)
@@ -1018,21 +1018,21 @@ func (dr *HttpClient) SendFile(file interface{}, args ...string) *HttpClient {
 			}
 			data, err := ioutil.ReadFile(osfile.Name())
 			if err != nil {
-				dr.Errors = append(dr.Errors, err)
-				return dr
+				dhc.Errors = append(dhc.Errors, err)
+				return dhc
 			}
-			dr.FileData = append(dr.FileData, File{
+			dhc.FileData = append(dhc.FileData, File{
 				Filename:  filename,
 				Fieldname: fieldname,
 				Data:      data,
 			})
-			return dr
+			return dhc
 		}
 
-		dr.Errors = append(dr.Errors, errors.New("SendFile currently only supports either a string (path/to/file), a slice of bytes (file content itself), or a os.File!"))
+		dhc.Errors = append(dhc.Errors, errors.New("SendFile currently only supports either a string (path/to/file), a slice of bytes (file content itself), or a os.File!"))
 	}
 
-	return dr
+	return dhc
 }
 
 func changeMapToURLValues(data map[string]interface{}) url.Values {
@@ -1106,7 +1106,7 @@ func changeMapToURLValues(data map[string]interface{}) url.Values {
 }
 
 // End is the most important function that you need to call when ending the chain. The request won't proceed without calling it.
-// End function returns Response which matchs the structure of Response type in Golang'dr http package (but without Body data). The body data itself returns as a string in a 2nd return value.
+// End function returns Response which matchs the structure of Response type in Golang'dhc http package (but without Body data). The body data itself returns as a string in a 2nd return value.
 // Lastly but worth noticing, error array (NOTE: not just single error value) is returned as a 3rd value and nil otherwise.
 //
 // For example:
@@ -1127,7 +1127,7 @@ func changeMapToURLValues(data map[string]interface{}) url.Values {
 //    }
 //    dhttp.New().Get("http://www.baidu.com").End(printBody)
 //
-func (dr *HttpClient) End(callback ...func(response Response, body string, err error)) (Response, string, error) {
+func (dhc *HttpClient) End(callback ...func(response Response, body string, err error)) (Response, string, error) {
 	var bytesCallback []func(response Response, body []byte, err error)
 	if len(callback) > 0 {
 		bytesCallback = []func(response Response, body []byte, err error){
@@ -1137,14 +1137,14 @@ func (dr *HttpClient) End(callback ...func(response Response, body string, err e
 		}
 	}
 
-	resp, body, err := dr.EndBytes(bytesCallback...)
+	resp, body, err := dhc.EndBytes(bytesCallback...)
 	bodyString := string(body)
 
 	return resp, bodyString, err
 }
 
 // EndBytes should be used when you want the body as bytes. The callbacks work the same way as with `End`, except that a byte array is used instead of a string.
-func (dr *HttpClient) EndBytes(callback ...func(response Response, body []byte, err error)) (Response, []byte, error) {
+func (dhc *HttpClient) EndBytes(callback ...func(response Response, body []byte, err error)) (Response, []byte, error) {
 	var (
 		err error
 		resp Response
@@ -1152,27 +1152,27 @@ func (dr *HttpClient) EndBytes(callback ...func(response Response, body []byte, 
 	)
 	
 	for {
-		resp, body, err = dr.getResponseBytes()
+		resp, body, err = dhc.getResponseBytes()
 		if err != nil {
 			return nil, nil, err
 		}
-		if dr.isRetryableRequest(resp) {
-			resp.Header.Set("Retry-Count", strconv.Itoa(dr.Retryable.Attempt))
+		if dhc.isRetryableRequest(resp) {
+			resp.Header.Set("Retry-Count", strconv.Itoa(dhc.Retryable.Attempt))
 			break
 		}
 	}
 
 	respCallback := *resp
 	if len(callback) != 0 {
-		callback[0](&respCallback, body, dr.marshalErrors())
+		callback[0](&respCallback, body, dhc.marshalErrors())
 	}
 	return resp, body, nil
 }
 
-func (dr *HttpClient) isRetryableRequest(resp Response) bool {
-	if dr.Retryable.Enable && dr.Retryable.Attempt < dr.Retryable.RetryCount && contains(resp.StatusCode, dr.Retryable.RetryableStatus) {
-		time.Sleep(dr.Retryable.RetryTime)
-		dr.Retryable.Attempt++
+func (dhc *HttpClient) isRetryableRequest(resp Response) bool {
+	if dhc.Retryable.Enable && dhc.Retryable.Attempt < dhc.Retryable.RetryCount && contains(resp.StatusCode, dhc.Retryable.RetryableStatus) {
+		time.Sleep(dhc.Retryable.RetryTime)
+		dhc.Retryable.Attempt++
 		return false
 	}
 	return true
@@ -1188,107 +1188,107 @@ func contains(respStatus int, statuses []int) bool {
 }
 
 // EndStruct should be used when you want the body as a struct. The callbacks work the same way as with `End`, except that a struct is used instead of a string.
-func (dr *HttpClient) EndStruct(v interface{}, callback ...func(response Response, v interface{}, body []byte, errs []error)) (Response, []byte, error) {
-	resp, body, errs := dr.EndBytes()
+func (dhc *HttpClient) EndStruct(v interface{}, callback ...func(response Response, v interface{}, body []byte, errs []error)) (Response, []byte, error) {
+	resp, body, errs := dhc.EndBytes()
 	if errs != nil {
 		return nil, body, errs
 	}
 	err := json.Unmarshal(body, &v)
 	if err != nil {
-		dr.Errors = append(dr.Errors, err)
-		return resp, body, dr.marshalErrors()
+		dhc.Errors = append(dhc.Errors, err)
+		return resp, body, dhc.marshalErrors()
 	}
 	respCallback := *resp
 	if len(callback) != 0 {
-		callback[0](&respCallback, v, body, dr.Errors)
+		callback[0](&respCallback, v, body, dhc.Errors)
 	}
 	return resp, body, nil
 }
 
-func (dr *HttpClient) getResponseBytes() (Response, []byte, error) {
+func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	var (
 		req  *http.Request
 		err  error
 		resp Response
 	)
 	// check whether there is an error. if yes, return all errors
-	if len(dr.Errors) != 0 {
-		return nil, nil, dr.marshalErrors()
+	if len(dhc.Errors) != 0 {
+		return nil, nil, dhc.marshalErrors()
 	}
 	// check if there is forced type
-	switch dr.ForceType {
+	switch dhc.ForceType {
 	case TypeJSON, TypeForm, TypeXML, TypeText, TypeMultipart:
-		dr.TargetType = dr.ForceType
+		dhc.TargetType = dhc.ForceType
 		// If forcetype is not set, check whether user set Content-Type header.
 		// If yes, also bounce to the correct supported TargetType automatically.
 	default:
-		contentType := dr.Header.Get("Content-Type")
+		contentType := dhc.Header.Get("Content-Type")
 		for k, v := range Types {
 			if contentType == v {
-				dr.TargetType = k
+				dhc.TargetType = k
 			}
 		}
 	}
 
 	traceId, ok := gl.Get(gl.LogId)
 	if ok {
-		dr.SetHeader("traceId", traceId.(string))
+		dhc.SetHeader("traceId", traceId.(string))
 	}
 
-	// if slice and map get mixed, let'dr bounce to rawstring
-	if len(dr.Data) != 0 && len(dr.SliceData) != 0 {
-		dr.BounceToRawString = true
+	// if slice and map get mixed, let'dhc bounce to rawstring
+	if len(dhc.Data) != 0 && len(dhc.SliceData) != 0 {
+		dhc.BounceToRawString = true
 	}
 
 	// Make Request
-	req, err = dr.MakeRequest()
+	req, err = dhc.MakeRequest()
 	if err != nil {
-		dr.Errors = append(dr.Errors, err)
-		return nil, nil, dr.marshalErrors()
+		dhc.Errors = append(dhc.Errors, err)
+		return nil, nil, dhc.marshalErrors()
 	}
 
 	// Set Transport
 	if !DisableTransportSwap {
-		dr.Client.Transport = dr.Transport
+		dhc.Client.Transport = dhc.Transport
 	}
 
 	// Log details of this request
-	if dr.Debug {
+	if dhc.Debug {
 		dump, err := httputil.DumpRequest(req, true)
-		dr.logger.SetPrefix("[http] ")
+		dhc.logger.SetPrefix("[http] ")
 		if err != nil {
-			dr.logger.Println("Error:", err)
+			dhc.logger.Println("Error:", err)
 		} else {
-			dr.logger.Printf("HTTP Request: %dr", string(dump))
+			dhc.logger.Printf("HTTP Request: %dhc", string(dump))
 		}
 	}
 
 	// Display CURL command line
-	if dr.CurlCommand {
+	if dhc.CurlCommand {
 		curl, err := http2curl.GetCurlCommand(req)
-		dr.logger.SetPrefix("[curl] ")
+		dhc.logger.SetPrefix("[curl] ")
 		if err != nil {
-			dr.logger.Println("Error:", err)
+			dhc.logger.Println("Error:", err)
 		} else {
-			dr.logger.Printf("CURL command line: %dr", curl)
+			dhc.logger.Printf("CURL command line: %dhc", curl)
 		}
 	}
 
 	// Send request
-	resp, err = dr.Client.Do(req)
+	resp, err = dhc.Client.Do(req)
 	if err != nil {
-		dr.Errors = append(dr.Errors, err)
-		return nil, nil, dr.marshalErrors()
+		dhc.Errors = append(dhc.Errors, err)
+		return nil, nil, dhc.marshalErrors()
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	// Log details of this response
-	if dr.Debug {
+	if dhc.Debug {
 		dump, err := httputil.DumpResponse(resp, true)
 		if nil != err {
-			dr.logger.Println("Error:", err)
+			dhc.logger.Println("Error:", err)
 		} else {
-			dr.logger.Printf("HTTP Response: %dr", string(dump))
+			dhc.logger.Printf("HTTP Response: %dhc", string(dump))
 		}
 	}
 
@@ -1301,7 +1301,7 @@ func (dr *HttpClient) getResponseBytes() (Response, []byte, error) {
 	return resp, body, nil
 }
 
-func (dr *HttpClient) MakeRequest() (*http.Request, error) {
+func (dhc *HttpClient) MakeRequest() (*http.Request, error) {
 	var (
 		req           *http.Request
 		contentType   string // This is only set when the request body content is non-empty.
@@ -1309,7 +1309,7 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 		err           error
 	)
 
-	if dr.Method == "" {
+	if dhc.Method == "" {
 		return nil, errors.New("No method specified")
 	}
 
@@ -1321,18 +1321,18 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 	// to http.NewRequest, because it contains logic which dependends on
 	// whether or not the body is "nil".
 	//
-	switch dr.TargetType {
+	switch dhc.TargetType {
 	case TypeJSON:
 		// If-case to give support to json array. we check if
-		// 1) Map only: send it as json map from dr.Data
-		// 2) Array or Mix of map & array or others: send it as rawstring from dr.RawString
+		// 1) Map only: send it as json map from dhc.Data
+		// 2) Array or Mix of map & array or others: send it as rawstring from dhc.RawString
 		var contentJson []byte
-		if dr.BounceToRawString {
-			contentJson = []byte(dr.RawString)
-		} else if len(dr.Data) != 0 {
-			contentJson, _ = json.Marshal(dr.Data)
-		} else if len(dr.SliceData) != 0 {
-			contentJson, _ = json.Marshal(dr.SliceData)
+		if dhc.BounceToRawString {
+			contentJson = []byte(dhc.RawString)
+		} else if len(dhc.Data) != 0 {
+			contentJson, _ = json.Marshal(dhc.Data)
+		} else if len(dhc.SliceData) != 0 {
+			contentJson, _ = json.Marshal(dhc.SliceData)
 		}
 		if contentJson != nil {
 			contentReader = bytes.NewReader(contentJson)
@@ -1340,10 +1340,10 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 		}
 	case TypeForm, TypeFormData, TypeUrlencoded:
 		var contentForm []byte
-		if dr.BounceToRawString || len(dr.SliceData) != 0 {
-			contentForm = []byte(dr.RawString)
+		if dhc.BounceToRawString || len(dhc.SliceData) != 0 {
+			contentForm = []byte(dhc.RawString)
 		} else {
-			formData := changeMapToURLValues(dr.Data)
+			formData := changeMapToURLValues(dhc.Data)
 			contentForm = []byte(formData.Encode())
 		}
 		if len(contentForm) != 0 {
@@ -1351,13 +1351,13 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 			contentType = "application/x-www-form-urlencoded"
 		}
 	case TypeText:
-		if len(dr.RawString) != 0 {
-			contentReader = strings.NewReader(dr.RawString)
+		if len(dhc.RawString) != 0 {
+			contentReader = strings.NewReader(dhc.RawString)
 			contentType = "text/plain"
 		}
 	case TypeXML:
-		if len(dr.RawString) != 0 {
-			contentReader = strings.NewReader(dr.RawString)
+		if len(dhc.RawString) != 0 {
+			contentReader = strings.NewReader(dhc.RawString)
 			contentType = "application/xml"
 		}
 	case TypeMultipart:
@@ -1366,18 +1366,18 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 			mw  = multipart.NewWriter(buf)
 		)
 
-		if dr.BounceToRawString {
-			fieldName := dr.Header.Get("data_fieldname")
+		if dhc.BounceToRawString {
+			fieldName := dhc.Header.Get("data_fieldname")
 			if fieldName == "" {
 				fieldName = "data"
 			}
 			fw, _ := mw.CreateFormField(fieldName)
-			fw.Write([]byte(dr.RawString))
+			fw.Write([]byte(dhc.RawString))
 			contentReader = buf
 		}
 
-		if len(dr.Data) != 0 {
-			formData := changeMapToURLValues(dr.Data)
+		if len(dhc.Data) != 0 {
+			formData := changeMapToURLValues(dhc.Data)
 			for key, values := range formData {
 				for _, value := range values {
 					fw, _ := mw.CreateFormField(key)
@@ -1387,18 +1387,18 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 			contentReader = buf
 		}
 
-		if len(dr.SliceData) != 0 {
-			fieldName := dr.Header.Get("json_fieldname")
+		if len(dhc.SliceData) != 0 {
+			fieldName := dhc.Header.Get("json_fieldname")
 			if fieldName == "" {
 				fieldName = "data"
 			}
 			// copied from CreateFormField() in mime/multipart/writer.go
 			h := make(textproto.MIMEHeader)
 			fieldName = strings.Replace(strings.Replace(fieldName, "\\", "\\\\", -1), `"`, "\\\"", -1)
-			h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%dr"`, fieldName))
+			h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%dhc"`, fieldName))
 			h.Set("Content-Type", "application/json")
 			fw, _ := mw.CreatePart(h)
-			contentJson, err := json.Marshal(dr.SliceData)
+			contentJson, err := json.Marshal(dhc.SliceData)
 			if err != nil {
 				return nil, err
 			}
@@ -1407,8 +1407,8 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 		}
 
 		// add the files
-		if len(dr.FileData) != 0 {
-			for _, file := range dr.FileData {
+		if len(dhc.FileData) != 0 {
+			for _, file := range dhc.FileData {
 				fw, _ := mw.CreateFormFile(file.Fieldname, file.Filename)
 				fw.Write(file.Data)
 			}
@@ -1422,14 +1422,14 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 			contentType = mw.FormDataContentType()
 		}
 	default:
-		// let'dr return an error instead of an nil pointer exception here
-		return nil, errors.New("TargetType '" + dr.TargetType + "' could not be determined")
+		// let'dhc return an error instead of an nil pointer exception here
+		return nil, errors.New("TargetType '" + dhc.TargetType + "' could not be determined")
 	}
 
-	if req, err = http.NewRequest(dr.Method, dr.Url, contentReader); err != nil {
+	if req, err = http.NewRequest(dhc.Method, dhc.Url, contentReader); err != nil {
 		return nil, err
 	}
-	for k, vals := range dr.Header {
+	for k, vals := range dhc.Header {
 		for _, v := range vals {
 			req.Header.Add(k, v)
 		}
@@ -1446,7 +1446,7 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 
 	// Add all querystring from Query func
 	q := req.URL.Query()
-	for k, v := range dr.QueryData {
+	for k, v := range dhc.QueryData {
 		for _, vv := range v {
 			q.Add(k, vv)
 		}
@@ -1454,12 +1454,12 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 	req.URL.RawQuery = q.Encode()
 
 	// Add basic auth
-	if dr.BasicAuth != struct{ Username, Password string }{} {
-		req.SetBasicAuth(dr.BasicAuth.Username, dr.BasicAuth.Password)
+	if dhc.BasicAuth != struct{ Username, Password string }{} {
+		req.SetBasicAuth(dhc.BasicAuth.Username, dhc.BasicAuth.Password)
 	}
 
 	// Add cookies
-	for _, cookie := range dr.Cookies {
+	for _, cookie := range dhc.Cookies {
 		req.AddCookie(cookie)
 	}
 
@@ -1468,8 +1468,8 @@ func (dr *HttpClient) MakeRequest() (*http.Request, error) {
 
 // AsCurlCommand returns a string representing the runnable `curl' command
 // version of the request.
-func (dr *HttpClient) AsCurlCommand() (string, error) {
-	req, err := dr.MakeRequest()
+func (dhc *HttpClient) AsCurlCommand() (string, error) {
+	req, err := dhc.MakeRequest()
 	if err != nil {
 		return "", err
 	}
@@ -1480,15 +1480,15 @@ func (dr *HttpClient) AsCurlCommand() (string, error) {
 	return cmd.String(), nil
 }
 
-func (dr *HttpClient) marshalErrors() error {
+func (dhc *HttpClient) marshalErrors() error {
 	var err error
-	el := len(dr.Errors)
+	el := len(dhc.Errors)
 	if el > 0 {
 		if el == 1 {
-			err = dr.Errors[0]
+			err = dhc.Errors[0]
 		} else {
 			var errStrS []string
-			for _, e := range dr.Errors {
+			for _, e := range dhc.Errors {
 				if e != nil {
 					errStrS = append(errStrS, e.Error())
 				}
