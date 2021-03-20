@@ -225,16 +225,8 @@ func NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
 	return client
 }
 
-func NewHttpClient(Timeout time.Duration, Domain string) *dhttp.HttpClient {
-	client := &dhttp.HttpClient{
-		Timeout: Timeout,
-		Domain:  Domain,
-	}
-	if err := client.Start(); err != nil {
-		Error("http client start occur error:%s", err.Error())
-		return nil
-	}
-	return client
+func NewHttpClient() *dhttp.HttpClient {
+	return dhttp.New()
 }
 
 func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) *dgrpc.GrpcClient {
