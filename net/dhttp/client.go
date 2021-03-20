@@ -1186,7 +1186,7 @@ func contains(respStatus int, statuses []int) bool {
 }
 
 // EndStruct should be used when you want the body as a struct. The callbacks work the same way as with `End`, except that a struct is used instead of a string.
-func (dhc *HttpClient) EndStruct(v interface{}, callback ...func(response Response, v interface{}, body []byte, errs []error)) (Response, []byte, error) {
+func (dhc *HttpClient) EndStruct(v interface{}, callback ...func(response Response, v interface{}, body []byte, err error)) (Response, []byte, error) {
 	resp, body, errs := dhc.EndBytes()
 	if errs != nil {
 		return nil, body, errs
@@ -1198,7 +1198,7 @@ func (dhc *HttpClient) EndStruct(v interface{}, callback ...func(response Respon
 	}
 	respCallback := *resp
 	if len(callback) != 0 {
-		callback[0](&respCallback, v, body, dhc.Errors)
+		callback[0](&respCallback, v, body, dhc.marshalErrors())
 	}
 	return resp, body, nil
 }
