@@ -1127,10 +1127,10 @@ func changeMapToURLValues(data map[string]interface{}) url.Values {
 //
 // For example:
 //
-//    func printBody(resp dhttp.Response, body string, errs []error){
+//    func printBody(resp Response, body string, errs []error){
 //      fmt.Println(resp.Status)
 //    }
-//    dhttp.New().Get("http://www.baidu.com").End(printBody)
+//    New().Get("http://www.baidu.com").End(printBody)
 //
 func (dhc *HttpClient) End(callback ...func(response Response, body string, err error)) (Response, string, error) {
 	var bytesCallback []func(response Response, body []byte, err error)
