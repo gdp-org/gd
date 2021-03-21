@@ -10,4 +10,6 @@ const (
 	Tag      = "glTag"
 	LogId    = "glLogId"
 	Url      = "glUrl"
+	HideData = "glHideData"
+	HideRet  = "glHideRet"
 )

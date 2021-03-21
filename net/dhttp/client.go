@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/pc"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -48,6 +49,12 @@ import (
 
 type Request *http.Request
 type Response *http.Response
+
+const (
+	glHttpClientCall     = "http_call_%v"
+	glHttpClientCost     = "http_cost_%v"
+	glHttpClientCallFail = "http_call_fail_%v"
+)
 
 // HTTP methods we support
 const (
@@ -1209,6 +1216,21 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 		err  error
 		resp Response
 	)
+
+	sTime := time.Now()
+	defer func() {
+		cost := time.Now().Sub(sTime)
+		pc.Cost(fmt.Sprintf("http_call_cost_%s", dhc.Url), cost)
+
+		gl.Incr(fmt.Sprintf(glHttpClientCall, dhc.Url), 1)
+		gl.IncrCost(fmt.Sprintf(glHttpClientCost, dhc.Url), cost)
+
+		if err != nil {
+			pc.CostFail(fmt.Sprintf("http_call_cost_fail_%v", dhc.Url), 1)
+			gl.Incr(fmt.Sprintf(glHttpClientCallFail, dhc.Url), 1)
+		}
+	}()
+
 	// check whether there is an error. if yes, return all errors
 	if len(dhc.Errors) != 0 {
 		return nil, nil, dhc.marshalErrors()
@@ -1217,7 +1239,7 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	switch dhc.ForceType {
 	case TypeJSON, TypeForm, TypeXML, TypeText, TypeMultipart:
 		dhc.TargetType = dhc.ForceType
-		// If forcetype is not set, check whether user set Content-Type header.
+		// If force type is not set, check whether user set Content-Type header.
 		// If yes, also bounce to the correct supported TargetType automatically.
 	default:
 		contentType := dhc.Header.Get("Content-Type")

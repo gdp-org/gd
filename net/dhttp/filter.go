@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-// example: group filter
+// group filter
 func GroupFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
@@ -33,7 +33,7 @@ func GroupFilter() gin.HandlerFunc {
 	}
 }
 
-// example: use gl
+// use gl
 func GlFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		gl.Init()
@@ -43,7 +43,7 @@ func GlFilter() gin.HandlerFunc {
 	}
 }
 
-// example: log middle handle
+// log middle handle
 func Logger(pk string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
@@ -83,20 +83,29 @@ func Logger(pk string) gin.HandlerFunc {
 		pc.Cost(pk, costDu)
 		cost := costDu / time.Millisecond
 
-		data, ok := c.Get(Data)
-		if !ok {
-			dataRaw, ok := c.Get(DataRaw)
-			if ok {
-				paramsBts, ok := dataRaw.([]byte)
-				if !ok {
-					data = fmt.Sprintf("%v", dataRaw)
-				} else {
-					data = string(paramsBts)
+		var data interface{}
+		t, ok := gl.Get(gl.HideData)
+		if (ok && !t.(bool)) || !ok {
+			data, ok = c.Get(Data)
+			if !ok {
+				dataRaw, ok := c.Get(DataRaw)
+				if ok {
+					paramsBts, ok := dataRaw.([]byte)
+					if !ok {
+						data = fmt.Sprintf("%v", dataRaw)
+					} else {
+						data = string(paramsBts)
+					}
 				}
 			}
 		}
 
-		ret, _ := c.Get(Ret)
+		var ret interface{}
+		r, ok := gl.Get(gl.HideRet)
+		if (ok && !r.(bool)) || ! ok {
+			ret, _ = c.Get(Ret)
+		}
+
 		httpStatusInterface, _ := c.Get(Code)
 		httpStatus := httpStatusInterface.(int)
 
@@ -156,7 +165,7 @@ func Logger(pk string) gin.HandlerFunc {
 	}
 }
 
-// example: stat filter
+// stat filter
 func StatFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uri := c.Request.RequestURI

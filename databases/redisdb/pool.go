@@ -271,7 +271,6 @@ func (p *RedisPoolClient) Do(commandName string, args ...interface{}) (reply int
 		cost := time.Now().Sub(sTime)
 		pcKey := fmt.Sprintf(RedisPoolCmd, strings.ToLower(commandName))
 		pc.Cost(fmt.Sprintf("reidsPool,name=%v,cmd=%s", p.redisPool.servers, pcKey), cost)
-		pc.Cost(fmt.Sprintf("reidsPool,name=%v,cmd=%s", p.redisPool.servers, pcKey), cost)
 
 		gl.Incr(glRedisPoolCall, 1)
 		gl.IncrCost(glRedisPoolCost, cost)
