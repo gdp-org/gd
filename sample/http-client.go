@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bitly/go-simplejson"
 	"github.com/chuck1024/gd"
 	"time"
 )
@@ -17,5 +18,6 @@ func main() {
 		fmt.Printf("occur error:%s\n", err)
 		return
 	}
-	fmt.Println(body)
+	ret, _:= simplejson.NewJson([]byte(body))
+	fmt.Println(ret.Get("result").Get("Ret"))
 }

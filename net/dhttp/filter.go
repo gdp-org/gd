@@ -102,7 +102,7 @@ func Logger(pk string) gin.HandlerFunc {
 
 		var ret interface{}
 		r, ok := gl.Get(gl.HideRet)
-		if (ok && !r.(bool)) || ! ok {
+		if (ok && !r.(bool)) || !ok {
 			ret, _ = c.Get(Ret)
 		}
 
@@ -158,10 +158,10 @@ func Logger(pk string) gin.HandlerFunc {
 		}
 
 		if cost > 50 {
-			dlog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s", path, string(mj)))
+			dlog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s %s %s", pk, c.Request.Method, path, string(mj)))
 			return
 		}
-		dlog.InfoT("SESSION", fmt.Sprintf("%s %s", path, string(mj)))
+		dlog.InfoT("SESSION", fmt.Sprintf("%s %s %s %s", pk, c.Request.Method, path, string(mj)))
 	}
 }
 
