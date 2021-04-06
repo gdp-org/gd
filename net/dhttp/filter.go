@@ -157,7 +157,7 @@ func Logger(pk string) gin.HandlerFunc {
 			dlog.Error("json marshal occur error:%v", jsonErr)
 		}
 
-		if cost > 50 {
+		if cost > 100 {
 			dlog.WarnT("SESSION_SLOW", fmt.Sprintf("%s %s %s %s", pk, c.Request.Method, path, string(mj)))
 			return
 		}
