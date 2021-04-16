@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/runtime/pc"
@@ -73,7 +72,7 @@ func Logger(pk string) gin.HandlerFunc {
 		if gdTokenRaw != "" && ok {
 			tokenByte, err := utls.GdDecode(gdTokenRaw, key.(string))
 			if err != nil {
-				gd.Error("Logger GdDecode GdTokenRaw[%s] occur error:%v", gdTokenRaw, err)
+				dlog.Error("Logger GdDecode GdTokenRaw[%s] occur error:%v", gdTokenRaw, err)
 			}
 			gl.Set(gl.GdToken, string(tokenByte))
 		}
