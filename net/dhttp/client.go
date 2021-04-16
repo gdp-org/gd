@@ -1260,7 +1260,7 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	key, kok := gl.Get(gl.SecretKey)
 	if sok && kok {
 		dstUrl, _ := url.ParseRequestURI(dhc.Url)
-		gdToken := utls.GdEncode([]byte(fmt.Sprintf("%s__%s__%d", server, dstUrl.Path, time.Now().Unix())), key.(string))
+		gdToken := utls.GdEncode([]byte(fmt.Sprintf("%s__%s__%d", server, dstUrl.Path, time.Now().UnixNano()/1e6)), key.(string))
 		dhc.SetHeader(GdTokenRaw, gdToken)
 	}
 
