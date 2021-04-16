@@ -68,6 +68,7 @@ func Logger(pk string) gin.HandlerFunc {
 
 		// gd token
 		gdTokenRaw := c.GetHeader(GdTokenRaw)
+		gl.Set(gl.GdTokenRaw, gdTokenRaw)
 		key, ok := gl.Get(gl.SecretKey)
 		if gdTokenRaw != "" && ok {
 			tokenByte, err := utls.GdDecode(gdTokenRaw, key.(string))
