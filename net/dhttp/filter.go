@@ -178,14 +178,6 @@ func Logger(pk string) gin.HandlerFunc {
 	}
 }
 
-// secret key
-func SecretKeyFilter(key string) gin.HandlerFunc {
-	return func(c *gin.Context){
-		gl.Set(gl.SecretKey, key)
-		c.Next()
-	}
-}
-
 // stat filter
 func StatFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
