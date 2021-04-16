@@ -27,6 +27,7 @@ import (
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/runtime/pc"
+	"github.com/chuck1024/gd/utls"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -1253,6 +1254,14 @@ func (dhc *HttpClient) getResponseBytes() (Response, []byte, error) {
 	traceId, ok := gl.Get(gl.LogId)
 	if ok {
 		dhc.SetHeader(TraceID, traceId.(string))
+	}
+
+	server, sok := gl.Get(gl.Server)
+	key, kok := gl.Get(gl.SecretKey)
+	if sok && kok {
+		dstUrl, _ := url.ParseRequestURI(dhc.Url)
+		gdToken := utls.GdEncode([]byte(fmt.Sprintf("%s__%s__%d", server, dstUrl.Path, time.Now().Unix())), key.(string))
+		dhc.SetHeader(GdTokenRaw, gdToken)
 	}
 
 	// if slice and map get mixed, let'dhc bounce to rawstring

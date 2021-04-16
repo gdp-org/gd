@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/runtime/pc"
@@ -49,6 +50,8 @@ func Logger(pk string) gin.HandlerFunc {
 		st := time.Now()
 		costKey := pk
 
+		gl.Set(gl.Server, pk)
+
 		// traceId
 		traceId := c.Query(TraceID)
 		if traceId != "" {
@@ -62,6 +65,17 @@ func Logger(pk string) gin.HandlerFunc {
 				c.Set(TraceID, traceId)
 				gl.Set(gl.LogId, traceId)
 			}
+		}
+
+		// gd token
+		gdTokenRaw := c.GetHeader(GdTokenRaw)
+		key, ok := gl.Get(gl.SecretKey)
+		if gdTokenRaw != "" && ok {
+			tokenByte, err := utls.GdDecode(gdTokenRaw, key.(string))
+			if err != nil {
+				gd.Error("Logger GdDecode GdTokenRaw[%s] occur error:%v", gdTokenRaw, err)
+			}
+			gl.Set(gl.GdToken, string(tokenByte))
 		}
 
 		realIp, _ := network.GetRealIP(c.Request)

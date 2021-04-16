@@ -8,6 +8,7 @@ package utls
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -191,6 +192,32 @@ func copyFileContents(src, dst string) (err error) {
 	}
 	err = out.Sync()
 	return
+}
+
+func GdEncode(Bytes []byte, key string) string {
+	keyLen := len(key)
+	length := len(Bytes)
+	encode := make([]byte, length)
+	for i := 0; i < length; i++ {
+		encode[i] = Bytes[i] ^ key[i%keyLen]
+	}
+	return base64.StdEncoding.EncodeToString(encode)
+}
+
+func GdDecode(str string, key string) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+
+	keyLen := len(key)
+	s1 := string(data)
+	length := len(s1)
+	decode := make([]byte, length)
+	for i := 0; i < length; i++ {
+		decode[i] = s1[i] ^ key[i%keyLen]
+	}
+	return decode, nil
 }
 
 var letterRunes = []rune("0123456789abcdefghipqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
