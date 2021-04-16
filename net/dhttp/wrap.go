@@ -40,11 +40,8 @@ func CheckWrap(toWrap interface{}) error {
 	if wt.Out(1).Kind() != reflect.String {
 		return fmt.Errorf("params out 2 must be string %v", toWrap)
 	}
-	if wt.Out(2).Kind() != reflect.Interface {
-		return fmt.Errorf("params out 3 must be interface %v", toWrap)
-	}
-	if !wt.Out(3).Implements(errInterface) {
-		return fmt.Errorf("params out 4 must be error %v", toWrap)
+	if !wt.Out(2).Implements(errInterface) {
+		return fmt.Errorf("params out 3 must be error %v", toWrap)
 	}
 	return nil
 }

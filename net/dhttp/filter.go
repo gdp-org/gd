@@ -178,6 +178,14 @@ func Logger(pk string) gin.HandlerFunc {
 	}
 }
 
+// gd token key
+func GdTokenKey(key string) gin.HandlerFunc {
+	return func(c *gin.Context){
+		gl.Set(gl.SecretKey, key)
+		c.Next()
+	}
+}
+
 // stat filter
 func StatFilter() gin.HandlerFunc {
 	return func(c *gin.Context) {
