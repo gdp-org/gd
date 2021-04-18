@@ -17,5 +17,5 @@ const (
 	DataRaw         = "data_raw"
 	RedirectUrl     = "redirect_url"
 	TraceID         = "trace_id"
-	GdTokenRaw      = "gd_token_raw"
+	GdToken         = "gd_token"
 )
