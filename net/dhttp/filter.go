@@ -66,18 +66,6 @@ func Logger(pk string) gin.HandlerFunc {
 			}
 		}
 
-		// gd token
-		gdTokenRaw := c.GetHeader(GdTokenRaw)
-		gl.Set(gl.GdTokenRaw, gdTokenRaw)
-		key, ok := gl.Get(gl.SecretKey)
-		if gdTokenRaw != "" && ok {
-			tokenByte, err := utls.GdDecode(gdTokenRaw, key.(string))
-			if err != nil {
-				dlog.Error("Logger GdDecode GdTokenRaw[%s] occur error:%v", gdTokenRaw, err)
-			}
-			gl.Set(gl.GdToken, string(tokenByte))
-		}
-
 		realIp, _ := network.GetRealIP(c.Request)
 		c.Set(RemoteIP, realIp)
 		gl.Set(gl.ClientIp, realIp)
