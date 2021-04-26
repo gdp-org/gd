@@ -64,7 +64,7 @@ func StreamServerLoggerInterceptor() grpc.StreamServerInterceptor {
 		costMs := cost / time.Millisecond
 		logData["cost"] = costMs
 		if costMs >= 50 || err != nil {
-			logData["ctx"] = gl.JsonCurrentCtx()
+			logData["gl"] = gl.JsonCurrentGlData()
 		}
 
 		logDataStr, jsonErr := json.Marshal(logData)
@@ -99,8 +99,8 @@ func UnaryServerLoggerInterceptor() grpc.UnaryServerInterceptor {
 		cost := time.Now().Sub(st)
 		costMs := cost / time.Millisecond
 		if costMs > 50 || err != nil {
-			ctxJson := gl.JsonCurrentCtx()
-			logData["ctx"] = ctxJson
+			ctxJson := gl.JsonCurrentGlData()
+			logData["gl"] = ctxJson
 		}
 
 		logData["ret"] = resp

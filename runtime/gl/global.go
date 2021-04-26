@@ -129,7 +129,7 @@ func GetCurrentGlData() map[string]interface{} {
 
 	for k, v := range gl {
 		kStr := fmt.Sprintf("%v", k)
-		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url || kStr == GdToken {
+		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url || kStr == GdToken || kStr == SecretKey || kStr == Server {
 			continue
 		}
 		ret[kStr] = v
@@ -137,7 +137,7 @@ func GetCurrentGlData() map[string]interface{} {
 	return ret
 }
 
-func JsonCurrentCtx() *js.Json {
+func JsonCurrentGlData() *js.Json {
 	retJ := js.New()
 	gid, ok := getGoId()
 	if !ok {
@@ -146,30 +146,68 @@ func JsonCurrentCtx() *js.Json {
 	}
 	ctx, ok := _gl.getGl()
 	if !ok || ctx == nil {
-		retJ.Set("_info", "no ctx")
+		retJ.Set("_info", "no gl")
 		return retJ
 	}
 
 	if log != nil {
-		log.Debug("json ctx %s:%v", gid, ctx)
+		log.Debug("json gl %s:%v", gid, ctx)
 	}
 
 	for k, v := range ctx {
 		kStr := fmt.Sprintf("%v", k)
-		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url {
+		if kStr == ClientIp || kStr == Tag || kStr == LogId || kStr == Url || kStr == GdToken || kStr == SecretKey|| kStr == Server {
 			continue
 		}
 		if isPtrOrInterface(v) {
-			if strings.HasPrefix(kStr, "_tk_") {
-				retJ.Set("_tk_", "@#")
-			} else {
-				retJ.Set(kStr, "@#")
-			}
+			retJ.Set(kStr, "@#")
 		} else {
 			retJ.Set(kStr, v)
 		}
 	}
 	return retJ
+}
+
+func GetGlData() *js.Json {
+	retJ := js.New()
+	gid, ok := getGoId()
+	if !ok {
+		retJ.Set("_info", "no id")
+		return retJ
+	}
+	ctx, ok := _gl.getGl()
+	if !ok || ctx == nil {
+		retJ.Set("_info", "no gl")
+		return retJ
+	}
+
+	if log != nil {
+		log.Debug("json gl %s:%v", gid, ctx)
+	}
+
+	for k, v := range ctx {
+		kStr := fmt.Sprintf("%v", k)
+		if isPtrOrInterface(v) {
+			retJ.Set(kStr, "@#")
+		} else {
+			retJ.Set(kStr, v)
+		}
+	}
+	return retJ
+}
+
+func CopyGlData(glJsonObj *js.Json) {
+	for key, value := range glJsonObj.MustMap() {
+		if strings.Contains(key, "cost") {
+			if valueInt, ok := value.(int64); ok {
+				Incr(key, valueInt)
+			} else {
+				Set(key, value)
+			}
+		} else {
+			Set(key, value)
+		}
+	}
 }
 
 func isPtrOrInterface(v interface{}) bool {
