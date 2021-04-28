@@ -363,7 +363,7 @@ func (c *SqlCondition) BuildShardWhereSql(shardKey string) (string, string, []in
 		valHolder = append(valHolder, interface{}(c.limit))
 	}
 
-	if condStr != "" && !strings.HasPrefix(condStr, " LIMIT ?") {
+	if condStr != "" && (!strings.HasPrefix(condStr, " LIMIT ?") || !strings.HasPrefix(condStr, " ORDER BY ")) {
 		condStr = " WHERE" + condStr
 	}
 	return tableName, condStr, valHolder
