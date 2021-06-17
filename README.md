@@ -1,5 +1,7 @@
 # godog
 
+[![GoDoc](https://pkg.go.dev/badge/github.com/gin-gonic/gin?status.svg)](https://pkg.go.dev/github.com/chuck1024/gd@v1.7.9?tab=doc)
+
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗"
 in Chinese, which is very cute.
 
