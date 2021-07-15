@@ -89,22 +89,24 @@ func (z *ZkRegister) initObjForZk(filePath string) error {
 }
 
 func (z *ZkRegister) initZk(f *ini.File) error {
-	c := f.Section("Server")
+	c := f.Section("DisRes")
 	hosts := c.Key("zkHost").Strings(",")
 	root := strings.TrimRight(c.Key("root").String(), "/")
 	environ := c.Key("environ").String()
 	group := c.Key("group").String()
-	serviceName := c.Key("serverName").String()
+
+	s := f.Section("Server")
+	serviceName := s.Key("serverName").String()
 
 	ip := network.GetLocalIP()
 	port, ok := inject.Find("regPort")
 	if !ok {
-		if c.Key("httpPort").MustInt() > 0 {
-			port = c.Key("httpPort").MustInt()
-		} else if c.Key("rpcPort").MustInt() > 0 {
-			port = c.Key("rpcPort").MustInt()
-		} else if c.Key("grpcPort").MustInt() > 0 {
-			port = c.Key("grpcPort").MustInt()
+		if s.Key("httpPort").MustInt() > 0 {
+			port = s.Key("httpPort").MustInt()
+		} else if s.Key("rpcPort").MustInt() > 0 {
+			port = s.Key("rpcPort").MustInt()
+		} else if s.Key("grpcPort").MustInt() > 0 {
+			port = s.Key("grpcPort").MustInt()
 		}
 	}
 	weight := c.Key("weight").MustUint64()
