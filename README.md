@@ -165,20 +165,19 @@ packet's methods, if you need. You add new RpcPacket according to yourself rule.
 author. Of course, the author encourages the use of DogPacket.
 
 ---
-**[server]**  
-provides server register and discovery. Load balancing will be provided in the future. Service discovery registration
+**[service]**  
+provides service register and discovery. Load balancing will be provided in the future. Service discovery registration
 based on etcd and zookeeper implementation.
 
 ```go
 register :
 type DogRegister interface {
-	NewRegister(hosts []string, root, environ, group, service string)
-	SetRootNode(node string) error
-	GetRootNode() (root string)
-	SetHeartBeat(heartBeat time.Duration)
-	SetOffline(offline bool)
-	Run(ip string, port int, weight uint64) error
-	Close()
+    Start() error
+    Close()
+    SetRootNode(node string) error
+    GetRootNode() (root string)
+    SetHeartBeat(heartBeat time.Duration)
+    SetOffline(offline bool)
 }
 
 discovery:

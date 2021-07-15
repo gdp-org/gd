@@ -14,6 +14,7 @@ package register
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/chuck1024/gd/service"
 	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"go.etcd.io/etcd/client/v3"
 	"gopkg.in/ini.v1"
 	"strings"
@@ -38,6 +40,7 @@ type EtcdConfig struct {
 	nodeInfo  service.NodeInfo // service node info
 	heartBeat uint64           // heartbeat
 	environ   string           // service run environment
+	tlsConfig *tls.Config
 }
 
 type EtcdRegister struct {
@@ -147,6 +150,22 @@ func (e *EtcdRegister) initEtcd(f *ini.File) error {
 		},
 	}
 
+	cert := c.Key("cert").String()
+	key := c.Key("key").String()
+	ca := c.Key("ca").String()
+	if cert != "" && key != "" && ca != "" {
+		tlsInfo := transport.TLSInfo{
+			CertFile:      cert,
+			KeyFile:       key,
+			TrustedCAFile: ca,
+		}
+		tlsConfig, err := tlsInfo.ClientConfig()
+		if err != nil {
+			return fmt.Errorf("load tls conf from file fail,, err=%v", err)
+		}
+		config.tlsConfig = tlsConfig
+	}
+
 	return e.initWithEtcdConfig(config)
 }
 
@@ -156,6 +175,7 @@ func (e *EtcdRegister) initWithEtcdConfig(c *EtcdConfig) error {
 	e.client, _ = clientv3.New(clientv3.Config{
 		Endpoints:   c.host,
 		DialTimeout: 1 * time.Second,
+		TLS:         c.tlsConfig,
 	})
 
 	ch, err := e.register()
@@ -260,4 +280,3 @@ func (e *EtcdRegister) GetRootNode() (root string) {
 func (e *EtcdRegister) SetHeartBeat(heartBeat time.Duration) {
 	e.EtcdConfig.heartBeat = uint64(heartBeat)
 }
-
