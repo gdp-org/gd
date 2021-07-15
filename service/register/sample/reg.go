@@ -1,18 +1,12 @@
-/**
- * Copyright 2018 Author. All rights reserved.
- * Author: Chuck1024
- */
-
-package sample_test
+package main
 
 import (
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/service/register"
-	"testing"
 	"time"
 )
 
-func TestEtcd(t *testing.T) {
+func etcd(){
 	var r register.DogRegister
 	var i chan struct{}
 
@@ -27,7 +21,7 @@ func TestEtcd(t *testing.T) {
 	<-i
 }
 
-func TestZk(t *testing.T) {
+func zk(){
 	var r register.DogRegister
 	var i chan struct{}
 
@@ -39,4 +33,8 @@ func TestZk(t *testing.T) {
 	time.Sleep(10 * time.Second)
 	r.Close()
 	<-i
+}
+
+func main(){
+	etcd()
 }
