@@ -5,7 +5,9 @@
 
 package discovery
 
-import "github.com/chuck1024/gd/server"
+import (
+	"github.com/chuck1024/gd/service"
+)
 
 const (
 	MaxNodeNum = 128
@@ -15,9 +17,9 @@ type DogDiscovery interface {
 	NewDiscovery(dns []string)
 	Watch(node string) error
 	WatchMulti(nodes []string) error
-	AddNode(node string, info *server.NodeInfo)
+	AddNode(node string, info *service.NodeInfo)
 	DelNode(node string, key string)
-	GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
+	GetNodeInfo(node string) (nodesInfo []service.NodeInfo)
 	Run() error
 	Close() error
 }

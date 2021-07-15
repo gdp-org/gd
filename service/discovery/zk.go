@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/server"
+	"github.com/chuck1024/gd/service"
 	"github.com/samuel/go-zookeeper/zk"
 	"sync"
 	"time"
@@ -17,7 +17,7 @@ import (
 
 type ZkNode struct {
 	node      string
-	nodesInfo []server.NodeInfo
+	nodesInfo []service.NodeInfo
 	stopChan  chan struct{}
 	client    *zk.Conn
 }
@@ -77,7 +77,7 @@ func (z *ZkDiscovery) WatchMulti(nodes []string) error {
 	return nil
 }
 
-func (z *ZkDiscovery) AddNode(node string, info *server.NodeInfo) {
+func (z *ZkDiscovery) AddNode(node string, info *service.NodeInfo) {
 	zkNode := z.nodes[node]
 	z.lock.Lock()
 	defer z.lock.Unlock()
@@ -99,9 +99,9 @@ func (z *ZkDiscovery) DelNode(node string, key string) {
 	}
 }
 
-func (z *ZkDiscovery) unMsgNodeInfo(data []byte) *server.NodeInfo {
-	var info server.NodeInfo
-	info = &server.DefaultNodeInfo{}
+func (z *ZkDiscovery) unMsgNodeInfo(data []byte) *service.NodeInfo {
+	var info service.NodeInfo
+	info = &service.DefaultNodeInfo{}
 	err := json.Unmarshal([]byte(data), info)
 	if err != nil {
 		dlog.Error("GetNodeInfo json unmarshal occur derror:%s", err)
@@ -111,7 +111,7 @@ func (z *ZkDiscovery) unMsgNodeInfo(data []byte) *server.NodeInfo {
 	return &info
 }
 
-func (z *ZkDiscovery) GetNodeInfo(node string) []server.NodeInfo {
+func (z *ZkDiscovery) GetNodeInfo(node string) []service.NodeInfo {
 	return z.nodes[node].nodesInfo
 }
 

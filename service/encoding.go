@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package server
+package service
 
 type NodeInfo interface {
 	GetIp() string

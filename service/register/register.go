@@ -10,15 +10,15 @@ import "time"
 var (
 	DefaultHeartBeat  uint64 = 10
 	DefaultRetryTimes        = 3
+	defaultConf              = "conf/conf.ini"
 )
 
 // register server
 type DogRegister interface {
-	NewRegister(hosts []string, root, environ, group, service string)
+	Start() error
+	Close()
 	SetRootNode(node string) error
 	GetRootNode() (root string)
 	SetHeartBeat(heartBeat time.Duration)
 	SetOffline(offline bool)
-	Run(ip string, port int, weight uint64) error
-	Close()
 }
