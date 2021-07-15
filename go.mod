@@ -1,6 +1,6 @@
 module github.com/chuck1024/gd
 
-go 1.14
+go 1.15
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
