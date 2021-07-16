@@ -182,14 +182,13 @@ type DogRegister interface {
 
 discovery:
 type DogDiscovery interface {
-	NewDiscovery(dns []string)
-	Watch(node string) error
-	WatchMulti(nodes []string) error
-	AddNode(node string, info *server.NodeInfo)
-	DelNode(node string, key string)
-	GetNodeInfo(node string) (nodesInfo []server.NodeInfo)
-	Run() error
-	Close() error
+    Start() error
+    Close()
+    Watch(key, node string) error
+    WatchMulti(nodes map[string]string) error
+    AddNode(key string, info service.NodeInfo)
+    DelNode(key string, addr string)
+    GetNodeInfo(key string) (nodesInfo []service.NodeInfo)
 }
 
 nodeInfo:
