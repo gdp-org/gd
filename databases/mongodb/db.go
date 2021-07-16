@@ -94,7 +94,7 @@ func (m *MongoClient) Close() {
 func (m *MongoClient) initObjForMongoDb(filePath string) error {
 	dbConfRealPath := filePath
 	if dbConfRealPath == "" {
-		return errors.New("dbConf not set in g_cfg")
+		return errors.New("dbConf not set")
 	}
 
 	if !strings.HasSuffix(dbConfRealPath, ".ini") {

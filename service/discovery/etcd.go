@@ -14,179 +14,265 @@ package discovery
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/service"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"go.etcd.io/etcd/client/v3"
+	"gopkg.in/ini.v1"
+	"strings"
 	"sync"
 	"time"
 )
 
 type EtcdNode struct {
-	node      string
+	key       string // node 的 key，便于获取
+	path      string // 节点路径
 	nodesInfo []service.NodeInfo
 	stopChan  chan struct{}
 	client    *clientv3.Client
 }
 
+type EtcdConfig struct {
+	host      []string // etcd server host
+	tlsConfig *tls.Config
+}
+
 // Encapsulates the etcd discovery
 type EtcdDiscovery struct {
-	dns      []string            //etcd host
-	nodes    map[string]EtcdNode // watch node
-	exitChan chan struct{}
-	running  bool
-	lock     *sync.Mutex
+	EtcdConfig   *EtcdConfig `inject:"etcdConfig" canNil:"true"`
+	EtcdConf     *ini.File   `inject:"etcdConf" canNil:"true"`
+	EtcdConfPath string      `inject:"etcdConfPath" canNil:"true"`
+
+	nodes   sync.Map
+	running bool
+
+	startOnce sync.Once
+	closeOnce sync.Once
 }
 
-func (e *EtcdDiscovery) NewDiscovery(dns []string) {
-	e.lock = new(sync.Mutex)
-	e.nodes = make(map[string]EtcdNode)
-	e.dns = dns
-	e.running = false
+func (e *EtcdDiscovery) Start() error {
+	var err error
+	e.startOnce.Do(func() {
+		if e.EtcdConfig != nil {
+			err = e.initWithEtcdConfig(e.EtcdConfig)
+		} else if e.EtcdConf != nil {
+			err = e.initEtcd(e.EtcdConf)
+		} else {
+			if e.EtcdConfPath == "" {
+				e.EtcdConfPath = defaultConf
+			}
+
+			err = e.initObjForEtcd(e.EtcdConfPath)
+		}
+	})
+	return err
 }
 
-func (e *EtcdDiscovery) Watch(node string) error {
-	if node[0] != '/' {
-		node = "/" + node
+func (e *EtcdDiscovery) Close() {
+	e.closeOnce.Do(func() {
+		e.nodes.Range(func(key, value interface{}) bool {
+			close(value.(EtcdNode).stopChan)
+			return true
+		})
+		return
+	})
+}
+
+func (e *EtcdDiscovery) initObjForEtcd(filePath string) error {
+	etcdConfRealPath := filePath
+	if etcdConfRealPath == "" {
+		return errors.New("etcdConf not set")
+	}
+
+	if !strings.HasSuffix(etcdConfRealPath, ".ini") {
+		return errors.New("etcdConf not an ini file")
+	}
+
+	etcdConf, err := ini.Load(etcdConfRealPath)
+	if err != nil {
+		return err
+	}
+
+	if err = e.initEtcd(etcdConf); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *EtcdDiscovery) initEtcd(f *ini.File) error {
+	c := f.Section("DisRes")
+	hosts := c.Key("etcdHost").Strings(",")
+
+	config := &EtcdConfig{
+		host: hosts,
+	}
+
+	cert := c.Key("cert").String()
+	key := c.Key("key").String()
+	ca := c.Key("ca").String()
+	if cert != "" && key != "" && ca != "" {
+		tlsInfo := transport.TLSInfo{
+			CertFile:      cert,
+			KeyFile:       key,
+			TrustedCAFile: ca,
+		}
+		tlsConfig, err := tlsInfo.ClientConfig()
+		if err != nil {
+			return fmt.Errorf("load tls conf from file fail,, err=%v", err)
+		}
+		config.tlsConfig = tlsConfig
+	}
+
+	return e.initWithEtcdConfig(config)
+}
+
+func (e *EtcdDiscovery) initWithEtcdConfig(c *EtcdConfig) error {
+	e.nodes = sync.Map{}
+	e.EtcdConfig = c
+	e.running = true
+	// todo conf.ini init data to watch
+	e.nodes.Range(func(key, value interface{}) bool {
+		go e.watchNode(value.(EtcdNode))
+		return true
+	})
+	return nil
+}
+
+func (e *EtcdDiscovery) Watch(key, path string) error {
+	if !e.running {
+		return errors.New("etcd discovery not running")
+	}
+
+	if path[0] != '/' {
+		path = "/" + path
 	}
 
 	etcdNode := EtcdNode{
-		node:     node,
+		key:      key,
+		path:     path,
 		stopChan: make(chan struct{}, 1),
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   e.dns,
+		Endpoints:   e.EtcdConfig.host,
 		DialTimeout: time.Second,
+		TLS:         e.EtcdConfig.tlsConfig,
 	})
+
 	if err != nil {
 		dlog.Error("watch new client occur error:%s", err)
 		return err
 	}
 
 	etcdNode.client = cli
-
-	e.lock.Lock()
-	defer e.lock.Unlock()
-	e.nodes[node] = etcdNode
-	if e.running {
-		go e.watchNode(etcdNode)
-	}
-
+	e.nodes.Store(key, etcdNode)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				dlog.Error("etcd Watch panic %s", r)
+				return
+			}
+		}()
+		e.watchNode(etcdNode)
+	}()
 	return nil
 }
 
-func (e *EtcdDiscovery) WatchMulti(nodes []string) error {
-	for _, node := range nodes {
-		err := e.Watch(node)
+func (e *EtcdDiscovery) WatchMulti(nodes map[string]string) error {
+	for key, node := range nodes {
+		err := e.Watch(key, node)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (e *EtcdDiscovery) AddNode(node string, info *service.NodeInfo) {
-	etcdNode := e.nodes[node]
-	e.lock.Lock()
-	defer e.lock.Unlock()
-	etcdNode.nodesInfo = append(etcdNode.nodesInfo, *info)
-	e.nodes[node] = etcdNode
+func (e *EtcdDiscovery) AddNode(key string, info service.NodeInfo) {
+	etcdNode, ok := e.nodes.Load(key)
+	var nodesInfo []service.NodeInfo
+	if ok {
+		nodesInfo = etcdNode.(EtcdNode).nodesInfo
+		nodesInfo = append(nodesInfo, info)
+	}
+	e.nodes.Store(key, nodesInfo)
 	return
 }
 
-func (e *EtcdDiscovery) DelNode(node string, key string) {
-	etcdNode := e.nodes[node]
-	for k, v := range etcdNode.nodesInfo {
-		if v.GetIp()+fmt.Sprintf(":%d", v.GetPort()) == key {
-			e.lock.Lock()
-			etcdNode.nodesInfo = append(etcdNode.nodesInfo[:k], etcdNode.nodesInfo[k+1:]...)
-			e.nodes[node] = etcdNode
-			e.lock.Unlock()
+func (e *EtcdDiscovery) DelNode(key, addr string) {
+	etcdNode, ok := e.nodes.Load(key)
+	if !ok {
+		return
+	}
+	nodesInfo := etcdNode.(EtcdNode).nodesInfo
+	for k, v := range nodesInfo {
+		if v.GetIp()+fmt.Sprintf(":%d", v.GetPort()) == addr {
+			nodesInfo = append(nodesInfo[:k], nodesInfo[k+1:]...)
+			e.nodes.Store(key, nodesInfo)
 			break
 		}
 	}
 }
 
-func (e *EtcdDiscovery) unMsgNodeInfo(data []byte) *service.NodeInfo {
-	var info service.NodeInfo
-	info = &service.DefaultNodeInfo{}
-	err := json.Unmarshal([]byte(data), info)
+func (e *EtcdDiscovery) unMsgNodeInfo(data []byte) service.NodeInfo {
+	info := &service.DefaultNodeInfo{}
+	err := json.Unmarshal(data, info)
 	if err != nil {
 		dlog.Error("GetNodeInfo json unmarshal occur error:%s", err)
 		return nil
 	}
 
-	return &info
+	return info
 }
 
-func (e *EtcdDiscovery) GetNodeInfo(node string) []service.NodeInfo {
-	return e.nodes[node].nodesInfo
+func (e *EtcdDiscovery) GetNodeInfo(key string) []service.NodeInfo {
+	nodesInfo, ok := e.nodes.Load(key)
+	if !ok {
+		return nil
+	}
+	return nodesInfo.([]service.NodeInfo)
 }
 
 func (e *EtcdDiscovery) watchNode(node EtcdNode) {
-	resp, err := e.nodes[node.node].client.Get(context.TODO(), node.node, clientv3.WithPrefix())
+	nodes, ok := e.nodes.Load(node.key)
+	if !ok {
+		return
+	}
+
+	nodesInfo := nodes.(EtcdNode)
+	resp, err := nodesInfo.client.Get(context.TODO(), node.path, clientv3.WithPrefix())
 	if err != nil {
-		dlog.Error("watch node get node[%s] children", node.node)
+		dlog.Error("watch node get node[%s] children", node.path)
 		return
 	}
 
 	if resp.Count != 0 {
 		for _, ev := range resp.Kvs {
 			info := e.unMsgNodeInfo(ev.Value)
-			e.AddNode(node.node, info)
+			e.AddNode(node.key, info)
 		}
 	}
 
-	rch := e.nodes[node.node].client.Watch(context.Background(), node.node, clientv3.WithPrefix())
-	for wresp := range rch {
-		for _, ev := range wresp.Events {
-			switch ev.Type {
-			case clientv3.EventTypePut:
-				info := e.unMsgNodeInfo(ev.Kv.Value)
-				e.AddNode(node.node, info)
-			case clientv3.EventTypeDelete:
-				e.DelNode(node.node, string(ev.Kv.Key))
+	watchChan := nodesInfo.client.Watch(context.Background(), node.path, clientv3.WithPrefix())
+	for {
+		select {
+		case result := <-watchChan:
+			for _, ev := range result.Events {
+				switch ev.Type {
+				case clientv3.EventTypePut:
+					info := e.unMsgNodeInfo(ev.Kv.Value)
+					e.AddNode(node.key, info)
+				case clientv3.EventTypeDelete:
+					e.DelNode(node.key, string(ev.Kv.Key))
+				}
 			}
+		case <-node.stopChan:
+			e.running = false
+			return
 		}
 	}
-}
-
-func (e *EtcdDiscovery) Run() error {
-	if e.running {
-		return fmt.Errorf("etcd discovery is already running")
-	}
-
-	e.lock.Lock()
-	defer e.lock.Unlock()
-	e.running = true
-	e.exitChan = make(chan struct{}, MaxNodeNum)
-
-	for _, nodes := range e.nodes {
-		go e.watchNode(nodes)
-	}
-	return nil
-}
-
-func (e *EtcdDiscovery) Close() error {
-	for _, node := range e.nodes {
-		close(node.stopChan)
-	}
-
-	length := len(e.nodes)
-	for i := 0; i < length; i++ {
-		<-e.exitChan
-	}
-
-	for _, node := range e.nodes {
-		close(node.stopChan)
-	}
-
-	if e.exitChan != nil {
-		close(e.exitChan)
-	}
-
-	return nil
 }

@@ -19,7 +19,7 @@ const defaultCharSet = "utf8mb4"
 func (c *MysqlClient) initObjForMysqlDb(dbConfPath string) error {
 	dbConfRealPath := dbConfPath
 	if dbConfRealPath == "" {
-		return errors.New("dbConf not set in g_cfg")
+		return errors.New("dbConf not set")
 	}
 
 	if !strings.HasSuffix(dbConfRealPath, ".ini") {

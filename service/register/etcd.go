@@ -88,7 +88,7 @@ func (e *EtcdRegister) Close() {
 func (e *EtcdRegister) initObjForEtcd(filePath string) error {
 	etcdConfRealPath := filePath
 	if etcdConfRealPath == "" {
-		return errors.New("etcdConf not set in g_cfg")
+		return errors.New("etcdConf not set")
 	}
 
 	if !strings.HasSuffix(etcdConfRealPath, ".ini") {

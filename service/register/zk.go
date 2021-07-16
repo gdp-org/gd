@@ -70,7 +70,7 @@ func (z *ZkRegister) Close() {
 func (z *ZkRegister) initObjForZk(filePath string) error {
 	zkConfRealPath := filePath
 	if zkConfRealPath == "" {
-		return errors.New("zkConf not set in g_cfg")
+		return errors.New("zkConf not set")
 	}
 
 	if !strings.HasSuffix(zkConfRealPath, ".ini") {
@@ -153,7 +153,7 @@ func (z *ZkRegister) initWithZkConfig(c *ZkConfig) error {
 }
 
 func (z *ZkRegister) run() (err error) {
-	p := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service, z.ZkConfig.environ,
+	p := fmt.Sprintf("%s/%s/%s/%s/%s:%d", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service, z.ZkConfig.environ,
 		z.ZkConfig.nodeInfo.GetIp(), z.ZkConfig.nodeInfo.GetPort())
 	dlog.Info("zk p: %s", p)
 

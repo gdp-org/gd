@@ -9,17 +9,16 @@ import (
 	"github.com/chuck1024/gd/service"
 )
 
-const (
-	MaxNodeNum = 128
+var (
+	defaultConf = "conf/conf.ini"
 )
 
 type DogDiscovery interface {
-	NewDiscovery(dns []string)
-	Watch(node string) error
-	WatchMulti(nodes []string) error
-	AddNode(node string, info *service.NodeInfo)
-	DelNode(node string, key string)
-	GetNodeInfo(node string) (nodesInfo []service.NodeInfo)
-	Run() error
-	Close() error
+	Start() error
+	Close()
+	Watch(key, node string) error
+	WatchMulti(nodes map[string]string) error
+	AddNode(key string, info service.NodeInfo)
+	DelNode(key string, addr string)
+	GetNodeInfo(key string) (nodesInfo []service.NodeInfo)
 }
