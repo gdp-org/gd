@@ -104,11 +104,6 @@ func (z *ZkDiscovery) initWithZkConfig(c *ZkConfig) error {
 	z.running = true
 	z.ZkConfig = c
 	z.nodes = sync.Map{}
-	// todo conf.ini init data to watch
-	z.nodes.Range(func(key, value interface{}) bool {
-		go z.watchNode(value.(ZkNode))
-		return true
-	})
 	return nil
 }
 
