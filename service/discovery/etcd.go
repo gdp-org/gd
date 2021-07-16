@@ -134,11 +134,6 @@ func (e *EtcdDiscovery) initWithEtcdConfig(c *EtcdConfig) error {
 	e.nodes = sync.Map{}
 	e.EtcdConfig = c
 	e.running = true
-	// todo conf.ini init data to watch
-	e.nodes.Range(func(key, value interface{}) bool {
-		go e.watchNode(value.(EtcdNode))
-		return true
-	})
 	return nil
 }
 
@@ -177,7 +172,7 @@ func (e *EtcdDiscovery) Watch(key, path string) error {
 				return
 			}
 		}()
-		e.watchNode(etcdNode)
+		e.watchNode(key)
 	}()
 	return nil
 }
@@ -194,12 +189,14 @@ func (e *EtcdDiscovery) WatchMulti(nodes map[string]string) error {
 
 func (e *EtcdDiscovery) AddNode(key string, info service.NodeInfo) {
 	etcdNode, ok := e.nodes.Load(key)
-	var nodesInfo []service.NodeInfo
+	en := etcdNode.(EtcdNode)
 	if ok {
-		nodesInfo = etcdNode.(EtcdNode).nodesInfo
+		nodesInfo := en.nodesInfo
 		nodesInfo = append(nodesInfo, info)
+		en.nodesInfo = nodesInfo
 	}
-	e.nodes.Store(key, nodesInfo)
+	etcdNode = en
+	e.nodes.Store(key, etcdNode)
 	return
 }
 
@@ -208,11 +205,13 @@ func (e *EtcdDiscovery) DelNode(key, addr string) {
 	if !ok {
 		return
 	}
-	nodesInfo := etcdNode.(EtcdNode).nodesInfo
+	en := etcdNode.(EtcdNode)
+	nodesInfo := en.nodesInfo
 	for k, v := range nodesInfo {
 		if v.GetIp()+fmt.Sprintf(":%d", v.GetPort()) == addr {
 			nodesInfo = append(nodesInfo[:k], nodesInfo[k+1:]...)
-			e.nodes.Store(key, nodesInfo)
+			en.nodesInfo = nodesInfo
+			e.nodes.Store(key, en)
 			break
 		}
 	}
@@ -234,17 +233,17 @@ func (e *EtcdDiscovery) GetNodeInfo(key string) []service.NodeInfo {
 	if !ok {
 		return nil
 	}
-	return nodesInfo.([]service.NodeInfo)
+	return nodesInfo.(EtcdNode).nodesInfo
 }
 
-func (e *EtcdDiscovery) watchNode(node EtcdNode) {
-	nodes, ok := e.nodes.Load(node.key)
+func (e *EtcdDiscovery) watchNode(key string) {
+	nodes, ok := e.nodes.Load(key)
 	if !ok {
 		return
 	}
 
-	nodesInfo := nodes.(EtcdNode)
-	resp, err := nodesInfo.client.Get(context.TODO(), node.path, clientv3.WithPrefix())
+	node := nodes.(EtcdNode)
+	resp, err := node.client.Get(context.TODO(), node.path, clientv3.WithPrefix())
 	if err != nil {
 		dlog.Error("watch node get node[%s] children", node.path)
 		return
@@ -257,7 +256,7 @@ func (e *EtcdDiscovery) watchNode(node EtcdNode) {
 		}
 	}
 
-	watchChan := nodesInfo.client.Watch(context.Background(), node.path, clientv3.WithPrefix())
+	watchChan := node.client.Watch(context.Background(), node.path, clientv3.WithPrefix())
 	for {
 		select {
 		case result := <-watchChan:

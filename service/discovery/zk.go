@@ -160,12 +160,13 @@ func (z *ZkDiscovery) WatchMulti(nodes map[string]string) error {
 
 func (z *ZkDiscovery) AddNode(key string, info service.NodeInfo) {
 	zkNode, ok := z.nodes.Load(key)
-	var nodesInfo []service.NodeInfo
+	zn := zkNode.(ZkNode)
 	if ok {
-		nodesInfo = zkNode.(ZkNode).nodesInfo
+		nodesInfo := zn.nodesInfo
 		nodesInfo = append(nodesInfo, info)
+		zn.nodesInfo = nodesInfo
 	}
-	z.nodes.Store(key, nodesInfo)
+	z.nodes.Store(key, zn)
 	return
 }
 
@@ -174,11 +175,13 @@ func (z *ZkDiscovery) DelNode(key string, addr string) {
 	if !ok {
 		return
 	}
-	nodesInfo := zkNode.(ZkNode).nodesInfo
+	zn := zkNode.(ZkNode)
+	nodesInfo := zn.nodesInfo
 	for k, v := range nodesInfo {
 		if v.GetIp()+fmt.Sprintf(":%d", v.GetPort()) == addr {
 			nodesInfo = append(nodesInfo[:k], nodesInfo[k+1:]...)
-			z.nodes.Store(key, zkNode)
+			zn.nodesInfo = nodesInfo
+			z.nodes.Store(key, zn)
 			break
 		}
 	}
@@ -200,7 +203,7 @@ func (z *ZkDiscovery) GetNodeInfo(key string) []service.NodeInfo {
 	if !ok {
 		return nil
 	}
-	return nodesInfo.([]service.NodeInfo)
+	return nodesInfo.(ZkNode).nodesInfo
 }
 
 func (z *ZkDiscovery) watchNode(node ZkNode) {
