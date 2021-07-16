@@ -92,7 +92,7 @@ func (z *ZkRegister) initZk(f *ini.File) error {
 	c := f.Section("DisRes")
 	hosts := c.Key("zkHost").Strings(",")
 	root := strings.TrimRight(c.Key("root").String(), "/")
-	environ := c.Key("environ").String()
+	environ := c.Key("env").String()
 	group := c.Key("group").String()
 
 	s := f.Section("Server")
@@ -135,6 +135,7 @@ func (z *ZkRegister) initWithZkConfig(c *ZkConfig) error {
 		return err
 	}
 
+	z.ZkConfig = c
 	z.client = conn
 
 	err = z.isExistNode()
@@ -153,9 +154,9 @@ func (z *ZkRegister) initWithZkConfig(c *ZkConfig) error {
 }
 
 func (z *ZkRegister) run() (err error) {
-	p := fmt.Sprintf("%s/%s/%s/%s/%s:%d", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service, z.ZkConfig.environ,
+	p := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service, z.ZkConfig.environ,
 		z.ZkConfig.nodeInfo.GetIp(), z.ZkConfig.nodeInfo.GetPort())
-	dlog.Info("zk p: %s", p)
+	dlog.Info("zk path: %s", p)
 
 	dataByte, _ := json.Marshal(&z.ZkConfig.nodeInfo)
 	path, err := z.client.Create(p, dataByte, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
@@ -193,7 +194,7 @@ func (z *ZkRegister) SetHeartBeat(heartBeat time.Duration) {
 }
 
 func (z *ZkRegister) isExistNode() (err error) {
-	node := fmt.Sprintf("%s/%s/%s", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service)
+	node := fmt.Sprintf("/%s/%s/%s", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service)
 
 	isExist, _, err := z.client.Exists(node)
 	if err != nil {
@@ -208,7 +209,7 @@ func (z *ZkRegister) isExistNode() (err error) {
 		for _, v := range paths {
 			path, err := z.client.Create(v, []byte(""), 0, zk.WorldACL(zk.PermAll))
 			if err != nil {
-				dlog.Error("zk create path occur error: %s", err)
+				dlog.Error("zk create path occur error: %s, path = %s", err, v)
 				return err
 			}
 

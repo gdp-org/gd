@@ -23,9 +23,10 @@ require (
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/pkg/errors v0.9.1
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
-	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
+	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/v2pro/plz v0.0.0-20180227161703-2d49b86ea382
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4

@@ -116,7 +116,7 @@ func (e *EtcdRegister) initEtcd(f *ini.File) error {
 		heartBeat = DefaultHeartBeat
 	}
 
-	environ := c.Key("environ").String()
+	environ := c.Key("env").String()
 	group := c.Key("group").String()
 
 	s := f.Section("Server")
@@ -213,7 +213,7 @@ func (e *EtcdRegister) initWithEtcdConfig(c *EtcdConfig) error {
 }
 
 func (e *EtcdRegister) register() (<-chan *clientv3.LeaseKeepAliveResponse, error) {
-	node := fmt.Sprintf("%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
+	node := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
 		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
 
 	dlog.Info("etcd register node:%s", node)
@@ -240,7 +240,7 @@ func (e *EtcdRegister) register() (<-chan *clientv3.LeaseKeepAliveResponse, erro
 		break
 	}
 
-	dlog.Info("register success!!! service:%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
+	dlog.Info("register success!!! service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
 		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
 
 	return e.client.KeepAlive(context.TODO(), resp.ID)
@@ -254,7 +254,7 @@ func (e *EtcdRegister) revoke() error {
 		dlog.Error("revoke occur derror:", err)
 	}
 
-	dlog.Info("revoke service:%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
+	dlog.Info("revoke service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
 		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
 	return err
 }
