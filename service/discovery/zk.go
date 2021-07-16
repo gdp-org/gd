@@ -25,6 +25,7 @@ type ZkNode struct {
 	stopChan  chan struct{}
 	client    *zk.Conn
 }
+
 type ZkConfig struct {
 	host []string // zk server host
 }
