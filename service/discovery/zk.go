@@ -27,7 +27,7 @@ type ZkNode struct {
 }
 
 type ZkConfig struct {
-	host []string // zk server host
+	Host []string // zk server host
 }
 
 // Encapsulates the zookeeper discovery
@@ -94,7 +94,7 @@ func (z *ZkDiscovery) initZk(f *ini.File) error {
 	c := f.Section("DisRes")
 	hosts := c.Key("zkHost").Strings(",")
 	config := &ZkConfig{
-		host: hosts,
+		Host: hosts,
 	}
 
 	return z.initWithZkConfig(config)
@@ -122,7 +122,7 @@ func (z *ZkDiscovery) Watch(key, path string) error {
 		stopChan: make(chan struct{}, 1),
 	}
 
-	conn, _, err := zk.Connect(z.ZkConfig.host, time.Second*5, zk.WithLogInfo(false))
+	conn, _, err := zk.Connect(z.ZkConfig.Host, time.Second*5, zk.WithLogInfo(false))
 	if err != nil {
 		dlog.Error("watch zk connect occur error:%v", err)
 		return err

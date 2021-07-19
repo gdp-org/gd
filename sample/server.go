@@ -13,6 +13,7 @@ import (
 	"github.com/chuck1024/gd/net/dogrpc"
 	"github.com/chuck1024/gd/runtime/inject"
 	pb "github.com/chuck1024/gd/sample/helloworld"
+	"github.com/chuck1024/gd/service/register"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"net/http"
@@ -84,6 +85,7 @@ func Register(e *gd.Engine) {
 	})
 
 	// Rpc
+	inject.RegisterOrFail("register", &register.EtcdRegister{})
 	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
 	if err := e.RpcServer.DogRpcRegister(); err != nil {
 		gd.Error("DogRpcRegister occur error:%s", err)

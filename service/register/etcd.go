@@ -19,9 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/chuck1024/gd/service"
-	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"go.etcd.io/etcd/client/v3"
@@ -33,14 +31,14 @@ import (
 
 // server path : /root/group/service/environ/pool/ip:port
 type EtcdConfig struct {
-	host      []string         // etcd server host
-	root      string           // root path
-	group     string           // service group
-	service   string           // service name
-	nodeInfo  service.NodeInfo // service node info
-	heartBeat uint64           // heartbeat
-	environ   string           // service run environment
-	tlsConfig *tls.Config
+	Host      []string         // etcd server host
+	Root      string           // root path
+	Group     string           // service group
+	Service   string           // service name
+	NodeInfo  service.NodeInfo // service node info
+	HeartBeat uint64           // heartbeat
+	Environ   string           // service run environment
+	TlsConfig *tls.Config      // service tls config
 }
 
 type EtcdRegister struct {
@@ -123,28 +121,19 @@ func (e *EtcdRegister) initEtcd(f *ini.File) error {
 	serviceName := s.Key("serverName").String()
 
 	ip := network.GetLocalIP()
-	port, ok := inject.Find("regPort")
-	if !ok {
-		if s.Key("httpPort").MustInt() > 0 {
-			port = s.Key("httpPort").MustInt()
-		} else if s.Key("rpcPort").MustInt() > 0 {
-			port = s.Key("rpcPort").MustInt()
-		} else if s.Key("grpcPort").MustInt() > 0 {
-			port = s.Key("grpcPort").MustInt()
-		}
-	}
+	port := c.Key("regPort").MustInt()
 	weight := c.Key("weight").MustUint64()
 
 	config := &EtcdConfig{
-		host:      hosts,
-		root:      root,
-		group:     group,
-		service:   serviceName,
-		heartBeat: heartBeat,
-		environ:   environ,
-		nodeInfo: &service.DefaultNodeInfo{
+		Host:      hosts,
+		Root:      root,
+		Group:     group,
+		Service:   serviceName,
+		HeartBeat: heartBeat,
+		Environ:   environ,
+		NodeInfo: &service.DefaultNodeInfo{
 			Ip:      ip,
-			Port:    int(utls.MustInt64(port, 0)),
+			Port:    port,
 			Offline: false,
 			Weight:  weight,
 		},
@@ -159,11 +148,11 @@ func (e *EtcdRegister) initEtcd(f *ini.File) error {
 			KeyFile:       key,
 			TrustedCAFile: ca,
 		}
-		tlsConfig, err := tlsInfo.ClientConfig()
+		TlsConfig, err := tlsInfo.ClientConfig()
 		if err != nil {
 			return fmt.Errorf("load tls conf from file fail,, err=%v", err)
 		}
-		config.tlsConfig = tlsConfig
+		config.TlsConfig = TlsConfig
 	}
 
 	return e.initWithEtcdConfig(config)
@@ -173,9 +162,9 @@ func (e *EtcdRegister) initWithEtcdConfig(c *EtcdConfig) error {
 	e.EtcdConfig = c
 	e.exitChan = make(chan struct{})
 	e.client, _ = clientv3.New(clientv3.Config{
-		Endpoints:   c.host,
+		Endpoints:   c.Host,
 		DialTimeout: 1 * time.Second,
-		TLS:         c.tlsConfig,
+		TLS:         c.TlsConfig,
 	})
 
 	ch, err := e.register()
@@ -213,17 +202,17 @@ func (e *EtcdRegister) initWithEtcdConfig(c *EtcdConfig) error {
 }
 
 func (e *EtcdRegister) register() (<-chan *clientv3.LeaseKeepAliveResponse, error) {
-	node := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
-		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
+	node := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.Root, e.EtcdConfig.Group, e.EtcdConfig.Service, e.EtcdConfig.Environ,
+		e.EtcdConfig.NodeInfo.GetIp(), e.EtcdConfig.NodeInfo.GetPort())
 
 	dlog.Info("etcd register node:%s", node)
 
-	dataByte, _ := json.Marshal(e.EtcdConfig.nodeInfo)
+	dataByte, _ := json.Marshal(e.EtcdConfig.NodeInfo)
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
-	resp, err := e.client.Grant(ctx, int64(e.EtcdConfig.heartBeat))
+	resp, err := e.client.Grant(ctx, int64(e.EtcdConfig.HeartBeat))
 	cancel()
 	if err != nil {
-		dlog.Error("etcd register client grant occur derror:%s", err)
+		dlog.Error("etcd register client grant occur error:%s", err)
 		return nil, err
 	}
 
@@ -240,8 +229,8 @@ func (e *EtcdRegister) register() (<-chan *clientv3.LeaseKeepAliveResponse, erro
 		break
 	}
 
-	dlog.Info("register success!!! service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
-		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
+	dlog.Info("register success!!! service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.Root, e.EtcdConfig.Group, e.EtcdConfig.Service, e.EtcdConfig.Environ,
+		e.EtcdConfig.NodeInfo.GetIp(), e.EtcdConfig.NodeInfo.GetPort())
 
 	return e.client.KeepAlive(context.TODO(), resp.ID)
 }
@@ -254,18 +243,18 @@ func (e *EtcdRegister) revoke() error {
 		dlog.Error("revoke occur derror:", err)
 	}
 
-	dlog.Info("revoke service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.root, e.EtcdConfig.group, e.EtcdConfig.service, e.EtcdConfig.environ,
-		e.EtcdConfig.nodeInfo.GetIp(), e.EtcdConfig.nodeInfo.GetPort())
+	dlog.Info("revoke service:/%s/%s/%s/%s/pool/%s:%d", e.EtcdConfig.Root, e.EtcdConfig.Group, e.EtcdConfig.Service, e.EtcdConfig.Environ,
+		e.EtcdConfig.NodeInfo.GetIp(), e.EtcdConfig.NodeInfo.GetPort())
 	return err
 }
 
 func (e *EtcdRegister) SetOffline(offline bool) {
-	e.EtcdConfig.nodeInfo.(*service.DefaultNodeInfo).Offline = offline
+	e.EtcdConfig.NodeInfo.(*service.DefaultNodeInfo).Offline = offline
 }
 
 func (e *EtcdRegister) SetRootNode(root string) (err error) {
-	e.EtcdConfig.root = strings.TrimRight(root, "/")
-	if len(e.EtcdConfig.root) == 0 {
+	e.EtcdConfig.Root = strings.TrimRight(root, "/")
+	if len(e.EtcdConfig.Root) == 0 {
 		err = fmt.Errorf("invalid root node %s", root)
 		return
 	}
@@ -274,9 +263,9 @@ func (e *EtcdRegister) SetRootNode(root string) (err error) {
 }
 
 func (e *EtcdRegister) GetRootNode() (root string) {
-	return e.EtcdConfig.root
+	return e.EtcdConfig.Root
 }
 
 func (e *EtcdRegister) SetHeartBeat(heartBeat time.Duration) {
-	e.EtcdConfig.heartBeat = uint64(heartBeat)
+	e.EtcdConfig.HeartBeat = uint64(heartBeat)
 }

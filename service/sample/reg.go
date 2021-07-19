@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/chuck1024/gd/service/register"
 )
 
@@ -26,8 +25,6 @@ func zk(){
 
 func main(){
 	var i chan struct{}
-	inject.InitDefault()
-	defer inject.Close()
 	etcd()
 	<-i
 }

@@ -37,8 +37,8 @@ type EtcdNode struct {
 }
 
 type EtcdConfig struct {
-	host      []string // etcd server host
-	tlsConfig *tls.Config
+	Host      []string // etcd server host
+	TlsConfig *tls.Config
 }
 
 // Encapsulates the etcd discovery
@@ -108,7 +108,7 @@ func (e *EtcdDiscovery) initEtcd(f *ini.File) error {
 	hosts := c.Key("etcdHost").Strings(",")
 
 	config := &EtcdConfig{
-		host: hosts,
+		Host: hosts,
 	}
 
 	cert := c.Key("cert").String()
@@ -124,7 +124,7 @@ func (e *EtcdDiscovery) initEtcd(f *ini.File) error {
 		if err != nil {
 			return fmt.Errorf("load tls conf from file fail,, err=%v", err)
 		}
-		config.tlsConfig = tlsConfig
+		config.TlsConfig = tlsConfig
 	}
 
 	return e.initWithEtcdConfig(config)
@@ -153,9 +153,9 @@ func (e *EtcdDiscovery) Watch(key, path string) error {
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   e.EtcdConfig.host,
+		Endpoints:   e.EtcdConfig.Host,
 		DialTimeout: time.Second,
-		TLS:         e.EtcdConfig.tlsConfig,
+		TLS:         e.EtcdConfig.TlsConfig,
 	})
 
 	if err != nil {

@@ -10,9 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/chuck1024/gd/service"
-	"github.com/chuck1024/gd/utls"
 	"github.com/chuck1024/gd/utls/network"
 	"github.com/samuel/go-zookeeper/zk"
 	"gopkg.in/ini.v1"
@@ -22,13 +20,12 @@ import (
 )
 
 type ZkConfig struct {
-	host     []string         // zk server host
-	root     string           // root path
-	group    string           // service group
-	service  string           // service name
-	nodeInfo service.NodeInfo // service node info
-
-	environ string //service run environment
+	Host     []string         // zk server host
+	Root     string           // root path
+	Group    string           // service group
+	Service  string           // service name
+	NodeInfo service.NodeInfo // service node info
+	Environ  string           //service run environment
 }
 
 type ZkRegister struct {
@@ -99,27 +96,18 @@ func (z *ZkRegister) initZk(f *ini.File) error {
 	serviceName := s.Key("serverName").String()
 
 	ip := network.GetLocalIP()
-	port, ok := inject.Find("regPort")
-	if !ok {
-		if s.Key("httpPort").MustInt() > 0 {
-			port = s.Key("httpPort").MustInt()
-		} else if s.Key("rpcPort").MustInt() > 0 {
-			port = s.Key("rpcPort").MustInt()
-		} else if s.Key("grpcPort").MustInt() > 0 {
-			port = s.Key("grpcPort").MustInt()
-		}
-	}
+	port := c.Key("regPort").MustInt()
 	weight := c.Key("weight").MustUint64()
 
 	config := &ZkConfig{
-		host:    hosts,
-		root:    root,
-		group:   group,
-		service: serviceName,
-		environ: environ,
-		nodeInfo: &service.DefaultNodeInfo{
+		Host:    hosts,
+		Root:    root,
+		Group:   group,
+		Service: serviceName,
+		Environ: environ,
+		NodeInfo: &service.DefaultNodeInfo{
 			Ip:      ip,
-			Port:    int(utls.MustInt64(port, 0)),
+			Port:    port,
 			Offline: false,
 			Weight:  weight,
 		},
@@ -129,7 +117,7 @@ func (z *ZkRegister) initZk(f *ini.File) error {
 }
 
 func (z *ZkRegister) initWithZkConfig(c *ZkConfig) error {
-	conn, _, err := zk.Connect(c.host, time.Second*5, zk.WithLogInfo(false))
+	conn, _, err := zk.Connect(c.Host, time.Second*5, zk.WithLogInfo(false))
 	if err != nil {
 		dlog.Error("zk connect occur error:%s", err)
 		return err
@@ -154,11 +142,11 @@ func (z *ZkRegister) initWithZkConfig(c *ZkConfig) error {
 }
 
 func (z *ZkRegister) run() (err error) {
-	p := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service, z.ZkConfig.environ,
-		z.ZkConfig.nodeInfo.GetIp(), z.ZkConfig.nodeInfo.GetPort())
+	p := fmt.Sprintf("/%s/%s/%s/%s/pool/%s:%d", z.ZkConfig.Root, z.ZkConfig.Group, z.ZkConfig.Service, z.ZkConfig.Environ,
+		z.ZkConfig.NodeInfo.GetIp(), z.ZkConfig.NodeInfo.GetPort())
 	dlog.Info("zk path: %s", p)
 
-	dataByte, _ := json.Marshal(&z.ZkConfig.nodeInfo)
+	dataByte, _ := json.Marshal(&z.ZkConfig.NodeInfo)
 	path, err := z.client.Create(p, dataByte, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		dlog.Error("zk create occur error:%s", err)
@@ -173,12 +161,12 @@ func (z *ZkRegister) run() (err error) {
 }
 
 func (z *ZkRegister) SetOffline(offline bool) {
-	z.ZkConfig.nodeInfo.(*service.DefaultNodeInfo).Offline = offline
+	z.ZkConfig.NodeInfo.(*service.DefaultNodeInfo).Offline = offline
 }
 
 func (z *ZkRegister) SetRootNode(root string) (err error) {
-	z.ZkConfig.root = strings.TrimRight(root, "/")
-	if len(z.ZkConfig.root) == 0 {
+	z.ZkConfig.Root = strings.TrimRight(root, "/")
+	if len(z.ZkConfig.Root) == 0 {
 		err = fmt.Errorf("invalid root node %s", root)
 		return
 	}
@@ -187,14 +175,14 @@ func (z *ZkRegister) SetRootNode(root string) (err error) {
 }
 
 func (z *ZkRegister) GetRootNode() (root string) {
-	return z.ZkConfig.root
+	return z.ZkConfig.Root
 }
 
 func (z *ZkRegister) SetHeartBeat(heartBeat time.Duration) {
 }
 
 func (z *ZkRegister) isExistNode() (err error) {
-	node := fmt.Sprintf("/%s/%s/%s", z.ZkConfig.root, z.ZkConfig.group, z.ZkConfig.service)
+	node := fmt.Sprintf("/%s/%s/%s", z.ZkConfig.Root, z.ZkConfig.Group, z.ZkConfig.Service)
 
 	isExist, _, err := z.client.Exists(node)
 	if err != nil {
@@ -203,7 +191,7 @@ func (z *ZkRegister) isExistNode() (err error) {
 	}
 
 	if !isExist {
-		p1 := node + "/" + z.ZkConfig.environ
+		p1 := node + "/" + z.ZkConfig.Environ
 		p2 := p1 + "/pool"
 		paths := []string{node, p1, p2}
 		for _, v := range paths {
