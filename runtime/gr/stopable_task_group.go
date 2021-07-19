@@ -11,42 +11,42 @@ Notice:
 1. it use lock to make sure taskList is correct. performance is bad
 2. still able to add task after WaitStopAll, so you should make sure no extra task is running after called WaitStopAll
 */
-type StopableTask interface {
+type StopAbleTask interface {
 	Close()
 }
 
-type StopableTaskGroup struct {
-	taskList []StopableTask
+type StopAbleTaskGroup struct {
+	taskList []StopAbleTask
 	lock     sync.Mutex
 }
 
-func NewStopableTaskGroup() *StopableTaskGroup {
-	return &StopableTaskGroup{
-		taskList: make([]StopableTask, 0),
+func NewStopAbleTaskGroup() *StopAbleTaskGroup {
+	return &StopAbleTaskGroup{
+		taskList: make([]StopAbleTask, 0),
 	}
 }
 
-func (s *StopableTaskGroup) AddTask(task StopableTask) {
+func (s *StopAbleTaskGroup) AddTask(task StopAbleTask) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if s.taskList == nil {
-		s.taskList = make([]StopableTask, 0)
+		s.taskList = make([]StopAbleTask, 0)
 	}
 	s.taskList = append(s.taskList, task)
 }
 
-func (s *StopableTaskGroup) Start() error {
+func (s *StopAbleTaskGroup) Start() error {
 	if s.taskList == nil {
-		s.taskList = make([]StopableTask, 0)
+		s.taskList = make([]StopAbleTask, 0)
 	}
 	return nil
 }
 
-func (s *StopableTaskGroup) Close() {
+func (s *StopAbleTaskGroup) Close() {
 	s.WaitStopAll()
 }
 
-func (s *StopableTaskGroup) WaitStopAll() {
+func (s *StopAbleTaskGroup) WaitStopAll() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -63,5 +63,5 @@ func (s *StopableTaskGroup) WaitStopAll() {
 		}
 	}
 	wg.Wait()
-	s.taskList = make([]StopableTask, 0)
+	s.taskList = make([]StopAbleTask, 0)
 }
