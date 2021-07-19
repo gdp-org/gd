@@ -32,6 +32,7 @@ func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) 
 
 func TestDogServer(t *testing.T) {
 	d := gd.Default()
+	d.RpcServer.Addr = 10241
 	// Rpc
 	d.RpcServer.AddDogHandler(1024, test)
 	if err := d.RpcServer.DogRpcRegister(); err != nil {
@@ -39,7 +40,7 @@ func TestDogServer(t *testing.T) {
 		return
 	}
 
-	err := d.RpcServer.Run(10241)
+	err := d.RpcServer.Start()
 	if err != nil {
 		t.Logf("Error occurs, error = %s", err.Error())
 		return

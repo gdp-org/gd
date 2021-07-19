@@ -13,8 +13,7 @@ import (
 )
 
 func TestRpcClient(t *testing.T) {
-	d := gd.Default()
-	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
+	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	c.AddAddr(network.GetLocalIP() + ":10241")
 
 	body := []byte("How are you?")

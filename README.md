@@ -340,22 +340,29 @@ import (
 	"fmt"
 	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/server/discovery"
+	"github.com/chuck1024/gd/service/discovery"
 	"time"
 )
 
 func main() {
-	d := gd.Default()
-	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
-	// discovery 
+	var i chan struct{}
+	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
+	// discovery
 	var r discovery.DogDiscovery
-	r = &discovery.ZkDiscovery{}
-	r.NewDiscovery([]string{"localhost:2379"})
-	r.Watch("/root/github/gd/stagging/pool")
-	r.Run()
+
+	r = &discovery.EtcdDiscovery{}
+	if err := r.Start(); err != nil {
+		dlog.Error("err:%s", err)
+		return
+	}
+
+	if err := r.Watch("test", "/root/github/gd/prod/pool"); err != nil {
+		dlog.Error("err:%s", err)
+		return
+	}
 	time.Sleep(100 * time.Millisecond)
 
-	hosts := r.GetNodeInfo("/root/github/gd/stagging/pool")
+	hosts := r.GetNodeInfo("test")
 	for _, v := range hosts {
 		dlog.Debug("%s:%d", v.GetIp(), v.GetPort())
 	}
@@ -382,6 +389,7 @@ func main() {
 	//}
 
 	dlog.Debug("code=%d,resp=%s", code, string(rsp))
+	<-i
 }
 ```
 
@@ -402,7 +410,8 @@ import (
 
 func TestRpcServer(t *testing.T) {
 	d := dogrpc.NewRpcServer()
-	// Rpc
+	d.Addr = 10241
+	// Tcp
 	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
 		t.Logf("rpc server request: %s", string(req))
 		code := uint32(0)
@@ -410,9 +419,9 @@ func TestRpcServer(t *testing.T) {
 		return code, resp
 	})
 
-	err := d.Run(10241)
+	err := d.Start()
 	if err != nil {
-		t.Logf("Error occurs, error = %s", err.Error())
+		t.Logf("Error occurs, derror = %s", err.Error())
 		return
 	}
 }
@@ -428,15 +437,14 @@ package dogrpc_test
 
 import (
 	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/utls"
+	"github.com/chuck1024/gd/utls/network"
 	"testing"
 	"time"
 )
 
 func TestRpcClient(t *testing.T) {
-	d := gd.Default()
-	c := d.NewRpcClient(time.Duration(500*time.Millisecond), 0)
-	c.AddAddr(utils.GetLocalIP() + ":10241")
+	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
+	c.AddAddr(network.GetLocalIP() + ":10241")
 
 	body := []byte("How are you?")
 
@@ -445,8 +453,9 @@ func TestRpcClient(t *testing.T) {
 		t.Logf("Error when sending request to server: %s", err)
 	}
 
-	t.Logf("code=%d,resp=%s", code, string(rsp))
+	t.Logf("code=%d, resp=%s", code, string(rsp))
 }
+
 ```
 
 > * You can find it in "net/dogrpc/rpc_client_test.go"
@@ -510,77 +519,92 @@ func GetErrorType(code int) string {
 ```
 
 ---
-`server module`
+`service module`
 > * if you use etcd, you must download etcd module
->* `go get github.com/coreos/etcd/clientv3`
+>* `go get go.etcd.io/etcd/client/v3`
 >* you can find it usage on "server/register/register_test.go" and "server/discovery/discovery.go"
 
 ```go
-package register_test
+package main
 
 import (
-	"github.com/chuck1024/gd/server/register"
-	"testing"
-	"time"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/service/register"
 )
 
-func TestEtcd(t *testing.T) {
+func etcd(){
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
-	r.NewRegister([]string{"localhost:2379"}, "/root/", "stagging", "gd", "test", )
-
-	r.Run("127.0.0.1", 10240, 10)
-	time.Sleep(3 * time.Second)
-	r.Close()
+	if err := r.Start(); err != nil {
+		dlog.Error("err:%s", err)
+		return
+	}
 }
 
-func TestZk(t *testing.T) {
+func zk(){
 	var r register.DogRegister
 	r = &register.ZkRegister{}
-	r.NewRegister([]string{"localhost:2181"}, "/root/", "stagging", "gd", "test", )
-	r.Run("127.0.0.1", 10240, 10)
-	time.Sleep(10 * time.Second)
-	r.Close()
+	if err := r.Start(); err != nil {
+		dlog.Error("err:%s", err)
+		return
+	}
+}
+
+func main(){
+	var i chan struct{}
+	etcd()
+	<-i
 }
 ```
 
 ```go
-package discovery_test
+package main
 
 import (
-	"github.com/chuck1024/gd/server/discovery"
-	"testing"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/service/discovery"
 	"time"
 )
 
-func TestDiscEtcd(t *testing.T) {
+func etcdDis() {
 	var r discovery.DogDiscovery
-	r = &discovery.EtcdDiscovery{}
-	r.NewDiscovery([]string{"localhost:2379"})
-	r.Watch("/root/gd/test/stagging/pool")
-	r.Run()
-	time.Sleep(100 * time.Millisecond)
 
-	n1 := r.GetNodeInfo("/root/gd/test/stagging/pool")
-	for _, v := range n1 {
-		t.Logf("%s:%d", v.GetIp(), v.GetPort())
+	r = &discovery.EtcdDiscovery{}
+	if err := r.Start(); err != nil {
+		dlog.Error("err:%s", err)
+		return
 	}
 
-	time.Sleep(10 * time.Second)
+	r.Watch("test", "/root/github/gd/prod/pool")
+	time.Sleep(100 * time.Millisecond)
+
+	n1 := r.GetNodeInfo("test")
+	for _, v := range n1 {
+		dlog.Info("%s:%d", v.GetIp(), v.GetPort())
+	}
 }
 
-func TestDiscZk(t *testing.T) {
+func zkDis() {
 	var r discovery.DogDiscovery
 	r = &discovery.ZkDiscovery{}
-	r.NewDiscovery([]string{"localhost:2181"})
-	r.Watch("/root/gd/test/stagging/pool")
-	r.Run()
-	time.Sleep(100 * time.Millisecond)
-	n1 := r.GetNodeInfo("/root/gd/test/stagging/pool")
-	for _, v := range n1 {
-		t.Logf("%s:%d", v.GetIp(), v.GetPort())
+	if err := r.Start(); err != nil {
+		dlog.Error("err:%s", err)
+		return
 	}
-	time.Sleep(10 * time.Second)
+
+	r.Watch("test", "/root/github/gd/prod/pool")
+
+	time.Sleep(100 * time.Millisecond)
+	n1 := r.GetNodeInfo("test")
+	for _, v := range n1 {
+		dlog.Info("%s:%d", v.GetIp(), v.GetPort())
+	}
+}
+
+func main() {
+	var i chan struct{}
+	etcdDis()
+	<-i
 }
 ```
 

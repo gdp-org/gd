@@ -12,6 +12,7 @@ import (
 
 func TestRpcServer(t *testing.T) {
 	d := dogrpc.NewRpcServer()
+	d.Addr = 10241
 	// Tcp
 	d.AddHandler(1024, func(req []byte) (uint32, []byte) {
 		t.Logf("rpc server request: %s", string(req))
@@ -20,7 +21,7 @@ func TestRpcServer(t *testing.T) {
 		return code, resp
 	})
 
-	err := d.Run(10241)
+	err := d.Start()
 	if err != nil {
 		t.Logf("Error occurs, derror = %s", err.Error())
 		return
