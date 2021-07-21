@@ -6,10 +6,10 @@
 package gl
 
 import (
-	"github.com/v2pro/plz/gls"
+	"github.com/petermattis/goid"
 	"strconv"
 )
 
 func getGoId() (string, bool) {
-	return strconv.FormatInt(gls.GoID(), 10), true
+	return strconv.FormatInt(goid.Get(), 10), true
 }

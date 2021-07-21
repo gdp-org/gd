@@ -1,3 +1,5 @@
+// +build windows
+
 /**
  * Copyright 2021 gd Author. All rights reserved.
  * Author: Chuck1024
