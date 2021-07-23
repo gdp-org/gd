@@ -254,7 +254,7 @@ func (helper *Helper) dealCommand(client net.Conn) {
 			key := arr[2]
 			value := strings.Join(arr[3:], " ")
 			ret = helper.Updater(id+" "+key, value, tpe, -1)
-		} else if tpe == "log" {
+		} else if tpe == "dlog" {
 			if len(arr) != 2 {
 				helper.help(client)
 				ret = false
@@ -265,7 +265,7 @@ func (helper *Helper) dealCommand(client net.Conn) {
 				client.Write([]byte("<" + err.Error() + "\n"))
 				ret = false
 			} else if lvl == -1 {
-				client.Write([]byte("<log:" + dlog.GetLevel() + "\n"))
+				client.Write([]byte("<dlog:" + dlog.GetLevel() + "\n"))
 			} else {
 				dlog.Debug("SetLogLevel:%d", lvl)
 				dlog.SetLevel(lvl)

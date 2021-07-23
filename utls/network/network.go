@@ -15,7 +15,7 @@ func IsLocalIP(request *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if (len(ip) >= 3 && ip[0:3] == "10.") || ip == "127.0.0.1" {
+	if ip == "127.0.0.1" {
 		return true, nil
 	}
 	return false, nil
