@@ -8,7 +8,6 @@ require (
 	github.com/alecthomas/log4go v0.0.0-20180109082532-d146e6b86faa
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/elazarl/goproxy v0.0.0-20200809112317-0581fc3aee2d // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-gonic/gin v1.6.3
@@ -28,7 +27,7 @@ require (
 	github.com/v2pro/plz v0.0.0-20180227161703-2d49b86ea382
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
-	go.mongodb.org/mongo-driver v1.4.4
+	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	google.golang.org/grpc v1.38.0
 	gopkg.in/ini.v1 v1.57.0
