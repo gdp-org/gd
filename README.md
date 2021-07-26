@@ -345,7 +345,7 @@ import (
 )
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	// discovery
 	var r discovery.DogDiscovery
@@ -389,7 +389,6 @@ func main() {
 	//}
 
 	dlog.Debug("code=%d,resp=%s", code, string(rsp))
-	<-i
 }
 ```
 
@@ -551,9 +550,8 @@ func zk(){
 }
 
 func main(){
-	var i chan struct{}
+	defer dlog.Close()
 	etcd()
-	<-i
 }
 ```
 
@@ -602,9 +600,8 @@ func zkDis() {
 }
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	etcdDis()
-	<-i
 }
 ```
 

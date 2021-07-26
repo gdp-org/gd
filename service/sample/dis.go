@@ -42,7 +42,6 @@ func zkDis() {
 }
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	etcdDis()
-	<-i
 }

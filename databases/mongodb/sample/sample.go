@@ -20,7 +20,7 @@ type Trainer struct {
 }
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	o := mongodb.MongoClient{
 		DataBase: "test",
 	}
@@ -118,6 +118,4 @@ func main() {
 		return
 	}
 	dlog.Debug("DeleteMany result:%v", r4)
-
-	<-i
 }

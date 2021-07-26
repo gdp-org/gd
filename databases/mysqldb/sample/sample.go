@@ -22,7 +22,7 @@ type TestDB struct {
 }
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	o := mysqldb.MysqlClient{DataBase: "test"}
 	if err := o.Start(); err != nil {
 		dlog.Error("err:%s", err)
@@ -73,5 +73,4 @@ func main() {
 	if err != nil {
 		dlog.Error("%s", err)
 	}
-	<-i
 }

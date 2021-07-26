@@ -123,6 +123,18 @@ func (g *gdConfig) initLogConfig() error {
 	return nil
 }
 
+func InitLog(filename string) {
+	dlog.LoadConfiguration(filename)
+}
+
+func InitLogByXml(xc *dlog.XmlLoggerConfig) {
+	dlog.LoadConfigurationByXml(xc)
+}
+
+func LogClose() {
+	dlog.Close()
+}
+
 // wrap log debug
 func Debug(arg0 interface{}, args ...interface{}) {
 	dlog.Debug(arg0, args...)

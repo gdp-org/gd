@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	t := &redisdb.RedisConfig{
 		Addrs: []string{"127.0.0.1:6379"},
 	}
@@ -31,5 +31,4 @@ func main() {
 		dlog.Debug("err:%s", err)
 	}
 	dlog.Debug("%s", v)
-	<-i
 }

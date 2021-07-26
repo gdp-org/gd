@@ -31,7 +31,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func main() {
-	var i chan struct{}
+	defer dlog.Close()
 	rc := &mockReg{
 		handler: &server{},
 	}
@@ -46,5 +46,4 @@ func main() {
 		return
 	}
 	dlog.Debug("err:%v", err)
-	<-i
 }

@@ -62,11 +62,6 @@ func (w *FileLogWriter) LogWrite(rec *LogRecord) {
 	case <-w.stop:
 		log.Println(fmt.Sprintf("write on closed logger:%v", rec))
 	default:
-		/**
-		time.After需要新启goroutine计时，消耗很大。
-		只有当确认当前日志channel block了，才需要通过time.After计算等待时间。
-		这样应该可以解决并发日志过多时的报警问题。
-		**/
 		select {
 		case w.rec <- rec:
 		case <-w.stop:
@@ -83,7 +78,7 @@ func (w *FileLogWriter) Close() {
 		w.fileCloseLock.Lock()
 		defer w.fileCloseLock.Unlock()
 		close(w.stop)
-		w.file.Sync() //FIXME race with line 85
+		w.file.Sync()
 	})
 }
 
@@ -120,7 +115,7 @@ func NewFileLogWriter(fileName string, rotate, daily, hourly bool) *FileLogWrite
 			if w.file != nil {
 				fmt.Fprint(w.file, FormatLogRecord(&w.formatCache, w.trailer, &LogRecord{Created: time.Now()}))
 				w.fileCloseLock.Lock()
-				w.file.Close() //FIXME race!
+				w.file.Close()
 				w.fileCloseLock.Unlock()
 			}
 		}()
@@ -164,11 +159,6 @@ func NewFileLogWriter(fileName string, rotate, daily, hourly bool) *FileLogWrite
 				// Update the counts
 				w.maxLinesCurLines++
 				w.maxsizeCurSize += n
-				// send to scribe if nessesary
-				/*
-					if w.ScribeCategory != "" && rec.Level > DEBUG && scribeClient != nil {
-					}
-				*/
 			}
 		}
 	}()

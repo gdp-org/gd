@@ -24,7 +24,6 @@ func zk(){
 }
 
 func main(){
-	var i chan struct{}
+	defer dlog.Close()
 	etcd()
-	<-i
 }
