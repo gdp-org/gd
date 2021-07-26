@@ -107,6 +107,7 @@ func (e *Engine) Run() error {
 		if err := utls.ReviewDumpPanic(file); err != nil {
 			Error("Failed to review dump dumpPanic file, error = %s", err.Error())
 		}
+		LogClose()
 	}()
 
 	// init cpu and memory
