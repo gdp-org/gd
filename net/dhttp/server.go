@@ -23,8 +23,8 @@ type HttpServer struct {
 
 	GinLog                    bool           `inject:"httpServerGinLog" canNil:"true"`
 	UseHttps                  bool           `inject:"httpServerUseHttps" canNil:"true"`
-	HttpsCertFilePath         string         `inject:"httpServerHttpsCertFile" canNil:"true"`
-	HttpsKeyFilePath          string         `inject:"httpServerHttpsKeyFile" canNil:"true"`
+	HttpsCertFile             string         `inject:"httpServerHttpsCertFile" canNil:"true"`
+	HttpsKeyFile              string         `inject:"httpServerHttpsKeyFile" canNil:"true"`
 	HttpServerShutdownTimeout int64          `inject:"httpServerShutdownTimeout" canNil:"true"`
 	HttpServerReadTimeout     int64          `inject:"httpServerReadTimeout" canNil:"true"`
 	HttpServerWriteTimeout    int64          `inject:"httpServerWriteTimeout" canNil:"true"`
@@ -39,10 +39,10 @@ func (h *HttpServer) Start() error {
 		dlog.Info("http server start http server with:shutdownTimeout=%d,readTimeout=%d,writeTimeout=%d", h.HttpServerShutdownTimeout, h.HttpServerReadTimeout, h.HttpServerWriteTimeout)
 	}()
 
-	if h.UseHttps {
-		if h.HttpsCertFilePath == "" || h.HttpsKeyFilePath == "" {
-			return errors.New("https cert file or key file not set")
-		}
+	if h.UseHttps {if h.HttpsCertFile == "" || h.HttpsKeyFile == "" {
+		return errors.New("https cert file or key file not set")
+	}
+
 	}
 
 	if h.HttpServerReadTimeout <= 0 {
@@ -65,7 +65,7 @@ func (h *HttpServer) Start() error {
 	go func() {
 		var err error
 		if h.UseHttps {
-			err = h.server.ListenAndServeTLS(h.HttpsCertFilePath, h.HttpsKeyFilePath)
+			err = h.server.ListenAndServeTLS(h.HttpsCertFile, h.HttpsKeyFile)
 		} else {
 			err = h.server.ListenAndServe()
 		}

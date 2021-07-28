@@ -6,9 +6,13 @@
 package dogrpc
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	dogError "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/utls/network"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"net"
 	"sync"
@@ -26,15 +30,57 @@ type RpcClient struct {
 	Timeout  time.Duration
 	RetryNum uint32
 	localIp  string
+
+	TlsCfg           *tls.Config
+	RpcCaPemFile     string
+	RpcClientKeyFile string
+	RpcClientPemFile string
 }
 
-func NewClient(timeout time.Duration, retryNum uint32) *RpcClient {
-	return &RpcClient{
+func DefaultNewClient(timeout time.Duration, retryNum uint32, useTls bool) *RpcClient {
+	r := &RpcClient{
 		Cm:       make(map[string]*Client),
 		Timeout:  timeout,
 		RetryNum: retryNum,
 		localIp:  network.GetLocalIP(),
 	}
+
+	if useTls && r.TlsCfg == nil {
+		if r.RpcCaPemFile == "" {
+			r.RpcCaPemFile = "conf/rpc-ca.pem"
+		}
+
+		if r.RpcClientKeyFile == "" {
+			r.RpcClientKeyFile = "conf/rpc-client.key"
+		}
+
+		if r.RpcClientPemFile == "" {
+			r.RpcClientPemFile = "conf/rpc-client.pem"
+		}
+
+		cert, err := tls.LoadX509KeyPair(r.RpcClientPemFile, r.RpcClientKeyFile)
+		if err != nil {
+			return nil
+		}
+
+		certPool := x509.NewCertPool()
+		ca, err := ioutil.ReadFile(r.RpcCaPemFile)
+		if err != nil {
+			return nil
+		}
+
+		if ok := certPool.AppendCertsFromPEM(ca); !ok {
+			return nil
+		}
+
+		r.TlsCfg = &tls.Config{
+			RootCAs:            certPool,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: true,
+		}
+	}
+
+	return r
 }
 
 // add server address
@@ -77,6 +123,17 @@ func (c *RpcClient) Connect() (*Client, error) {
 				Addr:           addr.String(),
 				RequestTimeout: c.Timeout,
 			}
+
+			if c.TlsCfg != nil {
+				cc.Dial = func(addr string) (conn io.ReadWriteCloser, err error) {
+					c, err := tls.DialWithDialer(dialer, "tcp", addr, c.TlsCfg)
+					if err != nil {
+						return nil, err
+					}
+					return c, err
+				}
+			}
+
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {

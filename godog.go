@@ -221,8 +221,8 @@ func (e *Engine) initCPUAndMemory() error {
 }
 
 // timeout Millisecond
-func NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
-	client := dogrpc.NewClient(timeout, retryNum)
+func NewRpcClient(timeout time.Duration, retryNum uint32, useTls bool) *dogrpc.RpcClient {
+	client := dogrpc.DefaultNewClient(timeout, retryNum, useTls)
 	return client
 }
 
@@ -230,10 +230,11 @@ func NewHttpClient() *dhttp.HttpClient {
 	return dhttp.New()
 }
 
-func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) *dgrpc.GrpcClient {
+func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string, useTls bool) *dgrpc.GrpcClient {
 	client := &dgrpc.GrpcClient{
 		Target:      target,
 		ServiceName: serviceName,
+		UseTls:      useTls,
 	}
 
 	if err := client.Start(makeRawClient); err != nil {

@@ -3,7 +3,7 @@
  * Author: Chuck1024
  */
 
-package dogrpc_test
+package sample_test
 
 import (
 	"github.com/chuck1024/gd"

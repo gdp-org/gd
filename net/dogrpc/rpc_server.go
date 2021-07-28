@@ -6,8 +6,13 @@
 package dogrpc
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
+	"io/ioutil"
+	"net"
 	"strconv"
 )
 
@@ -22,6 +27,11 @@ type RpcServer struct {
 	ss             *Server
 	defaultHandler map[uint32]RpcHandlerFunc
 	wrapHandler    map[uint32]interface{}
+
+	UseTls            bool   `inject:"rpcUseTls" canNil:"true"`
+	RpcCaPemFile      string `inject:"rpcCaPemFile" canNil:"true"`
+	RpcServerKeyFile  string `inject:"rpcServerKeyFile" canNil:"true"`
+	RpcServerPemFile  string `inject:"rpcServerPemFile" canNil:"true"`
 }
 
 func NewRpcServer() *RpcServer {
@@ -38,6 +48,47 @@ func NewRpcServer() *RpcServer {
 
 func (s *RpcServer) Start() error {
 	s.ss.Addr = fmt.Sprintf(":%d", s.Addr)
+
+	if s.UseTls {
+		if s.RpcCaPemFile == "" {
+			s.RpcCaPemFile = "conf/rpc-ca.pem"
+		}
+
+		if s.RpcServerKeyFile == "" {
+			s.RpcServerKeyFile = "conf/rpc-server.key"
+		}
+
+		if s.RpcServerPemFile == "" {
+			s.RpcServerPemFile = "conf/rpc-server.pem"
+		}
+
+		cert, err := tls.LoadX509KeyPair(s.RpcServerKeyFile, s.RpcServerPemFile)
+		if err != nil {
+			dlog.Crashf("Cannot load TLS certificates: [%s]", err)
+		}
+
+		certPool := x509.NewCertPool()
+		ca, err := ioutil.ReadFile(s.RpcCaPemFile)
+		if err != nil {
+			return err
+		}
+
+		if !certPool.AppendCertsFromPEM(ca) {
+			return errors.New("certPool.AppendCertsFromPEM err")
+		}
+
+		serverCfg := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			ClientCAs:    certPool,
+		}
+
+		s.ss.Listener = &netListener{
+			F: func(addr string) (net.Listener, error) {
+				return tls.Listen("tcp", addr, serverCfg)
+			},
+		}
+	}
 
 	err := s.ss.Serve()
 	if err != nil {

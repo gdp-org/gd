@@ -14,7 +14,7 @@ import (
 )
 
 func TestDogClient(t *testing.T) {
-	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
+	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0, false)
 	c.AddAddr(network.GetLocalIP() + ":10241")
 
 	b := &struct {

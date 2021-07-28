@@ -77,3 +77,32 @@ func setupKeepalive(conn net.Conn) error {
 	}
 	return nil
 }
+
+type netListener struct {
+	F func(addr string) (net.Listener, error)
+	L net.Listener
+}
+
+func (ln *netListener) Init(addr string) (err error) {
+	ln.L, err = ln.F(addr)
+	return
+}
+
+func (ln *netListener) ListenAddr() net.Addr {
+	if ln.L != nil {
+		return ln.L.Addr()
+	}
+	return nil
+}
+
+func (ln *netListener) Accept() (conn io.ReadWriteCloser, clientAddr string, err error) {
+	c, err := ln.L.Accept()
+	if err != nil {
+		return nil, "", err
+	}
+	return c, c.RemoteAddr().String(), nil
+}
+
+func (ln *netListener) Close() error {
+	return ln.L.Close()
+}

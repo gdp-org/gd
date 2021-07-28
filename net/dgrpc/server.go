@@ -41,7 +41,7 @@ type GrpcServer struct {
 	RegisterHandler IRegisterHandler `inject:"registerHandler"`
 	ServiceName     string           `inject:"serviceName"`
 
-	UseTls             bool   `inject:"useTls" canNil:"true"`
+	UseTls             bool   `inject:"grpcUseTls" canNil:"true"`
 	GrpcCertServerName string `inject:"grpcCertServerName" canNil:"true"` // if not, default gd
 	GrpcCaPemFile      string `inject:"grpcCaPemFile" canNil:"true"`
 	GrpcServerKeyFile  string `inject:"grpcServerKeyFile" canNil:"true"`
