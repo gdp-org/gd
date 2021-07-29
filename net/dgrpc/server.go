@@ -42,7 +42,6 @@ type GrpcServer struct {
 	ServiceName     string           `inject:"serviceName"`
 
 	UseTls             bool   `inject:"grpcUseTls" canNil:"true"`
-	GrpcCertServerName string `inject:"grpcCertServerName" canNil:"true"` // if not, default gd
 	GrpcCaPemFile      string `inject:"grpcCaPemFile" canNil:"true"`
 	GrpcServerKeyFile  string `inject:"grpcServerKeyFile" canNil:"true"`
 	GrpcServerPemFile  string `inject:"grpcServerPemFile" canNil:"true"`
@@ -119,8 +118,8 @@ func (s *GrpcServer) DefaultServer() (*grpc.Server, error) {
 			s.GrpcServerPemFile = "conf/server.pem"
 		}
 
-		if s.GrpcCertServerName == "" {
-			s.GrpcCertServerName = DefaultCertServiceName
+		if s.ServiceName == "" {
+			s.ServiceName = DefaultCertServiceName
 		}
 
 		c, err := s.GetCredentialsByCA()
@@ -164,7 +163,7 @@ func (s *GrpcServer) GetCredentialsByCA() (credentials.TransportCredentials, err
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		ClientCAs:    certPool,
 		RootCAs:      certPool,
-		ServerName:   s.GrpcCertServerName,
+		ServerName:   s.ServiceName,
 	})
 
 	return c, err

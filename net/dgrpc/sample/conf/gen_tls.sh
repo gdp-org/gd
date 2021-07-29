@@ -2,7 +2,7 @@
 
 # 根证书
 openssl genrsa -out ca.key 2048
-openssl req -new -x509 -days 36500 -key ca.key -out ca.pem
+openssl req -new -x509 -key ca.key -out ca.pem -days 36500
 
 # Country Name (2 letter code) []:
 # State or Province Name (full name) []:

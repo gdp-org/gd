@@ -25,7 +25,7 @@ func (s *server2) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func main() {
-	defer gd.LogClose()
+	var i chan struct{}
 	bc := dgrpc.GrpcClient{
 		Target:      "127.0.0.1:10240",
 		ServiceName: "gd",
@@ -52,4 +52,5 @@ func main() {
 
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
 	gd.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
+	<-i
 }

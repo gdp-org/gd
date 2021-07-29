@@ -204,9 +204,10 @@ func (c *GrpcClient) GetCredentialsByCA() (credentials.TransportCredentials, err
 		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 			return &cert, nil
 		},
-		ServerName: c.CertServerName,
-		RootCAs:    certPool,
-		ClientCAs:  certPool,
+		ServerName:         c.CertServerName,
+		RootCAs:            certPool,
+		ClientCAs:          certPool,
+		InsecureSkipVerify: true,
 	})
 
 	return t, err
