@@ -408,6 +408,7 @@ import (
 )
 
 func TestRpcServer(t *testing.T) {
+	var i chan struct{}
 	d := dogrpc.NewRpcServer()
 	d.Addr = 10241
 	// Tcp
@@ -423,6 +424,7 @@ func TestRpcServer(t *testing.T) {
 		t.Logf("Error occurs, derror = %s", err.Error())
 		return
 	}
+	<-i
 }
 
 ```

@@ -51,18 +51,18 @@ func (s *RpcServer) Start() error {
 
 	if s.UseTls {
 		if s.RpcCaPemFile == "" {
-			s.RpcCaPemFile = "conf/rpc-ca.pem"
+			s.RpcCaPemFile = "conf/ca.pem"
 		}
 
 		if s.RpcServerKeyFile == "" {
-			s.RpcServerKeyFile = "conf/rpc-server.key"
+			s.RpcServerKeyFile = "conf/server.key"
 		}
 
 		if s.RpcServerPemFile == "" {
-			s.RpcServerPemFile = "conf/rpc-server.pem"
+			s.RpcServerPemFile = "conf/server.pem"
 		}
 
-		cert, err := tls.LoadX509KeyPair(s.RpcServerKeyFile, s.RpcServerPemFile)
+		cert, err := tls.LoadX509KeyPair(s.RpcServerPemFile, s.RpcServerKeyFile)
 		if err != nil {
 			dlog.Crashf("Cannot load TLS certificates: [%s]", err)
 		}

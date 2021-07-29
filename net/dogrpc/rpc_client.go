@@ -47,15 +47,15 @@ func DefaultNewClient(timeout time.Duration, retryNum uint32, useTls bool) *RpcC
 
 	if useTls && r.TlsCfg == nil {
 		if r.RpcCaPemFile == "" {
-			r.RpcCaPemFile = "conf/rpc-ca.pem"
+			r.RpcCaPemFile = "conf/ca.pem"
 		}
 
 		if r.RpcClientKeyFile == "" {
-			r.RpcClientKeyFile = "conf/rpc-client.key"
+			r.RpcClientKeyFile = "conf/client.key"
 		}
 
 		if r.RpcClientPemFile == "" {
-			r.RpcClientPemFile = "conf/rpc-client.pem"
+			r.RpcClientPemFile = "conf/client.pem"
 		}
 
 		cert, err := tls.LoadX509KeyPair(r.RpcClientPemFile, r.RpcClientKeyFile)
@@ -69,7 +69,7 @@ func DefaultNewClient(timeout time.Duration, retryNum uint32, useTls bool) *RpcC
 			return nil
 		}
 
-		if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		if !certPool.AppendCertsFromPEM(ca) {
 			return nil
 		}
 
@@ -126,7 +126,7 @@ func (c *RpcClient) Connect() (*Client, error) {
 
 			if c.TlsCfg != nil {
 				cc.Dial = func(addr string) (conn io.ReadWriteCloser, err error) {
-					c, err := tls.DialWithDialer(dialer, "tcp", addr, c.TlsCfg)
+					c, err := tls.DialWithDialer(dialer, DefaultDialNetWork, addr, c.TlsCfg)
 					if err != nil {
 						return nil, err
 					}

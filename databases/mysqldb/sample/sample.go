@@ -6,8 +6,8 @@
 package main
 
 import (
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/databases/mysqldb"
-	"github.com/chuck1024/gd/dlog"
 )
 
 type TestDB struct {
@@ -22,10 +22,10 @@ type TestDB struct {
 }
 
 func main() {
-	defer dlog.Close()
+	defer gd.LogClose()
 	o := mysqldb.MysqlClient{DataBase: "test"}
 	if err := o.Start(); err != nil {
-		dlog.Error("err:%s", err)
+		gd.Error("err:%s", err)
 		return
 	}
 
@@ -33,14 +33,14 @@ func main() {
 	query := "select ? from test where id = ?"
 	data, err := o.Query((*TestDB)(nil), query, 2)
 	if err != nil {
-		dlog.Error("err:%s", err)
+		gd.Error("err:%s", err)
 		return
 	}
 	if data == nil {
-		dlog.Error("err:%s", err)
+		gd.Error("err:%s", err)
 		return
 	}
-	dlog.Debug("%v", data.(*TestDB))
+	gd.Debug("%v", data.(*TestDB))
 
 	// Add
 	insert := &TestDB{
@@ -53,7 +53,7 @@ func main() {
 
 	err = o.Add("test", insert, true)
 	if err != nil {
-		dlog.Error("%s", err)
+		gd.Error("%s", err)
 	}
 
 	// queryList
@@ -64,13 +64,13 @@ func main() {
 		product, _ := ret.(*TestDB)
 		testList = append(testList, product)
 	}
-	dlog.Debug("%v", testList[0].CardId)
+	gd.Debug("%v", testList[0].CardId)
 
 	// update
 	where := make(map[string]interface{}, 0)
 	where["id"] = 2
 	err = o.Update("test", &TestDB{Sex: "female"}, where, []string{"sex"})
 	if err != nil {
-		dlog.Error("%s", err)
+		gd.Error("%s", err)
 	}
 }

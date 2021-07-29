@@ -1,15 +1,15 @@
 /**
- * Copyright 2018 gd Author. All Rights Reserved.
+ * Copyright 2021 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 
-package dogrpc_test
+package main
 
 import (
+	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dogrpc"
-	"testing"
 )
 
 type TestReq struct {
@@ -30,20 +30,22 @@ func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) 
 	return uint32(de.RpcSuccess), "ok", nil, ret
 }
 
-func TestDogServer(t *testing.T) {
+func main() {
 	var i chan struct{}
+	defer gd.LogClose()
 	d := dogrpc.NewDogRpcServer()
 	d.Addr = 10241
+	d.UseTls = true
 	// Rpc
 	d.AddDogHandler(1024, test)
 	if err := d.DogRpcRegister(); err != nil {
-		t.Logf("DogRpcRegister occur error:%s", err)
+		gd.Error("DogRpcRegister occur error:%s", err)
 		return
 	}
 
 	err := d.Start()
 	if err != nil {
-		t.Logf("Error occurs, error = %s", err.Error())
+		gd.Error("Error occurs, error = %s", err.Error())
 		return
 	}
 	<-i

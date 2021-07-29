@@ -7,7 +7,7 @@ package main
 
 import (
 	"context"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/net/dgrpc"
 	pb "github.com/chuck1024/gd/net/dgrpc/sample/helloworld"
 	"google.golang.org/grpc"
@@ -31,7 +31,8 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func main() {
-	defer dlog.Close()
+	var i chan struct{}
+	defer gd.LogClose()
 	rc := &mockReg{
 		handler: &server{},
 	}
@@ -45,5 +46,6 @@ func main() {
 	if err != nil {
 		return
 	}
-	dlog.Debug("err:%v", err)
+	gd.Debug("err:%v", err)
+	<-i
 }

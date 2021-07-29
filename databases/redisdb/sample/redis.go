@@ -6,12 +6,12 @@
 package main
 
 import (
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/databases/redisdb"
-	"github.com/chuck1024/gd/dlog"
 )
 
 func main() {
-	defer dlog.Close()
+	defer gd.LogClose()
 	t := &redisdb.RedisConfig{
 		Addrs: []string{"127.0.0.1:6379"},
 	}
@@ -22,13 +22,13 @@ func main() {
 
 	err := o.Start()
 	if err != nil {
-		dlog.Debug("err:%s", err)
+		gd.Debug("err:%s", err)
 	}
 
 	o.Set("test", "ok")
 	v, err := o.Get("test")
 	if err != nil {
-		dlog.Debug("err:%s", err)
+		gd.Debug("err:%s", err)
 	}
-	dlog.Debug("%s", v)
+	gd.Debug("%s", v)
 }

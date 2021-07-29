@@ -7,6 +7,7 @@ package dogrpc
 
 import (
 	"bufio"
+	"crypto/tls"
 	dogError "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/dlog"
 	"io"
@@ -46,6 +47,17 @@ func (c *RpcClient) DogConnect() (*Client, error) {
 					return &DogPacketDecoder{br: bufio.NewReaderSize(r, bufferSize)}, nil
 				},
 			}
+
+			if c.TlsCfg != nil {
+				cc.Dial = func(addr string) (conn io.ReadWriteCloser, err error) {
+					c, err := tls.DialWithDialer(dialer, DefaultDialNetWork, addr, c.TlsCfg)
+					if err != nil {
+						return nil, err
+					}
+					return c, err
+				}
+			}
+
 			cc.Start()
 			c.Cm[addr.String()] = cc
 		} else {

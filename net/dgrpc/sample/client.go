@@ -8,7 +8,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd"
 	"github.com/chuck1024/gd/net/dgrpc"
 	pb "github.com/chuck1024/gd/net/dgrpc/sample/helloworld"
 	"google.golang.org/grpc"
@@ -25,6 +25,7 @@ func (s *server2) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func main() {
+	defer gd.LogClose()
 	bc := dgrpc.GrpcClient{
 		Target:      "127.0.0.1:10240",
 		ServiceName: "gd",
@@ -39,7 +40,7 @@ func main() {
 	)
 
 	if err != nil {
-		dlog.Error("grpc client start occur error:%v", err)
+		gd.Error("grpc client start occur error:%v", err)
 		return
 	}
 	defer bc.Stop()
@@ -50,5 +51,5 @@ func main() {
 	defer cancel()
 
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-	dlog.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
+	gd.Debug(fmt.Sprintf("Greeting: %s, err=%v", r, err))
 }
