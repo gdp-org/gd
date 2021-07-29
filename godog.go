@@ -6,6 +6,7 @@
 package gd
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dgrpc"
@@ -220,21 +221,49 @@ func (e *Engine) initCPUAndMemory() error {
 	return nil
 }
 
-// timeout Millisecond
-func NewRpcClient(timeout time.Duration, retryNum uint32, useTls bool) *dogrpc.RpcClient {
-	client := dogrpc.DefaultNewClient(timeout, retryNum, useTls)
+// default dog rpc client
+func NewRpcClient(timeout time.Duration, retryNum uint32) *dogrpc.RpcClient {
+	client := NewRpcClientTls(timeout, retryNum, false)
 	return client
 }
 
+func NewRpcClientTls(timeout time.Duration, retryNum uint32, useTls bool) *dogrpc.RpcClient {
+	client := NewRpcClientTlsConfig(timeout, retryNum, useTls, nil)
+	return client
+}
+
+func NewRpcClientTlsConfig(timeout time.Duration, retryNum uint32, useTls bool, cfg *tls.Config) *dogrpc.RpcClient {
+	client := NewRpcClientTlsFromFile(timeout, retryNum, useTls, cfg, "", "", "")
+	return client
+}
+
+func NewRpcClientTlsFromFile(timeout time.Duration, retryNum uint32, useTls bool, cfg *tls.Config, ca, clientKey, clientPem string) *dogrpc.RpcClient {
+	client := dogrpc.NewClient(timeout, retryNum, useTls, cfg, ca, clientKey, clientPem)
+	return client
+}
+
+// default http client
 func NewHttpClient() *dhttp.HttpClient {
 	return dhttp.New()
 }
 
-func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string, useTls bool) *dgrpc.GrpcClient {
+// default grpc client
+func NewGrpcClient(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string) *dgrpc.GrpcClient {
+	return NewGrpcClientTls(target, makeRawClient, serviceName, false)
+}
+
+func NewGrpcClientTls(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string, useTls bool) *dgrpc.GrpcClient {
+	return NewGrpcClientTlsFromFile(target, makeRawClient, serviceName, useTls, "", "", "")
+}
+
+func NewGrpcClientTlsFromFile(target string, makeRawClient func(conn *grpc.ClientConn) (interface{}, error), serviceName string, useTls bool, ca, clientKey, clientPem string) *dgrpc.GrpcClient {
 	client := &dgrpc.GrpcClient{
-		Target:      target,
-		ServiceName: serviceName,
-		UseTls:      useTls,
+		Target:            target,
+		ServiceName:       serviceName,
+		UseTls:            useTls,
+		GrpcCaPemFile:     ca,
+		GrpcClientKeyFile: clientKey,
+		GrpcClientPemFile: clientPem,
 	}
 
 	if err := client.Start(makeRawClient); err != nil {

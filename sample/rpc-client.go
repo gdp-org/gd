@@ -9,7 +9,7 @@ import (
 
 func main() {
 	defer gd.LogClose()
-	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0, false)
+	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
 	// discovery
 	var r discovery.DogDiscovery
 

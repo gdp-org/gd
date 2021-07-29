@@ -37,12 +37,16 @@ type RpcClient struct {
 	RpcClientPemFile string
 }
 
-func DefaultNewClient(timeout time.Duration, retryNum uint32, useTls bool) *RpcClient {
+func NewClient(timeout time.Duration, retryNum uint32, useTls bool, cfg *tls.Config, ca, serverKey, serverPem string) *RpcClient {
 	r := &RpcClient{
-		Cm:       make(map[string]*Client),
-		Timeout:  timeout,
-		RetryNum: retryNum,
-		localIp:  network.GetLocalIP(),
+		Cm:               make(map[string]*Client),
+		Timeout:          timeout,
+		RetryNum:         retryNum,
+		localIp:          network.GetLocalIP(),
+		TlsCfg:           cfg,
+		RpcCaPemFile:     ca,
+		RpcClientKeyFile: serverKey,
+		RpcClientPemFile: serverPem,
 	}
 
 	if useTls && r.TlsCfg == nil {

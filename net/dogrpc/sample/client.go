@@ -13,7 +13,7 @@ import (
 
 func main() {
 	defer gd.LogClose()
-	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0, true)
+	c := gd.NewRpcClientTls(time.Duration(500*time.Millisecond), 0, true)
 	c.AddAddr(network.GetLocalIP() + ":10241")
 
 	body := &struct {

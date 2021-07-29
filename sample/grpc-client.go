@@ -28,7 +28,7 @@ func main() {
 	bc := gd.NewGrpcClient("127.0.0.1:10242", func(conn *grpc.ClientConn) (interface{}, error) {
 		rawClient := pb.NewGreeterClient(conn)
 		return rawClient, nil
-	}, "gd", false)
+	}, "gd")
 	defer bc.Stop()
 
 	c := bc.GetRawClient().(pb.GreeterClient)
