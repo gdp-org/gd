@@ -375,7 +375,11 @@ func main() {
 		}
 	}
 
-	body := []byte("How are you?")
+	body := &struct {
+		Data string
+	}{
+		Data: "How are you?",
+	}
 
 	code, rsp, err := c.DogInvoke(1024, body)
 	if err != nil {
