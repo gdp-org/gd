@@ -135,5 +135,5 @@ func (s *RpcServer) dispatchPacket(clientAddr string, req Packet) (rsp Packet) {
 		Req:        req.(*RpcPacket).Body,
 	})
 
-	return NewRpcPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
+	return NewRpcPacketWithRet(packet.Cmd, body, packet.Seq, code)
 }

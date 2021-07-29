@@ -38,7 +38,7 @@ func HandlerHttpTest(c *gin.Context, req *TestReq) (code int, message string, er
 }
 
 func HandlerRpcTest(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	gd.Debug("rpc sever req:%v", req)
+	gd.Info("rpc sever req:%v", req)
 
 	ret = &TestResp{
 		Ret: "ok!!!",

@@ -50,6 +50,21 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 		} else {
 			inVal = reflect.New(inType).Elem()
 		}
+		inValInterface := inVal.Interface()
+
+		if len(req) > 0 {
+			jsonErr := json.Unmarshal(req, inValInterface)
+			if jsonErr != nil {
+				dlog.Info("wrap wrap data from json fail!bts=%s,func=%v,err=%v", string(req), toWrap, jsonErr)
+				Return(uint32(de.RpcInternalServerError),"data type not valid", jsonErr, nil)
+				return
+			}
+		} else {
+			if inType.Kind() == reflect.Ptr {
+				inVal = reflect.Zero(inType)
+				inValInterface = inVal.Interface()
+			}
+		}
 
 		in := make([]reflect.Value, wtNumIn)
 		in[0] = inVal
@@ -104,6 +119,10 @@ func Return(code uint32, message string, err error, result interface{}) (resp []
 	ret["code"] = code
 	ret["result"] = result
 	ret["message"] = message
+
+	if err != nil {
+		ret["message"] = err.Error()
+	}
 
 	resp, _ = json.Marshal(ret)
 	return

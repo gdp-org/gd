@@ -8,7 +8,6 @@ package main
 import (
 	"github.com/chuck1024/gd"
 	de "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/net/dogrpc"
 )
 
@@ -21,10 +20,10 @@ type TestResp struct {
 }
 
 func test(req *TestReq) (code uint32, message string, err error, ret *TestResp) {
-	dlog.Debug("rpc sever req:%v", req)
+	gd.Info("rpc sever req:%v", req)
 
 	ret = &TestResp{
-		Ret: "ok!!!",
+		Ret: req.Data,
 	}
 
 	return uint32(de.RpcSuccess), "ok", nil, ret

@@ -8,6 +8,7 @@ package dogrpc
 import (
 	"bufio"
 	"crypto/tls"
+	"encoding/json"
 	dogError "github.com/chuck1024/gd/derror"
 	"github.com/chuck1024/gd/dlog"
 	"io"
@@ -73,7 +74,7 @@ func (c *RpcClient) DogConnect() (*Client, error) {
 }
 
 // dog packet. Invoke rpc call
-func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code uint32, rsp []byte, err *dogError.CodeError) {
+func (c *RpcClient) DogInvoke(cmd uint32, req interface{}, client ...*Client) (code uint32, rsp []byte, err *dogError.CodeError) {
 	var ct *Client
 	if len(client) == 0 {
 		cc, err := c.DogConnect()
@@ -86,8 +87,13 @@ func (c *RpcClient) DogInvoke(cmd uint32, req []byte, client ...*Client) (code u
 		ct = client[0]
 	}
 
+	var body []byte
+	if req != nil {
+		body, _ = json.Marshal(req)
+	}
+
 	var reqPkt, rspPkt Packet
-	reqPkt = NewDogPacket(cmd, req)
+	reqPkt = NewDogPacket(cmd, body)
 	if rspPkt, err = ct.CallRetry(reqPkt, c.RetryNum); err != nil {
 		dlog.Error("Invoke CallRetry occur error:%v ", err)
 		return code, nil, err

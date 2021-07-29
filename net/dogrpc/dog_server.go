@@ -78,5 +78,5 @@ func (s *RpcServer) dogDispatchPacket(clientAddr string, req Packet) (rsp Packet
 		Req:        req.(*DogPacket).Body,
 	})
 
-	return NewDogPacketWithRet(packet.Cmd, body, packet.Seq, uint32(code))
+	return NewDogPacketWithRet(packet.Cmd, body, packet.Seq, code)
 }
