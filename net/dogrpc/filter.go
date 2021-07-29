@@ -22,7 +22,7 @@ type Filters struct {
 	Filters []Filter
 }
 
-func InitFilters(filters []Filter) {
+func Use(filters []Filter) {
 	var front Filter
 	for _, filter := range filters {
 		globalFilter.Filters = append(globalFilter.Filters, filter)
