@@ -301,12 +301,13 @@ func Register(e *gd.Engine) {
  })
 	
 	// Rpc 
+	inject.RegisterOrFail("register", &register.EtcdRegister{})
 	e.RpcServer.AddDogHandler(1024, HandlerRpcTest)
 	if err := e.RpcServer.DogRpcRegister(); err != nil {
 		gd.Error("DogRpcRegister occur error:%s", err)
 		return
 	}
-	dogrpc.InitFilters([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
+	dogrpc.Use([]dogrpc.Filter{&dogrpc.GlFilter{}, &dogrpc.LogFilter{}})
 	
 	// grpc 
 	inject.RegisterOrFail("registerHandler", &reg{handler: &server{}})
