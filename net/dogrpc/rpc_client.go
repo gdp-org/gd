@@ -88,12 +88,13 @@ func NewClient(timeout time.Duration, retryNum uint32, useTls bool, cfg *tls.Con
 }
 
 // add server address
-func (c *RpcClient) AddAddr(addr string) {
+func (c *RpcClient) AddAddr(addr string) *RpcClient {
 	if addr2, err := net.ResolveTCPAddr("tcp", addr); err != nil {
 		dlog.Error("parse addr failed, %s", err.Error())
 	} else {
 		c.addrs = append(c.addrs, addr2)
 	}
+	return c
 }
 
 // Stop stop client

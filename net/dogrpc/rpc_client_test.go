@@ -13,12 +13,9 @@ import (
 )
 
 func TestRpcClient(t *testing.T) {
-	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
-	c.AddAddr(network.GetLocalIP() + ":10241")
-
 	body := []byte("How are you?")
 
-	code, rsp, err := c.Invoke(1024, body)
+	code, rsp, err := gd.NewRpcClient(500*time.Millisecond, 0).AddAddr(network.GetLocalIP() + ":10241").Invoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}

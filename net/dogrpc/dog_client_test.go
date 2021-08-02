@@ -13,9 +13,6 @@ import (
 )
 
 func TestDogClient(t *testing.T) {
-	c := gd.NewRpcClient(time.Duration(500*time.Millisecond), 0)
-	c.AddAddr(network.GetLocalIP() + ":10241")
-
 	body := &struct {
 		Data string
 	}{
@@ -23,7 +20,7 @@ func TestDogClient(t *testing.T) {
 	}
 
 	// use gd protocol
-	code, rsp, err := c.DogInvoke(1024, body)
+	code, rsp, err := gd.NewRpcClient(500*time.Millisecond, 0).AddAddr(network.GetLocalIP() + ":10241").DogInvoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}
