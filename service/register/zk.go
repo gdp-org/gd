@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 gd Authoz. All Rights Reserved.
+ * Copyright 2018 gd Author. All Rights Reserved.
  * Author: Chuck1024
  */
 
