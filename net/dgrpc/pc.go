@@ -8,9 +8,9 @@ package dgrpc
 import (
 	"context"
 	"fmt"
-	"github.com/chuck1024/gd/runtime/gl"
-	"github.com/chuck1024/gd/runtime/pc"
-	"github.com/chuck1024/gd/utls"
+	"github.com/gdp-org/gd/runtime/gl"
+	"github.com/gdp-org/gd/runtime/pc"
+	"github.com/gdp-org/gd/utls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"time"

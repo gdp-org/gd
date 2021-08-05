@@ -11,7 +11,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/gd/utls"
+	"github.com/gdp-org/gd/utls"
 	"net"
 	"net/url"
 	"reflect"

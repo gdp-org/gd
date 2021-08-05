@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/gdp-org/gd/dlog"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"

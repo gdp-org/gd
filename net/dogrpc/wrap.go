@@ -8,8 +8,8 @@ package dogrpc
 import (
 	"encoding/json"
 	"fmt"
-	de "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/dlog"
+	de "github.com/gdp-org/gd/derror"
+	"github.com/gdp-org/gd/dlog"
 	"reflect"
 )
 

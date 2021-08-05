@@ -10,7 +10,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	log "github.com/chuck1024/gd/dlog"
+	log "github.com/gdp-org/gd/dlog"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

@@ -6,7 +6,7 @@
 package dogrpc
 
 import (
-	"github.com/chuck1024/gd/derror"
+	"github.com/gdp-org/gd/derror"
 	"time"
 )
 

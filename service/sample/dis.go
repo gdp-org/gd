@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/service/discovery"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/service/discovery"
 	"time"
 )
 

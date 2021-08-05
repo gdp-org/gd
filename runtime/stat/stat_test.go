@@ -8,8 +8,8 @@ package stat
 import (
 	"errors"
 	"fmt"
-	dogErr "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/utls"
+	dogErr "github.com/gdp-org/gd/derror"
+	"github.com/gdp-org/gd/utls"
 	"log"
 	"math/rand"
 	"testing"

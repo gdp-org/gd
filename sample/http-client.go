@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/bitly/go-simplejson"
-	"github.com/chuck1024/gd"
+	"github.com/gdp-org/gd"
 	"time"
 )
 

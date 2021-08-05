@@ -6,8 +6,8 @@
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/utls/network"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/utls/network"
 	"testing"
 	"time"
 )

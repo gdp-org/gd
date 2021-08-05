@@ -10,7 +10,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/gdp-org/gd/dlog"
 	"io/ioutil"
 	"net"
 	"strconv"

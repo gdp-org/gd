@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/service/discovery"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/service/discovery"
 	"time"
 )
 
