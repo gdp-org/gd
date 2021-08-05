@@ -9,8 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/alecthomas/log4go"
-	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/utls"
 	"time"
@@ -69,14 +68,14 @@ func StreamServerLoggerInterceptor() grpc.StreamServerInterceptor {
 
 		logDataStr, jsonErr := json.Marshal(logData)
 		if jsonErr != nil {
-			log.Warn("logData json marshal fail, error:%s", jsonErr)
+			dlog.Warn("logData json marshal fail, error:%s", jsonErr)
 			return err
 		}
 
 		if ShouldFail4Code(code) {
-			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
+			dlog.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		} else {
-			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
+			dlog.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		}
 		return err
 	}
@@ -113,13 +112,13 @@ func UnaryServerLoggerInterceptor() grpc.UnaryServerInterceptor {
 		logData["cost"] = costMs
 		logDataStr, jsonErr := json.Marshal(logData)
 		if jsonErr != nil {
-			log.Warn("logData json marshal fail, error:%s", jsonErr)
+			dlog.Warn("logData json marshal fail, error:%s", jsonErr)
 			return resp, err
 		}
 		if ShouldFail4Code(code) {
-			log.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
+			dlog.WarnT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		} else {
-			log.InfoT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
+			dlog.InfoT("SESSION", fmt.Sprintf("%s %s", info.FullMethod, logDataStr))
 		}
 		return resp, err
 	}
@@ -141,69 +140,69 @@ func SetGrpcLogger() {
 
 func (l *GrpcLogger) Info(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.INFO, logStr)
+	l.LogWithDepthAndLevel(dlog.INFO, logStr)
 }
 
 func (l *GrpcLogger) Infoln(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.INFO, logStr)
+	l.LogWithDepthAndLevel(dlog.INFO, logStr)
 }
 
 func (l *GrpcLogger) Infof(format string, args ...interface{}) {
 	logStr := fmt.Sprintf(format, args...)
-	l.LogWithDepthAndLevel(log4go.INFO, logStr)
+	l.LogWithDepthAndLevel(dlog.INFO, logStr)
 }
 
 func (l *GrpcLogger) Warning(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.WARNING, logStr)
+	l.LogWithDepthAndLevel(dlog.WARNING, logStr)
 }
 
 func (l *GrpcLogger) Warningln(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.WARNING, logStr)
+	l.LogWithDepthAndLevel(dlog.WARNING, logStr)
 }
 
 func (l *GrpcLogger) Warningf(format string, args ...interface{}) {
 	logStr := fmt.Sprintf(format, args...)
-	l.LogWithDepthAndLevel(log4go.WARNING, logStr)
+	l.LogWithDepthAndLevel(dlog.WARNING, logStr)
 }
 
 func (l *GrpcLogger) Error(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.ERROR, logStr)
+	l.LogWithDepthAndLevel(dlog.ERROR, logStr)
 }
 
 func (l *GrpcLogger) Errorln(args ...interface{}) {
 	logStr := fmt.Sprint(args...)
-	l.LogWithDepthAndLevel(log4go.ERROR, logStr)
+	l.LogWithDepthAndLevel(dlog.ERROR, logStr)
 }
 
 func (l *GrpcLogger) Errorf(format string, args ...interface{}) {
 	logStr := fmt.Sprintf(format, args...)
-	l.LogWithDepthAndLevel(log4go.ERROR, logStr)
+	l.LogWithDepthAndLevel(dlog.ERROR, logStr)
 }
 
 func (l *GrpcLogger) Fatal(args ...interface{}) {
-	log.Crash(args...)
+	dlog.Crash(args...)
 }
 
 func (l *GrpcLogger) Fatalln(args ...interface{}) {
-	log.Crash(args...)
+	dlog.Crash(args...)
 }
 
 func (l *GrpcLogger) Fatalf(format string, args ...interface{}) {
-	log.Crash(args...)
+	dlog.Crash(args...)
 }
 
 func (l *GrpcLogger) V(level int) bool {
 	switch level {
 	case infoLog:
-		return log.IsEnabledFor(log.INFO)
+		return dlog.IsEnabledFor(dlog.INFO)
 	case warningLog:
-		return log.IsEnabledFor(log.WARNING)
+		return dlog.IsEnabledFor(dlog.WARNING)
 	case errorLog:
-		return log.IsEnabledFor(log.ERROR)
+		return dlog.IsEnabledFor(dlog.ERROR)
 	case fatalLog:
 		return true
 	default:
@@ -211,16 +210,16 @@ func (l *GrpcLogger) V(level int) bool {
 	}
 }
 
-func (l *GrpcLogger) LogWithDepthAndLevel(level log4go.Level, args ...interface{}) {
+func (l *GrpcLogger) LogWithDepthAndLevel(level dlog.Level, args ...interface{}) {
 	if len(args) == 0 {
 		return
 	}
 	url, ip, logId := batchGetCtx()
 	first := utls.MustString(args[0], "")
 	if len(args) > 1 {
-		log.Global.IntLogfTagUrl(LogTag, ip, logId, url, log.Level(level), first, args[1:]...)
+		dlog.Global.IntLogfTagUrl(LogTag, ip, logId, url, level, first, args[1:]...)
 	} else {
-		log.Global.IntLogfTagUrl(LogTag, ip, logId, url, log.Level(level), first)
+		dlog.Global.IntLogfTagUrl(LogTag, ip, logId, url, level, first)
 	}
 }
 

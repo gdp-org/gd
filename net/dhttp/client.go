@@ -23,14 +23,17 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/gl"
 	"github.com/chuck1024/gd/runtime/pc"
 	"github.com/chuck1024/gd/utls"
+	"golang.org/x/net/publicsuffix"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"moul.io/http2curl"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
@@ -42,10 +45,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
-	"golang.org/x/net/publicsuffix"
-	"moul.io/http2curl"
 )
 
 type Request *http.Request
