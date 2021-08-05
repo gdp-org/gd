@@ -1,4 +1,4 @@
-module github.com/chuck1024/gd
+module github.com/gdp-org/gd
 
 go 1.15
 
