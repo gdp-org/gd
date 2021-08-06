@@ -180,7 +180,7 @@ func (e *Engine) Run() error {
 		inject.RegisterOrFail("rpcServer", e.RpcServer)
 	}
 
-	<-Running
+	<-running
 	return nil
 }
 
