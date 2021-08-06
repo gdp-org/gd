@@ -6,6 +6,7 @@
 package redisdb
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
@@ -15,7 +16,7 @@ import (
 	"github.com/gdp-org/gd/runtime/gr"
 	"github.com/gdp-org/gd/runtime/pc"
 	"github.com/gdp-org/gd/utls"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"gopkg.in/ini.v1"
 	"io"
 	"strings"
@@ -209,7 +210,7 @@ func (r *RedisClusterClient) newRedisCluster(clusterConf *RedisClusterConf) erro
 
 	clusterClient := redis.NewClusterClient(clusterOptions)
 
-	_, err := clusterClient.Ping().Result()
+	_, err := clusterClient.Ping(context.TODO()).Result()
 	if err != nil {
 		log.Error("init cluster client fail, %v", err)
 	}
@@ -355,7 +356,7 @@ func (r *RedisClusterClient) Get(key string) (string, error) {
 		reportPerf(r.redisCluster.clusterName, "Get", st, err, key)
 	}()
 
-	ret, err := clusterClient.Get(key).Result()
+	ret, err := clusterClient.Get(context.TODO(), key).Result()
 	if err == redis.Nil {
 		return "", ErrNil
 	}
@@ -381,7 +382,7 @@ func (r *RedisClusterClient) Set(key string, value string, expire time.Duration)
 		reportPerf(r.redisCluster.clusterName, "Set", st, err, key)
 	}()
 
-	ret, err := clusterClient.Set(key, value, expire).Result()
+	ret, err := clusterClient.Set(context.TODO(), key, value, expire).Result()
 	return ret, err
 }
 
@@ -404,7 +405,7 @@ func (r *RedisClusterClient) SetNX(key string, value string, expire time.Duratio
 		reportPerf(r.redisCluster.clusterName, "SetNX", st, err, key)
 	}()
 
-	isNew, err := clusterClient.SetNX(key, value, expire).Result()
+	isNew, err := clusterClient.SetNX(context.TODO(), key, value, expire).Result()
 	return isNew, err
 }
 
@@ -425,7 +426,7 @@ func (r *RedisClusterClient) Del(key string) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "Del", st, err, key)
 	}()
 
-	ret, err := clusterClient.Del(key).Result()
+	ret, err := clusterClient.Del(context.TODO(), key).Result()
 	return ret, err
 }
 
@@ -459,9 +460,9 @@ func (r *RedisClusterClient) MGet(keys []string) ([]interface{}, error) {
 	pipeline := clusterClient.Pipeline()
 	defer pipeline.Close()
 	for _, k := range keys {
-		pipeline.Get(k)
+		pipeline.Get(context.TODO(), k)
 	}
-	cmds, err := pipeline.Exec()
+	cmds, err := pipeline.Exec(context.TODO())
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
@@ -541,9 +542,9 @@ func (r *RedisClusterClient) MGet2(keys []string) ([]interface{}, error) {
 			defer wg.Done()
 			pipeline := clusterClient.Pipeline()
 			for _, keyItem := range keysItemTmp {
-				pipeline.Get(keyItem)
+				pipeline.Get(context.TODO(), keyItem)
 			}
-			cmds, err := pipeline.Exec()
+			cmds, err := pipeline.Exec(context.TODO())
 			if err != nil && err != redis.Nil {
 				lock.Lock()
 				errMsg = append(errMsg, err)
@@ -611,9 +612,9 @@ func (r *RedisClusterClient) MSet(kvs map[string]string, expire time.Duration) (
 	defer pipeline.Close()
 	for k, v := range kvs {
 		keys = append(keys, k)
-		pipeline.Set(k, v, expire)
+		pipeline.Set(context.TODO(), k, v, expire)
 	}
-	cmds, err := pipeline.Exec()
+	cmds, err := pipeline.Exec(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -692,9 +693,9 @@ func (r *RedisClusterClient) MSet2(kvs map[string]string, expire time.Duration) 
 			defer wg.Done()
 			pipeline := clusterClient.Pipeline()
 			for _, keyItem := range keysItemTmp {
-				pipeline.Set(keyItem, kvs[keyItem], expire)
+				pipeline.Set(context.TODO(), keyItem, kvs[keyItem], expire)
 			}
-			cmds, err := pipeline.Exec()
+			cmds, err := pipeline.Exec(context.TODO())
 			if err != nil {
 				lock.Lock()
 				errMsg = append(errMsg, err)
@@ -760,9 +761,9 @@ func (r *RedisClusterClient) MDel(keys []string) (map[string]bool, error) {
 	pipeline := clusterClient.Pipeline()
 	defer pipeline.Close()
 	for _, k := range keys {
-		pipeline.Del(k)
+		pipeline.Del(context.TODO(), k)
 	}
-	cmds, err := pipeline.Exec()
+	cmds, err := pipeline.Exec(context.TODO())
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
@@ -833,9 +834,9 @@ func (r *RedisClusterClient) MDel2(keys []string) (map[string]bool, error) {
 			defer wg.Done()
 			pipeline := clusterClient.Pipeline()
 			for _, keyItem := range keysItemTmp {
-				pipeline.Del(keyItem)
+				pipeline.Del(context.TODO(), keyItem)
 			}
-			cmds, err := pipeline.Exec()
+			cmds, err := pipeline.Exec(context.TODO())
 			if err != nil {
 				lock.Lock()
 				errMsg = append(errMsg, err)
@@ -904,7 +905,7 @@ func (r *RedisClusterClient) HGet(key string, field string) (string, error) {
 		reportPerf(r.redisCluster.clusterName, "HGet", st, err, key)
 	}()
 
-	ret, err := clusterClient.HGet(key, field).Result()
+	ret, err := clusterClient.HGet(context.TODO(), key, field).Result()
 	if err == redis.Nil {
 		return "", ErrNil
 	}
@@ -941,7 +942,7 @@ func (r *RedisClusterClient) HMGet(key string, fields []string) ([]interface{}, 
 		return make([]interface{}, 0), nil
 	}
 
-	ret, err := clusterClient.HMGet(key, fields...).Result()
+	ret, err := clusterClient.HMGet(context.TODO(), key, fields...).Result()
 	return ret, err
 }
 
@@ -966,7 +967,7 @@ func (r *RedisClusterClient) HScan(key string, count int64) (map[string]string, 
 		reportPerf(r.redisCluster.clusterName, "HScan", st, err, key)
 	}()
 
-	ret, _, err := clusterClient.HScan(key, 0, "", count).Result()
+	ret, _, err := clusterClient.HScan(context.TODO(), key, 0, "", count).Result()
 	if len(ret)%2 != 0 {
 		return nil, fmt.Errorf("hscan return invalid")
 	}
@@ -994,19 +995,19 @@ func (r *RedisClusterClient) HGetAll(key string) (map[string]string, error) {
 		reportPerf(r.redisCluster.clusterName, "HGetAll", st, err, key)
 	}()
 
-	ret, err := clusterClient.HGetAll(key).Result()
+	ret, err := clusterClient.HGetAll(context.TODO(), key).Result()
 	return ret, err
 }
 
 /**
 1. 若异常, 返回 (false, error)
-2. 若正常, 返回 (bool, nil), 其中true: field在hash中不存在且新增成功; false: field已在hash中存在且更新成功.
+2. 若正常, 返回 (int64, nil)
 */
-func (r *RedisClusterClient) HSet(key string, field string, value string) (bool, error) {
+func (r *RedisClusterClient) HSet(key string, field string, value string) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
-		return false, RedisClusterCustomError("redis cluster not init")
+		return 0, RedisClusterCustomError("redis cluster not init")
 	}
 
 	var err error
@@ -1015,7 +1016,7 @@ func (r *RedisClusterClient) HSet(key string, field string, value string) (bool,
 		reportPerf(r.redisCluster.clusterName, "HSet", st, err, key)
 	}()
 
-	ret, err := clusterClient.HSet(key, field, value).Result()
+	ret, err := clusterClient.HSet(context.TODO(), key, field, value).Result()
 	return ret, err
 }
 
@@ -1036,7 +1037,7 @@ func (r *RedisClusterClient) HSetNx(key string, field string, value string) (boo
 		reportPerf(r.redisCluster.clusterName, "HSetNx", st, err, key)
 	}()
 
-	ret, err := clusterClient.HSetNX(key, field, value).Result()
+	ret, err := clusterClient.HSetNX(context.TODO(), key, field, value).Result()
 	return ret, err
 }
 
@@ -1066,7 +1067,7 @@ func (r *RedisClusterClient) HMSet(key string, fields map[string]string) (bool, 
 		tmpFields[fieldName] = fieldValue
 	}
 
-	_, err = clusterClient.HMSet(key, tmpFields).Result()
+	_, err = clusterClient.HMSet(context.TODO(), key, tmpFields).Result()
 	if err != nil {
 		return false, err
 	} else {
@@ -1092,7 +1093,7 @@ func (r *RedisClusterClient) HMDel(key string, fields []string) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "HMDel", st, err, key)
 	}()
 
-	return clusterClient.HDel(key, fields...).Result()
+	return clusterClient.HDel(context.TODO(), key, fields...).Result()
 }
 
 /**
@@ -1113,7 +1114,7 @@ func (r *RedisClusterClient) Expire(key string, expiration time.Duration) (bool,
 		reportPerf(r.redisCluster.clusterName, "Expire", st, err, key)
 	}()
 
-	return clusterClient.Expire(key, expiration).Result()
+	return clusterClient.Expire(context.TODO(), key, expiration).Result()
 }
 
 /**
@@ -1134,7 +1135,7 @@ func (r *RedisClusterClient) PExpire(key string, expiration time.Duration) (bool
 		reportPerf(r.redisCluster.clusterName, "PExpire", st, err, key)
 	}()
 
-	return clusterClient.PExpire(key, expiration).Result()
+	return clusterClient.PExpire(context.TODO(), key, expiration).Result()
 }
 
 /**
@@ -1155,7 +1156,7 @@ func (r *RedisClusterClient) PTtl(key string) (time.Duration, error) {
 		reportPerf(r.redisCluster.clusterName, "PTtl", st, err, key)
 	}()
 
-	return clusterClient.PTTL(key).Result()
+	return clusterClient.PTTL(context.TODO(), key).Result()
 }
 
 /**
@@ -1175,7 +1176,7 @@ func (r *RedisClusterClient) HIncrBy(key string, field string, value int64) (int
 		reportPerf(r.redisCluster.clusterName, "HIncrBy", st, err, key)
 	}()
 
-	ret, err := clusterClient.HIncrBy(key, field, value).Result()
+	ret, err := clusterClient.HIncrBy(context.TODO(), key, field, value).Result()
 	return ret, err
 }
 
@@ -1192,7 +1193,7 @@ func (r *RedisClusterClient) IncrBy(key string, value int64) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "IncrBy", st, err, key)
 	}()
 
-	ret, err := clusterClient.IncrBy(key, value).Result()
+	ret, err := clusterClient.IncrBy(context.TODO(), key, value).Result()
 	return ret, err
 }
 
@@ -1216,7 +1217,7 @@ func (r *RedisClusterClient) Eval(script string, keys []string, args []interface
 		reportPerf(r.redisCluster.clusterName, "Eval", st, err, keys)
 	}()
 
-	ret, err = clusterClient.Eval(script, keys, args...).Result()
+	ret, err = clusterClient.Eval(context.TODO(), script, keys, args...).Result()
 	return ret, err
 }
 
@@ -1233,7 +1234,7 @@ func (r *RedisClusterClient) EvalSha(scriptSha string, keys []string, args []int
 		reportPerf(r.redisCluster.clusterName, "IncrBy", st, err, keys)
 	}()
 
-	ret, err := clusterClient.EvalSha(scriptSha, keys, args...).Result()
+	ret, err := clusterClient.EvalSha(context.TODO(), scriptSha, keys, args...).Result()
 	return ret, err
 }
 
@@ -1243,7 +1244,7 @@ func getScriptSha(script string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func (r *RedisClusterClient) ZAdd(key string, members []redis.Z) (int64, error) {
+func (r *RedisClusterClient) ZAdd(key string, members []*redis.Z) (int64, error) {
 	clusterClient := r.getClusterClient()
 
 	if clusterClient == nil {
@@ -1256,7 +1257,7 @@ func (r *RedisClusterClient) ZAdd(key string, members []redis.Z) (int64, error) 
 		reportPerf(r.redisCluster.clusterName, "ZAdd", st, err, key)
 	}()
 
-	return clusterClient.ZAdd(key, members...).Result()
+	return clusterClient.ZAdd(context.TODO(), key, members...).Result()
 }
 
 type ZSetResult struct {
@@ -1277,13 +1278,13 @@ func (r *RedisClusterClient) ZRangeByScoreWithScores(key string, min, max string
 		reportPerf(r.redisCluster.clusterName, "ZRangeByScoreWithScores", st, err, key)
 	}()
 
-	opt := redis.ZRangeBy{
+	opt := &redis.ZRangeBy{
 		Count:  limit,
 		Max:    max,
 		Min:    min,
 		Offset: offset,
 	}
-	result, err := clusterClient.ZRangeByScoreWithScores(key, opt).Result()
+	result, err := clusterClient.ZRangeByScoreWithScores(context.TODO(), key, opt).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -1310,14 +1311,14 @@ func (r *RedisClusterClient) ZRevRangeByScoreWithScores(key string, min, max str
 		reportPerf(r.redisCluster.clusterName, "ZRevRangeByScoreWithScores", st, err, key)
 	}()
 
-	opt := redis.ZRangeBy{
+	opt := &redis.ZRangeBy{
 		Count:  limit,
 		Max:    max,
 		Min:    min,
 		Offset: offset,
 	}
 	log.Debug("ZRevRangeByScoreWithScores key=%v,opt=%v", key, opt)
-	result, err := clusterClient.ZRevRangeByScoreWithScores(key, opt).Result()
+	result, err := clusterClient.ZRevRangeByScoreWithScores(context.TODO(), key, opt).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -1344,7 +1345,7 @@ func (r *RedisClusterClient) ZRange(key string, start, stop int64) ([]string, er
 		reportPerf(r.redisCluster.clusterName, "ZRange", st, err, key)
 	}()
 
-	return clusterClient.ZRange(key, start, stop).Result()
+	return clusterClient.ZRange(context.TODO(), key, start, stop).Result()
 }
 
 func (r *RedisClusterClient) ZRemRangeByRank(key string, start, stop int64) (int64, error) {
@@ -1360,7 +1361,7 @@ func (r *RedisClusterClient) ZRemRangeByRank(key string, start, stop int64) (int
 		reportPerf(r.redisCluster.clusterName, "ZRemRangeByRank", st, err, key)
 	}()
 
-	return clusterClient.ZRemRangeByRank(key, start, stop).Result()
+	return clusterClient.ZRemRangeByRank(context.TODO(), key, start, stop).Result()
 }
 
 func (r *RedisClusterClient) ZRemRangeByScore(key string, min, max string) (int64, error) {
@@ -1375,7 +1376,7 @@ func (r *RedisClusterClient) ZRemRangeByScore(key string, min, max string) (int6
 		reportPerf(r.redisCluster.clusterName, "ZRemRangeByScore", st, err, key)
 	}()
 
-	return clusterClient.ZRemRangeByScore(key, min, max).Result()
+	return clusterClient.ZRemRangeByScore(context.TODO(), key, min, max).Result()
 }
 
 func (r *RedisClusterClient) ZRem(key string, members ...interface{}) (int64, error) {
@@ -1391,7 +1392,7 @@ func (r *RedisClusterClient) ZRem(key string, members ...interface{}) (int64, er
 		reportPerf(r.redisCluster.clusterName, "ZRem", st, err, key)
 	}()
 
-	return clusterClient.ZRem(key, members...).Result()
+	return clusterClient.ZRem(context.TODO(), key, members...).Result()
 }
 
 func (r *RedisClusterClient) ZRevRange(key string, start, stop int64) ([]string, error) {
@@ -1407,7 +1408,7 @@ func (r *RedisClusterClient) ZRevRange(key string, start, stop int64) ([]string,
 		reportPerf(r.redisCluster.clusterName, "ZRevRange", st, err, key)
 	}()
 
-	return clusterClient.ZRevRange(key, start, stop).Result()
+	return clusterClient.ZRevRange(context.TODO(), key, start, stop).Result()
 }
 
 func (r *RedisClusterClient) SetBit(key string, offset int64, value int) (int64, error) {
@@ -1423,7 +1424,7 @@ func (r *RedisClusterClient) SetBit(key string, offset int64, value int) (int64,
 		reportPerf(r.redisCluster.clusterName, "SetBit", st, err, key)
 	}()
 
-	return clusterClient.SetBit(key, offset, value).Result()
+	return clusterClient.SetBit(context.TODO(), key, offset, value).Result()
 }
 
 func (r *RedisClusterClient) Exist(key string) (bool, error) {
@@ -1441,7 +1442,7 @@ func (r *RedisClusterClient) Exist(key string) (bool, error) {
 
 	var ret bool
 	var existRet int64
-	existRet, err = clusterClient.Exists(key).Result()
+	existRet, err = clusterClient.Exists(context.TODO(), key).Result()
 	if err != nil {
 		ret = false
 	} else if existRet > 0 {
@@ -1465,7 +1466,7 @@ func (r *RedisClusterClient) SAdd(key string, members []interface{}) (int64, err
 		reportPerf(r.redisCluster.clusterName, "SAdd", st, err, key)
 	}()
 
-	return clusterClient.SAdd(key, members...).Result()
+	return clusterClient.SAdd(context.TODO(), key, members...).Result()
 
 }
 
@@ -1481,7 +1482,7 @@ func (r *RedisClusterClient) SPop(key string) (string, error) {
 		reportPerf(r.redisCluster.clusterName, "SPop", st, err, key)
 	}()
 
-	return clusterClient.SPop(key).Result()
+	return clusterClient.SPop(context.TODO(), key).Result()
 }
 
 func (r *RedisClusterClient) LPop(key string) (string, error) {
@@ -1496,7 +1497,7 @@ func (r *RedisClusterClient) LPop(key string) (string, error) {
 		reportPerf(r.redisCluster.clusterName, "LPop", st, err, key)
 	}()
 
-	return clusterClient.LPop(key).Result()
+	return clusterClient.LPop(context.TODO(), key).Result()
 }
 
 func (r *RedisClusterClient) LIndex(key string, index int64) (string, error) {
@@ -1511,7 +1512,7 @@ func (r *RedisClusterClient) LIndex(key string, index int64) (string, error) {
 		reportPerf(r.redisCluster.clusterName, "LIndex", st, err, key)
 	}()
 
-	return clusterClient.LIndex(key, index).Result()
+	return clusterClient.LIndex(context.TODO(), key, index).Result()
 }
 
 func (r *RedisClusterClient) LPush(key string, value string) (int64, error) {
@@ -1526,7 +1527,7 @@ func (r *RedisClusterClient) LPush(key string, value string) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "LPush", st, err, key)
 	}()
 
-	return clusterClient.LPush(key, value).Result()
+	return clusterClient.LPush(context.TODO(), key, value).Result()
 }
 
 func (r *RedisClusterClient) RPush(key string, value string) (int64, error) {
@@ -1541,7 +1542,7 @@ func (r *RedisClusterClient) RPush(key string, value string) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "RPush", st, err, key)
 	}()
 
-	return clusterClient.RPush(key, value).Result()
+	return clusterClient.RPush(context.TODO(), key, value).Result()
 }
 
 func (r *RedisClusterClient) HLen(key string) (int64, error) {
@@ -1557,5 +1558,5 @@ func (r *RedisClusterClient) HLen(key string) (int64, error) {
 		reportPerf(r.redisCluster.clusterName, "HLen", st, err, key)
 	}()
 
-	return clusterClient.HLen(key).Result()
+	return clusterClient.HLen(context.TODO(), key).Result()
 }

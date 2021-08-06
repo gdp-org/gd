@@ -9,11 +9,10 @@ require (
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-errors/errors v1.1.1
-	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/go-redis/redis/v8 v8.11.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
