@@ -14,7 +14,7 @@ in Chinese, which is very cute.
 
 ```
 author: Chuck1024
-email : cc_9527@126.com
+email : chuck.ch1024@gmail.com
 ```
 
 ---
