@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-errors/errors v1.1.1
 	github.com/go-redis/redis/v8 v8.11.1
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
