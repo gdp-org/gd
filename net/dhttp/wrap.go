@@ -68,6 +68,7 @@ func Wrap(toWrap interface{}) gin.HandlerFunc {
 		dataBtsObj, ok := c.Get(DataRaw)
 		if !ok {
 			if c.Request.Method == "GET" {
+				// TODO fix
 				c.Bind(inValInterface)
 				c.Set(Data, inValInterface)
 			} else {
