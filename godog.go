@@ -140,9 +140,14 @@ func (e *Engine) Run() error {
 
 	// http server
 	httpPort := Config("Server", "httpPort").MustInt()
+	httpAddr := Config("Server", "httpAddr").MustString("")
 	if httpPort > 0 {
 		Info("http server try listen port:%d", httpPort)
-		inject.RegisterOrFail("httpServerRunHost", httpPort)
+		inject.RegisterOrFail("httpServerRunPort", httpPort)
+		if httpAddr != "" {
+			Info("http server try listen addr:%d", httpAddr)
+			inject.RegisterOrFail("httpServerRunAddr", httpAddr)
+		}
 		inject.RegisterOrFail("httpServer", e.HttpServer)
 
 		if falconEnable {

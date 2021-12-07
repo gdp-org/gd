@@ -28,7 +28,8 @@ type HttpServer struct {
 	HttpServerShutdownTimeout int64          `inject:"httpServerShutdownTimeout" canNil:"true"`
 	HttpServerReadTimeout     int64          `inject:"httpServerReadTimeout" canNil:"true"`
 	HttpServerWriteTimeout    int64          `inject:"httpServerWriteTimeout" canNil:"true"`
-	HttpServerRunHost         int            `inject:"httpServerRunHost"`
+	HttpServerRunAddr         string         `inject:"httpServerRunAddr" canNil:"true"`
+	HttpServerRunPort         int            `inject:"httpServerRunPort"`
 	HttpServerInit            HttpServerInit `inject:"httpServerInit"`
 
 	HandlerMap map[string]interface{}
@@ -39,10 +40,10 @@ func (h *HttpServer) Start() error {
 		dlog.Info("http server start http server with:shutdownTimeout=%d,readTimeout=%d,writeTimeout=%d", h.HttpServerShutdownTimeout, h.HttpServerReadTimeout, h.HttpServerWriteTimeout)
 	}()
 
-	if h.UseHttps {if h.HttpsCertFile == "" || h.HttpsKeyFile == "" {
-		return errors.New("https cert file or key file not set")
-	}
-
+	if h.UseHttps {
+		if h.HttpsCertFile == "" || h.HttpsKeyFile == "" {
+			return errors.New("https cert file or key file not set")
+		}
 	}
 
 	if h.HttpServerReadTimeout <= 0 {
@@ -80,16 +81,16 @@ func (h *HttpServer) Start() error {
 
 func (h *HttpServer) Close() {
 	if h.server == nil {
-		dlog.Info("not graceful http server shutdown %d", h.HttpServerRunHost)
+		dlog.Info("not graceful http server shutdown %d", h.HttpServerRunPort)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.HttpServerShutdownTimeout)*time.Second)
 	defer cancel()
 	if err := h.server.Shutdown(ctx); err != nil {
-		dlog.Error("http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunHost, h.HttpServerShutdownTimeout, err)
+		dlog.Error("http server shutdown fail,host=%s,timeout=%d,err=%v", h.HttpServerRunPort, h.HttpServerShutdownTimeout, err)
 	} else {
-		dlog.Info("http server shutdown %d", h.HttpServerRunHost)
+		dlog.Info("http server shutdown %d", h.HttpServerRunPort)
 	}
 }
 
@@ -116,11 +117,16 @@ func (h *HttpServer) makeHttpServer() error {
 	}
 
 	s := &http.Server{
-		Addr:         fmt.Sprintf(":%d", h.HttpServerRunHost),
+		Addr:         fmt.Sprintf(":%d", h.HttpServerRunPort),
 		Handler:      h.g,
 		ReadTimeout:  time.Duration(h.HttpServerReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(h.HttpServerWriteTimeout) * time.Second,
 	}
+
+	if len(h.HttpServerRunAddr) > 0 {
+		s.Addr = fmt.Sprintf("%s:%d", h.HttpServerRunAddr, h.HttpServerRunPort)
+	}
+
 	h.server = s
 	return nil
 }
