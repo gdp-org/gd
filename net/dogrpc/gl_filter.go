@@ -6,7 +6,7 @@
 package dogrpc
 
 import (
-	"github.com/gdp-org/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gl"
 	"strconv"
 	"time"
 )

@@ -7,7 +7,7 @@ package gd
 
 import (
 	"fmt"
-	"github.com/gdp-org/gd/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"os"
 	"path/filepath"
 	"strings"

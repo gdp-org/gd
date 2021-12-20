@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/gdp-org/gd/dlog"
-	"github.com/gdp-org/gd/service/register"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/service/register"
 )
 
 func etcd(){

@@ -6,9 +6,9 @@
 package dogrpc_test
 
 import (
-	de "github.com/gdp-org/gd/derror"
-	"github.com/gdp-org/gd/dlog"
-	"github.com/gdp-org/gd/net/dogrpc"
+	de "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/net/dogrpc"
 	"testing"
 )
 

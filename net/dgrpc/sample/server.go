@@ -7,9 +7,9 @@ package main
 
 import (
 	"context"
-	"github.com/gdp-org/gd"
-	"github.com/gdp-org/gd/net/dgrpc"
-	pb "github.com/gdp-org/gd/net/dgrpc/sample/helloworld"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/net/dgrpc"
+	pb "github.com/chuck1024/gd/net/dgrpc/sample/helloworld"
 	"google.golang.org/grpc"
 )
 

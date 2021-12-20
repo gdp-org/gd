@@ -8,9 +8,9 @@ package stat
 import (
 	"bytes"
 	"fmt"
-	dogErr "github.com/gdp-org/gd/derror"
-	"github.com/gdp-org/gd/dlog"
-	"github.com/gdp-org/gd/utls"
+	dogErr "github.com/chuck1024/gd/derror"
+	"github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/utls"
 	"math"
 	"os"
 	"sort"
