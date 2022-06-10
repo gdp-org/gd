@@ -9,15 +9,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gitee.com/chunanyong/dm"
+	"github.com/chuck1024/gd"
 	log "github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/pc"
 	"gopkg.in/ini.v1"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	_ "gitee.com/chunanyong/dm"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -38,6 +42,8 @@ type MysqlClient struct {
 
 	startOnce sync.Once
 	closeOnce sync.Once
+
+	DbType string
 }
 
 func (c *MysqlClient) Start() error {
@@ -100,10 +106,16 @@ func (c *MysqlClient) getWriteDbsArray() []*DbWrap {
 	return c.dbWrite
 }
 
-func getHostFromConnStr(connStr string) (string, error) {
-	//mysql:"%s:%s@tcp(%s:%s)/%s?timeout=%s"
-	fi := strings.Index(connStr, "@") + 5
-	ei := strings.Index(connStr, "/") - 1
+func getHostFromConnStr(connStr string, dbType string) (string, error) {
+	// dm: dm://SYSDBA:SYSDBA@172.18.35.112:5236?
+	// mysql:"%s:%s@tcp(%s:%s)/%s?timeout=%s"
+	var fi, ei int
+	fi = strings.Index(connStr, "@") + 5
+	ei = strings.Index(connStr, "/") - 1
+	if dbType == "dm" {
+		ei = strings.LastIndex(connStr, "?")
+		fi = strings.Index(connStr, "@") + 1
+	}
 	if fi <= 0 || ei <= 0 || ei <= fi {
 		err := fmt.Errorf("not find host in db conn str:%s,fi=%d,ei=%d", connStr, fi, ei)
 		return "", err
@@ -118,7 +130,7 @@ func getHostFromConnStr(connStr string) (string, error) {
 	return host, nil
 }
 
-func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []string, maxOpen int, maxIdle int, glSuffix string, timeout time.Duration, masterProxy, slaveProxy bool) error {
+func (c *MysqlClient) initMainDbsMaxOpen(connMasters, connSlaves []string, maxOpen, maxIdle int, glSuffix, dbType string, timeout time.Duration, masterProxy, slaveProxy bool) error {
 	log.Debug("open master=%v,slave=%v", connMasters, connSlaves)
 	if len(connMasters) <= 0 {
 		return fmt.Errorf("masters empty,master=%v,slave=%v", connMasters, connSlaves)
@@ -126,13 +138,13 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 
 	var dbWrites []*DbWrap
 	for _, connMaster := range connMasters {
-		db, err := sql.Open("mysql", connMaster)
+		db, err := sql.Open(dbType, connMaster)
 		if err != nil {
 			return err
 		}
 		db.SetMaxOpenConns(maxOpen)
 		db.SetMaxIdleConns(maxIdle)
-		hst, err := getHostFromConnStr(connMaster)
+		hst, err := getHostFromConnStr(connMaster, dbType)
 		if err != nil {
 			return err
 		}
@@ -150,11 +162,11 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 
 	dbRead := make([]*DbWrap, len(connSlaves))
 	for idx, rs := range connSlaves {
-		d, err := sql.Open("mysql", rs)
+		d, err := sql.Open(dbType, rs)
 		if err != nil {
 			return err
 		}
-		hst, err := getHostFromConnStr(rs)
+		hst, err := getHostFromConnStr(rs, dbType)
 		if err != nil {
 			return err
 		}
@@ -164,7 +176,7 @@ func (c *MysqlClient) initMainDbsMaxOpen(connMasters []string, connSlaves []stri
 		dbr.glSuffix = glSuffix
 		dbRead[idx] = dbr
 	}
-	c.dbRead = dbRead
+	c.dbRead = dbWrites
 
 	return nil
 }
@@ -198,7 +210,7 @@ func (c *MysqlClient) GetCount(query string, args ...interface{}) (int64, error)
 		return 0, err
 	}
 
-	err = row.Scan(&total)
+	err = row.Scan(nil, &total)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, nil
@@ -296,6 +308,40 @@ func (c *MysqlClient) queryRow(query string, args ...interface{}) (*Row, error) 
 	return nil, fmt.Errorf("no available db,lastErr=%v", err)
 }
 
+// IsExistTable 支持dm和mysql下判断表是否存在
+func (c *MysqlClient) IsExistTable(tableName string) (bool, error) {
+	type TableName struct {
+		TableName string `json:"table_name" mysqlField:"TABLE_NAME"`
+	}
+	db := c.DataBase
+	if c.DbType == "dm" {
+		ret, err := c.Query((*TableName)(nil), fmt.Sprintf("select SEGMENT_NAME AS TABLE_NAME  from dba_segments where dba_segments.OWNER='%s' and SEGMENT_NAME='%s';", db, tableName))
+		if err != nil {
+			gd.Error("IsExistTable dm query occur error:%v", err)
+			return false, err
+		}
+
+		if ret == nil {
+			gd.Info("IsExistTable dm Query is nil")
+			return false, nil
+		}
+
+		return ret.(*TableName).TableName == tableName, nil
+	} else {
+		ret, err := c.Query((*TableName)(nil), fmt.Sprintf("select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA = '%s' and  TABLE_NAME ='%s';", db, tableName))
+		if err != nil {
+			gd.Error("IsExistTable mysql query occur error:%v", err)
+			return false, err
+		}
+
+		if ret == nil {
+			gd.Info("IsExistTable mysql Query is nil")
+			return false, nil
+		}
+		return ret.(*TableName).TableName == tableName, nil
+	}
+}
+
 // no data return nil,nil
 func (c *MysqlClient) Query(dataType interface{}, query string, args ...interface{}) (interface{}, error) {
 	fieldNames, err := GetDataStructFields(dataType)
@@ -305,19 +351,20 @@ func (c *MysqlClient) Query(dataType interface{}, query string, args ...interfac
 
 	typeOf := reflect.TypeOf(dataType).Elem()
 	dataObj := reflect.New(typeOf).Interface()
-	dests, err := GetDataStructDests(dataObj)
+	dests, indexMap, err := GetDataStructDests(dataObj, c.DbType)
 	if err != nil {
 		return nil, err
 	}
-
 	query = strings.Replace(query, "?", strings.Join(fieldNames, ","), 1)
+	if c.DbType == "dm" {
+		query = strings.Replace(query, "`", "", -1)
+	}
 
 	row, err := c.queryRow(query, args...)
 	if err != nil {
 		return nil, err
 	}
-
-	err = row.Scan(dests...)
+	err = row.Scan(indexMap, dests...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -335,6 +382,10 @@ func (c *MysqlClient) QueryList(dataType interface{}, query string, args ...inte
 
 	query = strings.Replace(query, "?", strings.Join(fieldNames, ","), 1)
 
+	if c.DbType == "dm" {
+		query = strings.Replace(query, "`", "", -1)
+	}
+
 	rows, err := c.queryList(query, args...)
 	if err != nil {
 		return nil, err
@@ -345,12 +396,51 @@ func (c *MysqlClient) QueryList(dataType interface{}, query string, args ...inte
 	for rows.Next() {
 		typeOf := reflect.TypeOf(dataType).Elem()
 		dataObj := reflect.New(typeOf).Interface()
-		dests, err := GetDataStructDests(dataObj)
+		dests, indexMap, err := GetDataStructDests(dataObj, c.DbType)
 		if err != nil {
 			return nil, err
 		}
-		if err = rows.Scan(dests...); err != nil {
+		var tempScan []interface{}
+		for i, dp := range dests {
+			if indexMap == nil {
+				tempScan = append(tempScan, dp)
+			} else {
+				if _, ok := indexMap[i]; ok {
+					tempScan = append(tempScan, &dm.DmClob{})
+				} else {
+					tempScan = append(tempScan, dp)
+				}
+			}
+		}
+
+		if err = rows.Scan(tempScan...); err != nil {
 			return nil, err
+		}
+		// add value from tempDest to dest
+		for i, td := range tempScan {
+			if dmClob, isok := td.(*dm.DmClob); isok {
+				dmlen, errLength := dmClob.GetLength()
+				if errLength != nil {
+					return nil, errLength
+				}
+
+				strInt64 := strconv.FormatInt(dmlen, 10)
+				dmlenInt, errAtoi := strconv.Atoi(strInt64)
+				if errAtoi != nil {
+					return nil, errAtoi
+				}
+
+				str, errReadString := dmClob.ReadString(1, dmlenInt)
+				if errReadString != nil {
+					return nil, errReadString
+				}
+				dv := reflect.Indirect(reflect.ValueOf(dests[i]))
+				if dv.Kind() != reflect.Struct {
+					dv.SetString(str)
+				} else {
+					dv.FieldByName("String").SetString(str)
+				}
+			}
 		}
 		rets = append(rets, dataObj)
 	}
@@ -407,7 +497,11 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 					continue
 				}
 			}
-			mysqlFieldName = "`" + mysqlFieldName + "`"
+			if c.DbType == "dm" {
+				mysqlFieldName = "" + mysqlFieldName + ""
+			} else {
+				mysqlFieldName = "`" + mysqlFieldName + "`"
+			}
 			fieldNamesArray = append(fieldNamesArray, mysqlFieldName+"=?")
 		} else {
 			continue
@@ -425,15 +519,29 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 	pki := 0
 	for pkn, pkv := range primaryKeys {
 		if pki < lpk-1 {
-			whereFields = whereFields + fmt.Sprintf(" `%s` = ? AND ", pkn)
+			if c.DbType == "dm" {
+				whereFields = whereFields + fmt.Sprintf(" %s = ? AND ", pkn)
+			} else {
+				whereFields = whereFields + fmt.Sprintf(" `%s` = ? AND ", pkn)
+			}
 		} else {
-			whereFields = whereFields + fmt.Sprintf(" `%s` = ? ", pkn)
+			if c.DbType == "dm" {
+				whereFields = whereFields + fmt.Sprintf(" %s = ? ", pkn)
+			} else {
+				whereFields = whereFields + fmt.Sprintf(" `%s` = ? ", pkn)
+			}
 		}
 		dests = append(dests, pkv)
 		pki++
 	}
 
-	result, err := writeDb.Exec("update `"+tableName+"` set "+fieldsNames+" where "+whereFields, dests...)
+	var result sql.Result
+	var err error
+	if c.DbType == "dm" {
+		result, err = writeDb.Exec("update "+tableName+" set "+fieldsNames+" where "+whereFields, dests...)
+	} else {
+		result, err = writeDb.Exec("update `"+tableName+"` set "+fieldsNames+" where "+whereFields, dests...)
+	}
 	if err != nil {
 		return err
 	}
@@ -442,8 +550,11 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 	return nil
 }
 
-// d must be a struct pointer
+// Add DM数据库不支持改该方法
 func (c *MysqlClient) Add(tableName string, d interface{}, ondupUpdate bool) error {
+	if c.DbType == "dm" {
+		return errors.New("DM数据库不支持重复主键插入更新，请使用指定主键的插入方法")
+	}
 	_, err := c.AddEscapeAutoIncr(tableName, d, ondupUpdate, "")
 	return err
 }
@@ -456,7 +567,7 @@ func (c *MysqlClient) AddEscapeAutoIncr(tableName string, d interface{}, ondupUp
 	return result.LastInsertId()
 }
 
-//AddEscapeAutoIncrAndRetLastId执行纯插入操作(若数据已存在，则返回失败)，其会跳过由atuoincrkey指定的自增列，若执行成功，返回所插入的行id
+// AddEscapeAutoIncrAndRetLastId执行纯插入操作(若数据已存在，则返回失败)，其会跳过由atuoincrkey指定的自增列，若执行成功，返回所插入的行id
 func (c *MysqlClient) AddEscapeAutoIncrAndRetLastId(tableName string, d interface{}, atuoincrkey string) (int64, error) {
 	sqlRet, err := c.addEscapeAutoIncr(tableName, d, false, atuoincrkey)
 	if err != nil {
@@ -530,7 +641,9 @@ func (c *MysqlClient) addEscapeAutoIncr(tableName string, d interface{}, ondupUp
 		}
 		sqlStr = sqlStr + " ON DUPLICATE KEY UPDATE " + setStr
 	}
-
+	if c.DbType == "dm" {
+		sqlStr = strings.ReplaceAll(sqlStr, "`", "")
+	}
 	result, err := writeDb.Exec(sqlStr, dests...)
 	if err != nil {
 		return nil, err
@@ -541,6 +654,11 @@ func (c *MysqlClient) addEscapeAutoIncr(tableName string, d interface{}, ondupUp
 }
 
 func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, primaryKeys []string, updateFields []string, useSqlOnDup bool) (int64, error) {
+
+	if c.DbType == "dm" && useSqlOnDup {
+		return 0, errors.New("DM数据库不支持插入更新，请使用AddEscapeAutoIncr或AddEscapeAutoIncrAndRetLastId或Update方法")
+	}
+
 	if len(primaryKeys) <= 0 || len(updateFields) <= 0 {
 		return 0, errors.New("primaryKeys or updateFields are nil")
 	}
@@ -620,7 +738,9 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 		for _, value := range whereSqlFieldValues {
 			updateSqlFieldValues = append(updateSqlFieldValues, value)
 		}
-
+		if c.DbType == "dm" {
+			updateSql = strings.ReplaceAll(updateSql, "`", "")
+		}
 		uRows, err := c.Execute(updateSql, updateSqlFieldValues...)
 		log.Debug("InsertOrUpdateOnDup no use SqlOnDup, table=%s, sql=%s, values=%v, ret=%d, err=%v", tableName, updateSql, updateSqlFieldValues, uRows, err)
 		if err != nil {
@@ -628,11 +748,14 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 		}
 
 		if uRows == 0 {
+			if c.DbType == "dm" {
+				return uRows, errors.New("DM数据库更新数据失败，请指定主键值进行更新操作")
+			}
 			uRows, err = c.Execute(insertSql, insertSqlFieldValues...)
 			log.Debug("InsertOrUpdateOnDup no use SqlOnDup, table=%s, sql=%s, values=%v, ret=%d, err=%v", tableName, insertSql, insertSqlFieldValues, uRows, err)
 			if err != nil {
 				if mysqlError, ok := err.(*mysql.MySQLError); ok {
-					//1062 is duplicate entry error
+					// 1062 is duplicate entry error
 					if mysqlError.Number == 1062 {
 						log.Debug("InsertOrUpdateOnDup no use SqlOnDup, occur duplicate entry error, error:%v", mysqlError)
 						pc.Incr(PcTransactionInsertDup, 1)
@@ -657,7 +780,11 @@ func (c *MysqlClient) Delete(tableName string, condition map[string]interface{})
 	}
 	condStr, dest := buildWhereSql(condition)
 	writeDb := c.getWriteDbs()
-	rows, err := writeDb.Exec("delete from `"+tableName+"` where "+condStr, dest...)
+	sql := "delete from `" + tableName + "` where " + condStr
+	if c.DbType == "dm" {
+		sql = strings.ReplaceAll(sql, "`", "")
+	}
+	rows, err := writeDb.Exec(sql, dest...)
 	if err != nil {
 		return 0, err
 	}
@@ -670,6 +797,9 @@ func (c *MysqlClient) Delete(tableName string, condition map[string]interface{})
 
 func (c *MysqlClient) Execute(sql string, args ...interface{}) (int64, error) {
 	writeDb := c.getWriteDbs()
+	if c.DbType == "dm" {
+		sql = strings.ReplaceAll(sql, "`", "")
+	}
 	result, err := writeDb.Exec(sql, args...)
 	if err != nil {
 		return 0, err

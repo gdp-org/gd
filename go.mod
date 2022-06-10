@@ -3,6 +3,7 @@ module github.com/chuck1024/gd
 go 1.15
 
 require (
+	gitee.com/chunanyong/dm v1.8.5
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
