@@ -62,11 +62,21 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 		timeout += "s"
 	}
 
+	dbType := m.Key("db_type").String()
+	if dbType == "" {
+		dbType = "mysql"
+	}
+	c.DbType = dbType
+
 	connTimeout := m.Key("connTimeout").String()
 	if connTimeout == "" {
 		connTimeout = "1s"
 	} else if !strings.HasSuffix(connTimeout, "s") {
 		connTimeout += "s"
+	}
+
+	if c.DbType == "dm" {
+		connTimeout = strings.ReplaceAll(connTimeout, "s", "") + "000"
 	}
 
 	maxOpen, err := m.Key("max_open").Int()
@@ -86,13 +96,17 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 	masterIps := strings.Split(masterIp, ",")
 	connMasters := make([]string, 0)
 	for _, masterIpVal := range masterIps {
+		var connMaster string
 		if masterIpVal == "" {
 			continue
 		}
-
-		connMaster := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userWrite, passWrite, masterIp, masterPort, db, connTimeout, timeout, timeout)
-		if enableSqlSafeUpdates {
-			connMaster = connMaster + "&sql_safe_updates=1"
+		if dbType == "dm" {
+			connMaster = fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, "mysql", db)
+		} else {
+			connMaster = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userWrite, passWrite, masterIp, masterPort, db, connTimeout, timeout, timeout)
+			if enableSqlSafeUpdates {
+				connMaster = connMaster + "&sql_safe_updates=1"
+			}
 		}
 
 		connMasters = append(connMasters, connMaster)
@@ -104,15 +118,20 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 		if slaveIpVal == "" {
 			continue
 		}
-		connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
+		if dbType == "dm" {
+			connSlaves = append(connSlaves, fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, "mysql", db))
+		} else {
+			connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
+		}
 	}
 
 	glSuffix := m.Key("glSuffix").String()
 	to, _ := time.ParseDuration(timeout)
-	return c.initMainDbsMaxOpen(connMasters, connSlaves, maxOpen, maxIdle, glSuffix, to, masterProxy, slaveProxy)
+	return c.initMainDbsMaxOpen(connMasters, connSlaves, maxOpen, maxIdle, glSuffix, dbType, to, masterProxy, slaveProxy)
 }
 
 type CommonDbConf struct {
+	DbType      string // db type
 	DbName      string
 	ConnTime    string // connect timeout
 	ReadTime    string // read timeout
@@ -146,6 +165,12 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 		return errors.New("dbName is nil")
 	}
 
+	dbType := dbConf.DbType
+	if dbType == "" {
+		dbType = "mysql"
+	}
+	c.DbType = dbType
+
 	connTimeout := dbConf.ConnTime
 	if connTimeout == "" {
 		connTimeout = "200ms"
@@ -167,7 +192,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 		maxIdle = 1
 	}
 
-	connMasters, err := c.getReadWriteConnectString(dbConf.Master, connTimeout, readTimeout, writeTimeout, dbConf.DbName)
+	connMasters, err := c.getReadWriteConnectString(dbConf.Master, connTimeout, readTimeout, writeTimeout, dbConf.DbName, dbType)
 	if err != nil {
 		return err
 	}
@@ -176,7 +201,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 		return errors.New("no valid master ip found")
 	}
 
-	connSlave, err := c.getReadWriteConnectString(dbConf.Slave, connTimeout, readTimeout, writeTimeout, dbConf.DbName)
+	connSlave, err := c.getReadWriteConnectString(dbConf.Slave, connTimeout, readTimeout, writeTimeout, dbConf.DbName, dbType)
 	if err != nil {
 		return err
 	}
@@ -191,7 +216,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 		return fmt.Errorf("init mysqldb invalid duration %v", readTimeout)
 	}
 
-	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbConf.glSuffix, to, dbConf.Master.IsProxy, slaveIsProxy)
+	return c.initMainDbsMaxOpen(connMasters, connSlave, maxOpen, maxIdle, dbType, dbConf.glSuffix, to, dbConf.Master.IsProxy, slaveIsProxy)
 }
 
 func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTimeout int64, dbname string) ([]string, error) {
@@ -225,7 +250,7 @@ func (c *MysqlClient) getConnectString(conf *DbConnectConf, connTimeout, optTime
 	return conStrs, nil
 }
 
-func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout, readTimeout, writeTimeout string, dbname string) ([]string, error) {
+func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout, readTimeout, writeTimeout, dbname, dbType string) ([]string, error) {
 	if conf == nil || len(conf.Addrs) == 0 {
 		return nil, nil
 	}
@@ -239,11 +264,19 @@ func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout
 		if host != "" {
 			var constr string
 			if conf.ClientFoundRows {
-				constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s&clientFoundRows=true",
-					conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)
+				if dbType == "dm" {
+					constr = fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, "mysql", dbname)
+				} else {
+					constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s&clientFoundRows=true",
+						conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)
+				}
 			} else {
-				constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s",
-					conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)
+				if dbType == "dm" {
+					constr = fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, "mysql", dbname)
+				} else {
+					constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s",
+						conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)
+				}
 			}
 
 			if conf.EnableSqlSafeUpdates {

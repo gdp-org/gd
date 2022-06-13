@@ -32,7 +32,7 @@ func IsDbConnError(err error) bool {
 	} else {
 		mse, ok := err.(*mysql.MySQLError)
 		if ok && mse != nil {
-			//1062 is duplicate entry error
+			// 1062 is duplicate entry error
 			if mse.Number == 1062 {
 				return false
 			}
@@ -337,7 +337,7 @@ func (c *SqlCondition) BuildShardWhereSql(shardKey string) (string, string, []in
 		}
 	}
 	condStr := strings.Join(placeholder, " AND")
-	//build order by
+	// build order by
 	if len(c.order) != 0 {
 		orderHolder := make([]string, 0, len(c.order))
 		condStr = condStr + " ORDER BY "
@@ -353,7 +353,7 @@ func (c *SqlCondition) BuildShardWhereSql(shardKey string) (string, string, []in
 		condStr = condStr + strings.Join(orderHolder, ",")
 	}
 
-	//build limit
+	// build limit
 	if c.limit > 0 {
 		condStr = condStr + " LIMIT ?"
 		if c.offset > 0 {
@@ -454,27 +454,32 @@ func GetDataStructValues(data interface{}) []driver.Value {
 	return valueSlice
 }
 
-func GetDataStructDests(data interface{}) ([]interface{}, error) {
+func GetDataStructDests(data interface{}, dbType string) ([]interface{}, map[int]int, error) {
 	typeOf := reflect.TypeOf(data).Elem()
 	valueOf := reflect.ValueOf(data).Elem()
 	numField := valueOf.NumField()
 	dests := make([]interface{}, 0, numField)
+	indexs := make(map[int]int)
 	for i := 0; i < numField; i++ {
 		tField := typeOf.Field(i)
 		if len(tField.PkgPath) > 0 {
-			return nil, fmt.Errorf("field %s is not public", tField.Name)
+			return nil, nil, fmt.Errorf("field %s is not public", tField.Name)
 		}
 		mysqlFieldName := tField.Tag.Get("mysqlField")
 		if len(mysqlFieldName) == 0 {
-			return nil, fmt.Errorf("field %s has no mysqlField tag", tField.Name)
+			return nil, nil, fmt.Errorf("field %s has no mysqlField tag", tField.Name)
+		}
+
+		if dbType == "dm" && tField.Tag.Get("dataType") == "clob" {
+			indexs[i] = i
 		}
 
 		vField := valueOf.Field(i)
 		if vField.CanAddr() {
 			dests = append(dests, vField.Addr().Interface())
 		} else {
-			return nil, fmt.Errorf("%v can not be addressed", vField)
+			return nil, nil, fmt.Errorf("%v can not be addressed", vField)
 		}
 	}
-	return dests, nil
+	return dests, indexs, nil
 }
