@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"gitee.com/chunanyong/dm"
-	"github.com/chuck1024/gd"
 	log "github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/pc"
 	"gopkg.in/ini.v1"
@@ -317,26 +316,22 @@ func (c *MysqlClient) IsExistTable(tableName string) (bool, error) {
 	if c.DbType == "dm" {
 		ret, err := c.Query((*TableName)(nil), fmt.Sprintf("select SEGMENT_NAME AS TABLE_NAME  from dba_segments where dba_segments.OWNER='%s' and SEGMENT_NAME='%s';", db, tableName))
 		if err != nil {
-			gd.Error("IsExistTable dm query occur error:%v", err)
-			return false, err
+			return false, errors.New(fmt.Sprintf("IsExistTable dm query occur error:%v", err))
 		}
 
 		if ret == nil {
-			gd.Info("IsExistTable dm Query is nil")
-			return false, nil
+			return false, errors.New(fmt.Sprintf("IsExistTable dm Query is nil"))
 		}
 
 		return ret.(*TableName).TableName == tableName, nil
 	} else {
 		ret, err := c.Query((*TableName)(nil), fmt.Sprintf("select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA = '%s' and  TABLE_NAME ='%s';", db, tableName))
 		if err != nil {
-			gd.Error("IsExistTable mysql query occur error:%v", err)
-			return false, err
+			return false, errors.New(fmt.Sprintf("IsExistTable mysql query occur error:%v", err))
 		}
 
 		if ret == nil {
-			gd.Info("IsExistTable mysql Query is nil")
-			return false, nil
+			return false, errors.New(fmt.Sprintf("IsExistTable mysql Query is nil"))
 		}
 		return ret.(*TableName).TableName == tableName, nil
 	}
