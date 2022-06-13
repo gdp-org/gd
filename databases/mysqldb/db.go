@@ -20,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	_ "gitee.com/chunanyong/dm"
 	"github.com/go-sql-driver/mysql"
 )
 
