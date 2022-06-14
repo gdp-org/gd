@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"gitee.com/chunanyong/dm"
+	"github.com/chuck1024/gd"
 	log "github.com/chuck1024/gd/dlog"
 	"github.com/chuck1024/gd/runtime/pc"
 	"gopkg.in/ini.v1"
@@ -319,7 +320,8 @@ func (c *MysqlClient) IsExistTable(tableName string) (bool, error) {
 		}
 
 		if ret == nil {
-			return false, errors.New(fmt.Sprintf("IsExistTable dm Query is nil"))
+			gd.Info("IsExistTable dm Query is nil")
+			return false, nil
 		}
 
 		return ret.(*TableName).TableName == tableName, nil
@@ -330,7 +332,8 @@ func (c *MysqlClient) IsExistTable(tableName string) (bool, error) {
 		}
 
 		if ret == nil {
-			return false, errors.New(fmt.Sprintf("IsExistTable mysql Query is nil"))
+			gd.Info("IsExistTable mysql Query is nil")
+			return false, nil
 		}
 		return ret.(*TableName).TableName == tableName, nil
 	}
