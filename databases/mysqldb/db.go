@@ -662,6 +662,7 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 
 	escapedName := MysqlEscapeString(tableName)
 	tableName = escapedName
+
 	typ := reflect.TypeOf(d)
 	if typ == nil {
 		return 0, fmt.Errorf("input cannot be nil %v", typ)
