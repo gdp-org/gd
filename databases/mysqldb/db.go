@@ -203,7 +203,9 @@ func (c *MysqlClient) closeMainDbs() {
 
 func (c *MysqlClient) GetCount(query string, args ...interface{}) (int64, error) {
 	total := int64(0)
-
+	if c.DbType == "dm" {
+		query = strings.Replace(query, "`", "", -1)
+	}
 	row, err := c.queryRow(query, args...)
 	if err != nil {
 		return 0, err
