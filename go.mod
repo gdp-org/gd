@@ -21,7 +21,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.mongodb.org/mongo-driver v1.7.0
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/net v0.7.0
 	google.golang.org/grpc v1.38.0
 	gopkg.in/ini.v1 v1.57.0
 	moul.io/http2curl v1.0.0
