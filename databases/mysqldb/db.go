@@ -551,9 +551,6 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 
 // Add DM数据库不支持改该方法
 func (c *MysqlClient) Add(tableName string, d interface{}, ondupUpdate bool) error {
-	if c.DbType == "dm" {
-		return errors.New("DM数据库不支持重复主键插入更新，请使用指定主键的插入方法")
-	}
 	_, err := c.AddEscapeAutoIncr(tableName, d, ondupUpdate, "")
 	return err
 }
@@ -639,6 +636,21 @@ func (c *MysqlClient) addEscapeAutoIncr(tableName string, d interface{}, ondupUp
 			dests = append(dests, dt)
 		}
 		sqlStr = sqlStr + " ON DUPLICATE KEY UPDATE " + setStr
+		// 组装dm的插入更新  merge into
+		if c.DbType == "dm" {
+			var updateLang string
+			for i, filed := range fieldNamesArray {
+				if i+1 != len(fieldNamesArray) {
+					updateLang += " t1." + filed + "=t2." + filed + ","
+				} else {
+					updateLang += " t1." + filed + "=t2." + filed
+				}
+			}
+			sqlStr = "merge into " + tableName + "as t1" +
+				" using (select " + atuoincrkey + "as id from " + tableName + "as t2 on t1." + atuoincrkey + "=t2.id" +
+				" when matched then update set " + updateLang +
+				" when not matched then insert values  (" + placeHolders + ")"
+		}
 	}
 	if c.DbType == "dm" {
 		sqlStr = strings.ReplaceAll(sqlStr, "`", "")
@@ -653,10 +665,6 @@ func (c *MysqlClient) addEscapeAutoIncr(tableName string, d interface{}, ondupUp
 }
 
 func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, primaryKeys []string, updateFields []string, useSqlOnDup bool) (int64, error) {
-
-	if c.DbType == "dm" && useSqlOnDup {
-		return 0, errors.New("DM数据库不支持插入更新，请使用AddEscapeAutoIncr或AddEscapeAutoIncrAndRetLastId或Update方法")
-	}
 
 	if len(primaryKeys) <= 0 || len(updateFields) <= 0 {
 		return 0, errors.New("primaryKeys or updateFields are nil")
@@ -728,10 +736,40 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 		for _, value := range updateSqlFieldValues {
 			insertSqlFieldValues = append(insertSqlFieldValues, value)
 		}
+		// 组装dm的插入更新  merge into
+		if c.DbType == "dm" {
+			var updateSQL string
+			for i, filed := range insertSqlFieldNames {
+				if i+1 != len(insertSqlFieldNames) {
+					updateSQL += " t1." + filed + "=t2." + filed + ","
+				} else {
+					updateSQL += " t1." + filed + "=t2." + filed
+				}
+			}
 
-		iRows, err := c.Execute(insertSql, insertSqlFieldValues...)
-		log.Debug("InsertOrUpdateOnDup use SqlOnDup, table=%s, sql=%s, values=%v, ret=%d, err=%v", tableName, insertSql, insertSqlFieldValues, iRows, err)
-		return iRows, err
+			var pkSQL, onSQL string
+			for i, pk := range primaryKeys {
+				if i+1 != len(primaryKeys) {
+					pkSQL += fmt.Sprintf("%s,", pk)
+					onSQL += fmt.Sprintf("t1.%s=t2.%s,", pk, pk)
+				} else {
+					pkSQL += fmt.Sprintf("%s", pk)
+					onSQL += fmt.Sprintf("t1.%s=t2.%s", pk, pk)
+				}
+			}
+
+			insertSql = "merge into " + tableName + "as t1" +
+				" using (select " + pkSQL + "as id from " + tableName + "as t2 on " + onSQL +
+				" when matched then update set " + updateSQL +
+				" when not matched then insert values  (" + strings.Join(insertSqlPlaceHolders, ",") + ")"
+			iRows, err := c.Execute(insertSql)
+			log.Debug("InsertOrUpdateOnDup use SqlOnDup, table=%s, sql=%s, values=%v, ret=%d, err=%v", tableName, insertSql, insertSqlFieldValues, iRows, err)
+			return iRows, err
+		} else {
+			iRows, err := c.Execute(insertSql, insertSqlFieldValues...)
+			log.Debug("InsertOrUpdateOnDup use SqlOnDup, table=%s, sql=%s, values=%v, ret=%d, err=%v", tableName, insertSql, insertSqlFieldValues, iRows, err)
+			return iRows, err
+		}
 	} else {
 		updateSql := fmt.Sprintf("update `%s` set %s where %s", tableName, strings.Join(updateSqlFieldNames, ","), strings.Join(whereSqlFieldNames, " and "))
 		for _, value := range whereSqlFieldValues {
@@ -769,7 +807,7 @@ func (c *MysqlClient) InsertOrUpdateOnDup(tableName string, d interface{}, prima
 }
 
 /*
-	condition value supports limit kinds of slice:[]int64,[]string,[]interface
+condition value supports limit kinds of slice:[]int64,[]string,[]interface
 */
 func (c *MysqlClient) Delete(tableName string, condition map[string]interface{}) (int64, error) {
 	escapedName := MysqlEscapeString(tableName)
