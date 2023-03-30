@@ -42,6 +42,7 @@ type MysqlClient struct {
 	startOnce sync.Once
 	closeOnce sync.Once
 
+	// 数据库类型指定 dm mysql 缺省：mysql
 	DbType string
 }
 
@@ -310,11 +311,12 @@ func (c *MysqlClient) queryRow(query string, args ...interface{}) (*Row, error) 
 	return nil, fmt.Errorf("no available db,lastErr=%v", err)
 }
 
+type TableName struct {
+	TableName string `json:"table_name" mysqlField:"TABLE_NAME"`
+}
+
 // IsExistTable DM支持该方法 判断表是否存在
 func (c *MysqlClient) IsExistTable(tableName string) (bool, error) {
-	type TableName struct {
-		TableName string `json:"table_name" mysqlField:"TABLE_NAME"`
-	}
 	db := c.DataBase
 	if c.DbType == dmDataBaseType {
 		ret, err := c.Query((*TableName)(nil), fmt.Sprintf("select SEGMENT_NAME AS TABLE_NAME  from dba_segments where dba_segments.OWNER='%s' and SEGMENT_NAME='%s';", db, tableName))
