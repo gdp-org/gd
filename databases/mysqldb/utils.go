@@ -267,7 +267,7 @@ func (c *SqlCondition) WithOffset(offset int64) *SqlCondition {
 }
 
 /*
-	Valid SqlCondition,use before buildSql
+Valid SqlCondition,use before buildSql
 */
 func (c *SqlCondition) Valid(isGet bool) error {
 	if !isGet {
@@ -283,9 +283,9 @@ func (c *SqlCondition) Valid(isGet bool) error {
 }
 
 /*
-	returns:
-	@sqlStr string      contains all contents after(include) WHERE
-    @vars   []interface	varsHolder
+		returns:
+		@sqlStr string      contains all contents after(include) WHERE
+	    @vars   []interface	varsHolder
 */
 func (c *SqlCondition) BuildWhereSql() (string, []interface{}) {
 	_, str, vars := c.BuildShardWhereSql("")
@@ -293,11 +293,11 @@ func (c *SqlCondition) BuildWhereSql() (string, []interface{}) {
 }
 
 /*
-	Need to call WithTablePrefix() first
-	returns:
-	@tableName	string	tableName
-	@sqlStr string      contains all contents after(include) WHERE
-    @vars	[]interface	varsHolder
+		Need to call WithTablePrefix() first
+		returns:
+		@tableName	string	tableName
+		@sqlStr string      contains all contents after(include) WHERE
+	    @vars	[]interface	varsHolder
 */
 func (c *SqlCondition) BuildShardWhereSql(shardKey string) (string, string, []interface{}) {
 	tableName := MysqlEscapeString(c.tableprefix + shardKey)
@@ -470,7 +470,7 @@ func GetDataStructDests(data interface{}, dbType string) ([]interface{}, map[int
 			return nil, nil, fmt.Errorf("field %s has no mysqlField tag", tField.Name)
 		}
 
-		if dbType == "dm" && tField.Tag.Get("dataType") == "clob" {
+		if dbType == dmDataBaseType && tField.Tag.Get("dataType") == "clob" {
 			indexs[i] = i
 		}
 
