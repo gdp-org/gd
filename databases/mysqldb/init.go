@@ -64,7 +64,7 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 
 	dbType := m.Key("db_type").String()
 	if dbType == "" {
-		dbType = "mysql"
+		dbType = mysqlDataBaseType
 	}
 	c.DbType = dbType
 
@@ -101,7 +101,7 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 			continue
 		}
 		if dbType == dmDataBaseType {
-			connMaster = fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, "mysql", db)
+			connMaster = fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, mysqlDataBaseType, db)
 		} else {
 			connMaster = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userWrite, passWrite, masterIp, masterPort, db, connTimeout, timeout, timeout)
 			if enableSqlSafeUpdates {
@@ -119,7 +119,7 @@ func (c *MysqlClient) initDbs(f *ini.File, db string) error {
 			continue
 		}
 		if dbType == dmDataBaseType {
-			connSlaves = append(connSlaves, fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, "mysql", db))
+			connSlaves = append(connSlaves, fmt.Sprintf("dm://%s:%s@%s:%s?connectTimeout=%s&compatibleMode=%s&schema=%s", userWrite, passWrite, masterIp, masterPort, connTimeout, mysqlDataBaseType, db))
 		} else {
 			connSlaves = append(connSlaves, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s", userRead, passRead, slaveIp, slavePort, db, connTimeout, timeout, timeout))
 		}
@@ -167,7 +167,7 @@ func (c *MysqlClient) initDbsWithCommonConf(dbConf *CommonDbConf) error {
 
 	dbType := dbConf.DbType
 	if dbType == "" {
-		dbType = "mysql"
+		dbType = mysqlDataBaseType
 	}
 	c.DbType = dbType
 
@@ -265,14 +265,14 @@ func (c *MysqlClient) getReadWriteConnectString(conf *DbConnectConf, connTimeout
 			var constr string
 			if conf.ClientFoundRows {
 				if dbType == dmDataBaseType {
-					constr = fmt.Sprintf("dm://%s:%s@%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, "mysql", dbname)
+					constr = fmt.Sprintf("dm://%s:%s@%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, mysqlDataBaseType, dbname)
 				} else {
 					constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s&clientFoundRows=true",
 						conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)
 				}
 			} else {
 				if dbType == dmDataBaseType {
-					constr = fmt.Sprintf("dm://%s:%s@%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, "mysql", dbname)
+					constr = fmt.Sprintf("dm://%s:%s@%s?connectTimeout=%s&compatibleMode=%s&schema=%s", conf.User, conf.Pass, host, connTimeout, mysqlDataBaseType, dbname)
 				} else {
 					constr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s&readTimeout=%s&writeTimeout=%s&charset=%s",
 						conf.User, conf.Pass, host, dbname, connTimeout, readTimeout, writeTimeout, conf.CharSet)

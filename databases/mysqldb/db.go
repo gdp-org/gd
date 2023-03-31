@@ -27,6 +27,7 @@ import (
 const (
 	defaultDbConf          = "conf/conf.ini"
 	dmDataBaseType         = "dm"
+	mysqlDataBaseType      = "mysql"
 	PcTransactionInsertDup = "transaction_insert_dup"
 )
 
