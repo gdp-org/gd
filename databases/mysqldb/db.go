@@ -354,7 +354,7 @@ func (c *MysqlClient) Query(dataType interface{}, query string, args ...interfac
 
 	typeOf := reflect.TypeOf(dataType).Elem()
 	dataObj := reflect.New(typeOf).Interface()
-	dests, textToCharMap, err := GetDataStructDests(dataObj, c.DbType)
+	dests, indexMap, err := GetDataStructDests(dataObj, c.DbType)
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +370,7 @@ func (c *MysqlClient) Query(dataType interface{}, query string, args ...interfac
 			wks := strings.Split(keys[1], " ")
 			for _, key := range wks {
 				findTag := false
-				for k, _ := range textToCharMap {
+				for k, _ := range indexMap {
 					prefix := strings.ReplaceAll(fieldNames[k], "`", "")
 					if strings.HasPrefix(strings.TrimLeft(key, " "), prefix) {
 						builder.WriteString(fmt.Sprintf(" text_equal(%s,?)", prefix))
@@ -389,7 +389,7 @@ func (c *MysqlClient) Query(dataType interface{}, query string, args ...interfac
 	if err != nil {
 		return nil, err
 	}
-	err = row.Scan(textToCharMap, dests...)
+	err = row.Scan(indexMap, dests...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -409,7 +409,7 @@ func (c *MysqlClient) QueryList(dataType interface{}, query string, args ...inte
 	query = strings.Replace(query, "?", strings.Join(fieldNames, ","), 1)
 	typeOf := reflect.TypeOf(dataType).Elem()
 	dataObj := reflect.New(typeOf).Interface()
-	_, textToCharMap, err := GetDataStructDests(dataObj, c.DbType)
+	_, indexMap, err := GetDataStructDests(dataObj, c.DbType)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +424,7 @@ func (c *MysqlClient) QueryList(dataType interface{}, query string, args ...inte
 			wks := strings.Split(keys[1], " ")
 			for _, key := range wks {
 				findTag := false
-				for k, _ := range textToCharMap {
+				for k, _ := range indexMap {
 					prefix := strings.ReplaceAll(fieldNames[k], "`", "")
 					if strings.HasPrefix(strings.TrimLeft(key, " "), prefix) {
 						builder.WriteString(fmt.Sprintf(" text_equal(%s,?)", prefix))
@@ -519,7 +519,7 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 	tableName = escapedName
 	typeOf := reflect.TypeOf(d).Elem()
 	dataObj := reflect.New(typeOf).Interface()
-	_, textToCharMap, err := GetDataStructDests(dataObj, c.DbType)
+	_, indexMap, err := GetDataStructDests(dataObj, c.DbType)
 	if err != nil {
 		return err
 	}
@@ -584,7 +584,7 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 		if pki < lpk-1 {
 			if c.DbType == dmDataBaseType {
 				findTag := false
-				for k, _ := range textToCharMap {
+				for k, _ := range indexMap {
 					prefix := strings.ReplaceAll(fieldNames[k], "`", "")
 					if strings.HasPrefix(strings.TrimLeft(pkn, " "), prefix) {
 						whereFields = whereFields + fmt.Sprintf(" text_equal(%s,?) AND ", pkn)
@@ -601,7 +601,7 @@ func (c *MysqlClient) Update(tableName string, d interface{}, primaryKeys map[st
 		} else {
 			if c.DbType == dmDataBaseType {
 				findTag := false
-				for k, _ := range textToCharMap {
+				for k, _ := range indexMap {
 					prefix := strings.ReplaceAll(fieldNames[k], "`", "")
 					if strings.HasPrefix(strings.TrimLeft(pkn, " "), prefix) {
 						whereFields = whereFields + fmt.Sprintf(" text_equal(%s,?)", pkn)
