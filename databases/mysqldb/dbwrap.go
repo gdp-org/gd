@@ -220,7 +220,7 @@ func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err 
 
 	gl.Incr(db.glDbReadCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	if db.mysqlClient.DbType == "dm" {
+	if db.mysqlClient.DbType == dmDataBaseType {
 		ctx = context.Background()
 	}
 	rs, err = db.DB.QueryContext(ctx, query, args...)
@@ -264,9 +264,6 @@ func (db *DbWrap) ExecContext(ctx context.Context, query string, args ...interfa
 	if ctx == nil {
 		ct, cancel := context.WithTimeout(context.Background(), db.Timeout)
 		ctx = ct
-		if db.mysqlClient.DbType == "dm" {
-			ctx = context.Background()
-		}
 		defer cancel()
 	}
 	r, err = targetDb.DB.ExecContext(ctx, query, args...)
@@ -295,7 +292,7 @@ func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result
 
 	gl.Incr(db.glDbTransactionCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	if db.mysqlClient.DbType == "dm" {
+	if db.mysqlClient.DbType == dmDataBaseType {
 		ctx = context.Background()
 	}
 	defer cancel()
@@ -382,7 +379,9 @@ func (r *Row) Scan(indexMap map[int]int, dest ...interface{}) error {
 			if errLength != nil {
 				return errLength
 			}
-
+			if dmlen == 0 {
+				continue
+			}
 			// Convert int64 to int type
 			strInt64 := strconv.FormatInt(dmlen, 10)
 			dmlenInt, errAtoi := strconv.Atoi(strInt64)
