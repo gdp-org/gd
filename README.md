@@ -102,7 +102,6 @@ level = "DEBUG"
 
 [Process]
 maxCPU = 2
-maxMemory = "2g"
 healthPort = 9527
 
 [Server]
