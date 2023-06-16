@@ -7,7 +7,7 @@ package dgrpc
 
 import (
 	"context"
-	"github.com/gdp-org/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gl"
 	"google.golang.org/grpc"
 )
 

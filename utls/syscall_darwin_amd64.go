@@ -1,9 +1,8 @@
-// +build !windows
-// +build !arm
-// +build !arm64
+//go:build darwin && amd64
+// +build darwin,amd64
 
 /**
- * Copyright 2021 gd Author. All rights reserved.
+ * Copyright 2023 gd Author. All rights reserved.
  * Author: Chuck1024
  */
 

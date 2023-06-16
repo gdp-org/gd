@@ -6,9 +6,9 @@
 package main
 
 import (
-	"github.com/gdp-org/gd"
-	"github.com/gdp-org/gd/net/dhttp"
-	"github.com/gdp-org/gd/runtime/inject"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/net/dhttp"
+	"github.com/chuck1024/gd/runtime/inject"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

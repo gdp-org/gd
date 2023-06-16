@@ -7,7 +7,7 @@ package dlog
 
 import (
 	"fmt"
-	"github.com/gdp-org/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gl"
 	"os"
 	"strings"
 )

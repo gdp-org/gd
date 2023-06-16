@@ -6,8 +6,8 @@
 package main
 
 import (
-	"github.com/gdp-org/gd"
-	"github.com/gdp-org/gd/databases/redisdb"
+	"github.com/chuck1024/gd"
+	"github.com/chuck1024/gd/databases/redisdb"
 )
 
 func main() {

@@ -12,7 +12,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gdp-org/gd/dlog"
+	"github.com/chuck1024/gd/dlog"
 	"io"
 	"io/ioutil"
 	"math/rand"

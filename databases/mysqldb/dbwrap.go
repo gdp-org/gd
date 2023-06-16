@@ -9,15 +9,18 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	log "github.com/gdp-org/gd/dlog"
-	"github.com/gdp-org/gd/runtime/gl"
-	"github.com/gdp-org/gd/runtime/pc"
+	"gitee.com/chunanyong/dm"
+	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/pc"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
 	"runtime"
 
+	_ "gitee.com/chunanyong/dm"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -173,7 +176,7 @@ func (db *DbWrap) Query(query string, args ...interface{}) (rs *sql.Rows, err er
 		turn++
 		rs, err = db.doQuery(query, args...)
 		if err != nil {
-			//only retry on connection error
+			// only retry on connection error
 			if IsTimeoutError(err) || IsDbConnError(err) {
 				continue
 			} else {
@@ -217,6 +220,9 @@ func (db *DbWrap) doQuery(query string, args ...interface{}) (rs *sql.Rows, err 
 
 	gl.Incr(db.glDbReadCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	if db.mysqlClient.DbType == dmDataBaseType {
+		ctx = context.Background()
+	}
 	rs, err = db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		if cancel != nil {
@@ -286,6 +292,9 @@ func (db *DbWrap) ExecTransaction(transactionExec TransactionExec) (r sql.Result
 
 	gl.Incr(db.glDbTransactionCount(), 1)
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	if db.mysqlClient.DbType == dmDataBaseType {
+		ctx = context.Background()
+	}
 	defer cancel()
 
 	var tx *sql.Tx
@@ -325,14 +334,28 @@ type Row struct {
 // If more than one row matches the query,
 // Scan uses the first row and discards the rest. If no row matches
 // the query, Scan returns ErrNoRows.
-func (r *Row) Scan(dest ...interface{}) error {
+func (r *Row) Scan(indexMap map[int]int, dest ...interface{}) error {
 	if r.err != nil {
 		return r.err
 	}
 	defer r.rows.Close()
+
 	for _, dp := range dest {
 		if _, ok := dp.(*sql.RawBytes); ok {
 			return errors.New("sql: RawBytes isn't allowed on Row.Scan")
+		}
+	}
+
+	var tempScan []interface{}
+	for i, dp := range dest {
+		if indexMap == nil {
+			tempScan = append(tempScan, dp)
+		} else {
+			if _, ok := indexMap[i]; ok {
+				tempScan = append(tempScan, &dm.DmClob{})
+			} else {
+				tempScan = append(tempScan, dp)
+			}
 		}
 	}
 
@@ -342,9 +365,42 @@ func (r *Row) Scan(dest ...interface{}) error {
 		}
 		return sql.ErrNoRows
 	}
-	err := r.rows.Scan(dest...)
+
+	err := r.rows.Scan(tempScan...)
 	if err != nil {
 		return err
+	}
+
+	// add value from tempDest to dest  td->ptr
+	for i, td := range tempScan {
+		if dmClob, isok := td.(*dm.DmClob); isok {
+			// Get the length
+			dmlen, errLength := dmClob.GetLength()
+			if errLength != nil {
+				return errLength
+			}
+			if dmlen == 0 {
+				continue
+			}
+			// Convert int64 to int type
+			strInt64 := strconv.FormatInt(dmlen, 10)
+			dmlenInt, errAtoi := strconv.Atoi(strInt64)
+			if errAtoi != nil {
+				return errAtoi
+			}
+
+			// Read string
+			str, errReadString := dmClob.ReadString(1, dmlenInt)
+			if errReadString != nil {
+				return errReadString
+			}
+			dv := reflect.Indirect(reflect.ValueOf(dest[i]))
+			if dv.Kind() != reflect.Struct {
+				dv.SetString(str)
+			} else {
+				dv.FieldByName("String").SetString(str)
+			}
+		}
 	}
 	// Make sure the query can be processed to completion with no errors.
 	if err := r.rows.Close(); err != nil {

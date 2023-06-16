@@ -8,7 +8,7 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gdp-org/gd/utls"
+	"github.com/chuck1024/gd/utls"
 	"runtime"
 	"time"
 )

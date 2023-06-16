@@ -6,7 +6,7 @@
 package discovery
 
 import (
-	"github.com/gdp-org/gd/service"
+	"github.com/chuck1024/gd/service"
 )
 
 var (

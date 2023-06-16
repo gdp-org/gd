@@ -8,11 +8,11 @@ package redisdb
 import (
 	"errors"
 	"fmt"
-	log "github.com/gdp-org/gd/dlog"
-	"github.com/gdp-org/gd/runtime/gl"
-	"github.com/gdp-org/gd/runtime/gr"
-	"github.com/gdp-org/gd/runtime/pc"
-	"github.com/gdp-org/gd/utls"
+	log "github.com/chuck1024/gd/dlog"
+	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/chuck1024/gd/runtime/gr"
+	"github.com/chuck1024/gd/runtime/pc"
+	"github.com/chuck1024/gd/utls"
 	"github.com/garyburd/redigo/redis"
 	"gopkg.in/ini.v1"
 	"math/rand"
@@ -189,6 +189,7 @@ func newPoolRetryTimeout(servers []string, password string, dbNumber, maxActive,
 					}
 				} else {
 					log.Warn("redis dial tcp fail,server=%s,err=%v", server, err)
+					return nil, err
 				}
 
 				if _, err = c.Do("SELECT", dbNumber); err != nil {
@@ -422,10 +423,12 @@ func (p *RedisPoolClient) getConn(usedIps []string) (redis.Conn, string, error) 
 	return nil, "", nil
 }
 
-/**
+/*
+*
 Redis get
 return string if exist
-       err = redis.ErrNil if not exist
+
+	err = redis.ErrNil if not exist
 */
 func (p *RedisPoolClient) Get(key string) (ret string, errRet error) {
 	return redis.String(p.Do("GET", key))
