@@ -7,7 +7,7 @@ package dogrpc
 
 import (
 	"bufio"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/gdp-org/gd/dlog"
 	"io"
 	"strconv"
 )

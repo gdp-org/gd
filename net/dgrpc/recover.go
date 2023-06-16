@@ -7,7 +7,7 @@ package dgrpc
 
 import (
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/gdp-org/gd/dlog"
 	"github.com/go-errors/errors"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"google.golang.org/grpc/codes"

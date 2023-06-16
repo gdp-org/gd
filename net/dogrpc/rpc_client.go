@@ -8,9 +8,9 @@ package dogrpc
 import (
 	"crypto/tls"
 	"crypto/x509"
-	dogError "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/utls/network"
+	dogError "github.com/gdp-org/gd/derror"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/utls/network"
 	"io"
 	"io/ioutil"
 	"math/rand"

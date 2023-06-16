@@ -6,8 +6,8 @@
 package main
 
 import (
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/databases/mysqldb"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/databases/mysqldb"
 )
 
 type TestDB struct {

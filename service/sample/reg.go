@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/service/register"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/service/register"
 )
 
-func etcd(){
+func etcd() {
 	var r register.DogRegister
 	r = &register.EtcdRegister{}
 	if err := r.Start(); err != nil {
@@ -14,7 +14,7 @@ func etcd(){
 	}
 }
 
-func zk(){
+func zk() {
 	var r register.DogRegister
 	r = &register.ZkRegister{}
 	if err := r.Start(); err != nil {
@@ -23,7 +23,7 @@ func zk(){
 	}
 }
 
-func main(){
+func main() {
 	defer dlog.Close()
 	etcd()
 }

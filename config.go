@@ -6,7 +6,7 @@
 package gd
 
 import (
-	"github.com/chuck1024/gd/config"
+	"github.com/gdp-org/gd/config"
 	"gopkg.in/ini.v1"
 )
 
