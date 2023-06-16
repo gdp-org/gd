@@ -1,6 +1,6 @@
 module github.com/gdp-org/gd
 
-go 1.15
+go 1.18
 
 require (
 	gitee.com/chunanyong/dm v1.8.11
