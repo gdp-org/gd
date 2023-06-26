@@ -1,9 +1,8 @@
 # godog [![gd](gd.png)]()
 
-[![GoDoc](https://pkg.go.dev/badge/github.com/chuck1024/gd?status.svg)](https://pkg.go.dev/github.com/chuck1024/gd@v1.7.17?tab=doc)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chuck1024/gd)](https://goreportcard.com/report/github.com/chuck1024/gd)
-[![Release](https://img.shields.io/github/v/release/chuck1024/gd.svg?style=flat-square)](https://github.com/chuck1024/gd/tags)
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+[![GoDoc](https://pkg.go.dev/badge/github.com/gdp-org/gd?status.svg)](https://pkg.go.dev/github.com/gdp-org/gd@v1.7.11?tab=doc)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gdp-org/gd)](https://goreportcard.com/report/github.com/gdp-org/gd)
+[![Release](https://img.shields.io/github/v/release/gdp-org/gd.svg?style=flat-square)](https://github.com/gdp-org/gd/releases)
 
 "go" is the meaning of a dog in Chinese pronunciation, and dog's original intention is also a dog. So godog means "狗狗"
 in Chinese, which is very cute.
@@ -25,7 +24,7 @@ email : bpmf.9527@gmail.com
 Start with cloning gd:
 
 ```
-> go get github.com/chuck1024/gd
+> go get github.com/gdp-org/gd
 ```
 
 ---
@@ -50,9 +49,9 @@ anyone who is interested in this work can join it and let's enhance the system f
 package main
 
 import (
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/net/dhttp"
-	"github.com/chuck1024/gd/runtime/inject"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/net/dhttp"
+	"github.com/gdp-org/gd/runtime/inject"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -228,12 +227,12 @@ package main
 
 import (
  "context"
- "github.com/chuck1024/gd"
- de "github.com/chuck1024/gd/derror"
- "github.com/chuck1024/gd/net/dhttp"
- "github.com/chuck1024/gd/net/dogrpc"
- "github.com/chuck1024/gd/runtime/inject"
- pb "github.com/chuck1024/gd/sample/helloworld"
+ "github.com/gdp-org/gd"
+ de "github.com/gdp-org/gd/derror"
+ "github.com/gdp-org/gd/net/dhttp"
+ "github.com/gdp-org/gd/net/dogrpc"
+ "github.com/gdp-org/gd/runtime/inject"
+ pb "github.com/gdp-org/gd/sample/helloworld"
  "github.com/gin-gonic/gin"
  "google.golang.org/grpc"
  "net/http"
@@ -342,9 +341,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/service/discovery"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/service/discovery"
 	"time"
 )
 
@@ -411,7 +410,7 @@ func main() {
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/gdp-org/gd/net/dogrpc"
 	"testing"
 )
 
@@ -445,8 +444,8 @@ func TestRpcServer(t *testing.T) {
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/utls/network"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/utls/network"
 	"testing"
 	"time"
 )
@@ -537,8 +536,8 @@ func GetErrorType(code int) string {
 package main
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/service/register"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/service/register"
 )
 
 func etcd(){
@@ -569,8 +568,8 @@ func main(){
 package main
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/service/discovery"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/service/discovery"
 	"time"
 )
 

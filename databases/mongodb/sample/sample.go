@@ -8,8 +8,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/databases/mongodb"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/databases/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

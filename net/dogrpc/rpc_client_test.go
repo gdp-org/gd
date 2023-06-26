@@ -6,8 +6,8 @@
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/gd"
-	"github.com/chuck1024/gd/utls/network"
+	"github.com/gdp-org/gd"
+	"github.com/gdp-org/gd/utls/network"
 	"testing"
 	"time"
 )
@@ -15,7 +15,7 @@ import (
 func TestRpcClient(t *testing.T) {
 	body := []byte("How are you?")
 
-	code, rsp, err := gd.NewRpcClient(500*time.Millisecond, 0).AddAddr(network.GetLocalIP() + ":10241").Invoke(1024, body)
+	code, rsp, err := gd.NewRpcClient(500*time.Millisecond, 0).AddAddr(network.GetLocalIP()+":10241").Invoke(1024, body)
 	if err != nil {
 		t.Logf("Error when sending request to server: %s", err)
 	}

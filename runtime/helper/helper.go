@@ -8,8 +8,8 @@ package helper
 import (
 	"bufio"
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/utls"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/utls"
 	"io"
 	"net"
 	"os"

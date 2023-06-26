@@ -6,8 +6,8 @@
 package config
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/utls"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/utls"
 	"gopkg.in/ini.v1"
 	"sync"
 )

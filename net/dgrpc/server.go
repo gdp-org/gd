@@ -10,7 +10,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	log "github.com/chuck1024/gd/dlog"
+	log "github.com/gdp-org/gd/dlog"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -41,10 +41,10 @@ type GrpcServer struct {
 	RegisterHandler IRegisterHandler `inject:"registerHandler"`
 	ServiceName     string           `inject:"serviceName"`
 
-	UseTls             bool   `inject:"grpcUseTls" canNil:"true"`
-	GrpcCaPemFile      string `inject:"grpcCaPemFile" canNil:"true"`
-	GrpcServerKeyFile  string `inject:"grpcServerKeyFile" canNil:"true"`
-	GrpcServerPemFile  string `inject:"grpcServerPemFile" canNil:"true"`
+	UseTls            bool   `inject:"grpcUseTls" canNil:"true"`
+	GrpcCaPemFile     string `inject:"grpcCaPemFile" canNil:"true"`
+	GrpcServerKeyFile string `inject:"grpcServerKeyFile" canNil:"true"`
+	GrpcServerPemFile string `inject:"grpcServerPemFile" canNil:"true"`
 }
 
 func (s *GrpcServer) Start() error {

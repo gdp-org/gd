@@ -7,8 +7,8 @@ package inject
 
 import (
 	"fmt"
-	"github.com/chuck1024/gd/utls/orderedmap"
 	"github.com/facebookgo/structtag"
+	"github.com/gdp-org/gd/utls/orderedmap"
 	"reflect"
 	"sync"
 )

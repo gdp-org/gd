@@ -10,7 +10,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/chuck1024/gd/dlog"
+	"github.com/gdp-org/gd/dlog"
 	"io/ioutil"
 	"net"
 	"strconv"
@@ -28,10 +28,10 @@ type RpcServer struct {
 	defaultHandler map[uint32]RpcHandlerFunc
 	wrapHandler    map[uint32]interface{}
 
-	UseTls            bool   `inject:"rpcUseTls" canNil:"true"`
-	RpcCaPemFile      string `inject:"rpcCaPemFile" canNil:"true"`
-	RpcServerKeyFile  string `inject:"rpcServerKeyFile" canNil:"true"`
-	RpcServerPemFile  string `inject:"rpcServerPemFile" canNil:"true"`
+	UseTls           bool   `inject:"rpcUseTls" canNil:"true"`
+	RpcCaPemFile     string `inject:"rpcCaPemFile" canNil:"true"`
+	RpcServerKeyFile string `inject:"rpcServerKeyFile" canNil:"true"`
+	RpcServerPemFile string `inject:"rpcServerPemFile" canNil:"true"`
 }
 
 func NewRpcServer() *RpcServer {

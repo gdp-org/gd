@@ -6,8 +6,8 @@
 package main
 
 import (
-	"github.com/chuck1024/gd/dlog"
-	"github.com/chuck1024/gd/runtime/gl"
+	"github.com/gdp-org/gd/dlog"
+	"github.com/gdp-org/gd/runtime/gl"
 	"strconv"
 	"time"
 )

@@ -8,8 +8,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/chuck1024/gd"
-	pb "github.com/chuck1024/gd/sample/helloworld"
+	"github.com/gdp-org/gd"
+	pb "github.com/gdp-org/gd/sample/helloworld"
 	"google.golang.org/grpc"
 	"strconv"
 	"time"

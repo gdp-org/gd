@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/bitly/go-simplejson"
-	"github.com/chuck1024/gd"
+	"github.com/gdp-org/gd"
 	"time"
 )
 
@@ -18,6 +18,6 @@ func main() {
 		gd.Error("occur error:%s\n", err)
 		return
 	}
-	ret, _:= simplejson.NewJson([]byte(body))
+	ret, _ := simplejson.NewJson([]byte(body))
 	gd.Info(ret.Get("result").Get("Ret"))
 }

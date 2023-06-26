@@ -8,8 +8,8 @@ package dogrpc
 import (
 	"encoding/json"
 	"fmt"
-	de "github.com/chuck1024/gd/derror"
-	"github.com/chuck1024/gd/dlog"
+	de "github.com/gdp-org/gd/derror"
+	"github.com/gdp-org/gd/dlog"
 	"reflect"
 )
 
@@ -56,7 +56,7 @@ func wrap(toWrap interface{}) (RpcHandlerFunc, error) {
 			jsonErr := json.Unmarshal(req, inValInterface)
 			if jsonErr != nil {
 				dlog.Info("wrap wrap data from json fail!bts=%s,func=%v,err=%v", string(req), toWrap, jsonErr)
-				Return(uint32(de.RpcInternalServerError),"data type not valid", jsonErr, nil)
+				Return(uint32(de.RpcInternalServerError), "data type not valid", jsonErr, nil)
 				return
 			}
 		} else {

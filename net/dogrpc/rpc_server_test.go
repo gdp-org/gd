@@ -6,7 +6,7 @@
 package dogrpc_test
 
 import (
-	"github.com/chuck1024/gd/net/dogrpc"
+	"github.com/gdp-org/gd/net/dogrpc"
 	"testing"
 )
 
