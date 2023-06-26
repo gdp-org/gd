@@ -1,5 +1,7 @@
 # godog [![gd](gd.png)]()
 
+# Now, maintenance of this project is temporarily suspended. Please go to [github.com/chuck1024/gd](github.com/chuck1024/gd)
+
 [![GoDoc](https://pkg.go.dev/badge/github.com/gdp-org/gd?status.svg)](https://pkg.go.dev/github.com/gdp-org/gd@v1.7.11?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gdp-org/gd)](https://goreportcard.com/report/github.com/gdp-org/gd)
 [![Release](https://img.shields.io/github/v/release/gdp-org/gd.svg?style=flat-square)](https://github.com/gdp-org/gd/releases)
